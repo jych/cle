@@ -139,18 +139,42 @@ class DesignMatrixDataLayer(DataLayer):
         return self.sharedX_data[i*self.batch_size: (i+1)*self.batch_size]
 
 
-class CostLayer(DataLayer):
 
-    def __init__(self, name, np_data, batch_size=None):
+
+class CostLayer(Layer) :
+
+    def __init__(self, name) : pass
+
+    def fprop(self, x, y) : pass
+
+
+
+
+class MulticlassCostLayer(CostLayer) : 
+
+    def __init__(self, name, target):
         self.name = name
-        self.n_data = np_data.shape[0]
-        self.batch_size = batch_size if batch_size is not None else self.n_data
-        self.sharedX_data = sharedX(np_array)
-        self.sym_data = T.fmatrix()
+        self.target = target
 
-    def fprop(self, x, y):
-        return self.sym_data
+    def fprop(self, p, y=None):
+        y = self.target if y is None else y
+        return - T.sum( y * T.log(p) ) / p.shape[0]
 
-    def get_batch(self, i):
-        i = i % (self.n_data / self.batch_size + 1)
-        return self.sharedX_data[i*self.batch_size: (i+1)*self.batch_size]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

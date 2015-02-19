@@ -5,7 +5,7 @@ from util import *
 datapath = '/data/lisa/data/mnist/mnist.pkl'
 (train_x, train_y), (valid_x, valid_y), (test_x, test_y) = np.load(datapath)
 
-init_W, init_b = ParamInit('randn'), ParamInit('zeros')
+init_W, init_b = ParamInit('randn',0,0.01), ParamInit('zeros')
 
 X = DesignMatrixDataLayer('X', train_x, 100)
 Y = DesignMatrixDataLayer('Y', one_hot(train_y), 100)
