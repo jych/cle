@@ -139,18 +139,16 @@ class DesignMatrixDataLayer(DataLayer):
         return self.sharedX_data[i*self.batch_size: (i+1)*self.batch_size]
 
 
+class CostLayer(Layer):
+
+    def __init__(self, name):
+        pass
+
+    def fprop(self, x, y):
+        pass
 
 
-class CostLayer(Layer) :
-
-    def __init__(self, name) : pass
-
-    def fprop(self, x, y) : pass
-
-
-
-
-class MulticlassCostLayer(CostLayer) : 
+class MulticlassCostLayer(CostLayer):
 
     def __init__(self, name, target):
         self.name = name
@@ -158,7 +156,7 @@ class MulticlassCostLayer(CostLayer) :
 
     def fprop(self, p, y=None):
         y = self.target if y is None else y
-        return - T.sum( y * T.log(p) ) / p.shape[0]
+        return - T.sum(y * T.log(p)) / p.shape[0]
 
 
 
