@@ -28,13 +28,12 @@ net = SeqNet('net', X, l1, l2)
 cost = NLL_mul(net.fprop(), Y.fprop())
 ipdb.set_trace()
 
-
 i = T.lscalar()
 train_fn = theano.function(
     inputs=[i],
     outputs=[cost],
     on_unused_input='ignore',
-    givens=givens_train(i),
+    givens=X.get_batch(i),
     updates=rms_prop({W1: g_W1, B1: g_B1, V1: g_V1, C1: g_C1}, __lr)
 )
 ipdb.set_trace()
