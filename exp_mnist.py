@@ -7,9 +7,8 @@ datapath = '/data/lisa/data/mnist/mnist.pkl'
 
 init_W, init_b = ParamInit('randn'), ParamInit('zeros')
 
-X = DesignMatrixDataLayer('X', train_x, 100)
-Y = DesignMatrixDataLayer('Y', one_hot(train_y), 100)
-
+X = T.fmatrix()
+y = one_hot(train_y)
 l1 = FullyConnectedLayer(name='h1',
                          n_in=784,
                          n_out=1000,
@@ -24,16 +23,14 @@ l2 = FullyConnectedLayer(name='h2',
                          init_W=init_W,
                          init_b=init_b)
 
-net = SeqNet('net', X, l1,    l2)
-cost = NLL_mul(net.fprop(), Y.fprop())
-ipdb.set_trace()
+net = SeqNet('net', l1, l2)
+cost = NLL_mul(net.fprop(X), y)
 
-i = T.lscalar()
+ipdb.set_trace()
 train_fn = theano.function(
-    inputs=[i],
+    inputs=[X],
     outputs=[cost],
     on_unused_input='ignore',
-    givens=X.get_batch(i),
     updates=rms_prop({W1: g_W1, B1: g_B1, V1: g_V1, C1: g_C1}, __lr)
 )
 ipdb.set_trace()
