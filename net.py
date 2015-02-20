@@ -39,9 +39,6 @@ class ParamInit(object):
         return sharedX(self.initializer(np.zeros(shape)))
 
 
-RNG = MRG_RandomStreams(max(np.random.RandomState(1364).randint(2 ** 15), 1))
-
-
 class Activ(object):
 
     def linear(self, z):
@@ -84,21 +81,6 @@ class Net(Layer):
 
     def fprop(self, x=None):
         pass
-
-
-class SeqNet(Net):
-    def __init__(self, name, *layers):
-        self.name = name
-        self.layers = layers
-
-    @property
-    def params(self):
-        return flatten([layer.params for layer in self.layers])
-
-    def fprop(self, x=None):
-        for layer in self.layers:
-            x = layer.fprop(x)
-        return x
 
 
 class FullyConnectedLayer(Layer):
@@ -168,5 +150,20 @@ class MulticlassCostLayer(CostLayer):
         y = self.target if y is None else y
         return - T.sum(y * T.log(p)) / p.shape[0]
 
+
+class SeqNet(Net):
+    # Temporary class
+    def __init__(self, name, *layers):
+        self.name = name
+        self.layers = layers
+
+    @property
+    def params(self):
+        return flatten([layer.params for layer in self.layers])
+
+    def fprop(self, x=None):
+        for layer in self.layers:
+            x = layer.fprop(x)
+        return x
 
 
