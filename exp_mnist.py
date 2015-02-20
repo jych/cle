@@ -17,27 +17,27 @@ num_batches = train_x.shape[0] / batch_size
 init_W, init_b = ParamInit('randn'), ParamInit('zeros')
 
 X = T.fmatrix()
-y = one_hot(train_y)
-l1 = FullyConnectedLayer(name='h1',
+Y = one_hot(train_y)
+h1 = FullyConnectedLayer(name='h1',
                          n_in=784,
                          n_out=1000,
                          unit='relu',
                          init_W=init_W,
                          init_b=init_b)
 
-l2 = FullyConnectedLayer(name='h2',
+h2 = FullyConnectedLayer(name='h2',
                          n_in=1000,
                          n_out=10,
                          unit='softmax',
                          init_W=init_W,
                          init_b=init_b)
 
-net = SeqNet('net', l1, l2)
-cost = NLL_mul(net.fprop(X), y)
+net = SeqNet('net', h1, h2)
+cost = NLLMul(net.fprop(X), Y)
 
 ipdb.set_trace()
 train_fn = theano.function(
-    inputs=[X, y],
+    inputs=[X, Y],
     outputs=[cost],
     on_unused_input='ignore',
     updates=rms_prop({W1: g_W1, B1: g_B1, V1: g_V1, C1: g_C1}, __lr)

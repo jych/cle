@@ -5,43 +5,43 @@ import theano.tensor as T
 from layer import *
 
 
-def NLL_mul(probs, targets):
-    return - T.sum(targets * T.log(probs)) / probs.shape[0]
+def NLLMul(y_hat, y):
+    nll =  -T.sum(y * T.log(y_hat), axis=-1)
+    return nll.mean()
 
 
-def NLL_bin(probs, targets):
-    return - T.sum(targets * T.log(probs) + (1-targets) * T.log(1-probs)) / probs.shape[0]
+def NLLBin(y_hat, y):
+    nll = -T.sum(y * T.log(y_hat) + (1-y) * T.log(1-y_hat), axis=-1)
+    return nll.mean()
 
 
+#class CostLayer(Layer):
+#    """
+#    Implementations of cost layer
 
-class CostLayer(Layer):
-    """
-    Implementations of cost layer
+#    Parameters
+#    ----------
+#    todo..
+#    """
+#    def __init__(self, name):
+#        pass
 
-    Parameters
-    ----------
-    todo..
-    """
-    def __init__(self, name):
-        pass
-
-    def fprop(self, x, y):
-        pass
+#    def fprop(self, x, y):
+#        pass
 
 
-class MulticlassCostLayer(CostLayer):
-    """
-    Implementations of cost layer of multi-class case
+#class MultiClassCostLayer(CostLayer):
+#    """
+#    Implementations of cost layer of multi-class case
 
-    Parameters
-    ----------
-    todo..
-    """
-    def __init__(self, name, target):
-        self.name = name
-        self.target = target
+#    Parameters
+#    ----------
+#    todo..
+#    """
+#    def __init__(self, name):
+#        self.name = name
 
-    def fprop(self, p, y=None):
-        y = self.target if y is None else y
-        return - T.sum(y * T.log(p)) / p.shape[0]
+#    def fprop(self, p, y):
+#        y = target if y is None else y
+#        return - T.sum(y * T.log(p)) / p.shape[0]
 
