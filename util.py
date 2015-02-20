@@ -58,7 +58,7 @@ def NLL_bin(probs, targets):
 
 
 def predict(probs):
-    return T.argmax(probs, axis=1)
+    return T.argmax(probs, axis=-1)
 
 
 def error(labels, pred_labels):
