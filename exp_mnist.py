@@ -1,6 +1,8 @@
 import ipdb
 from net import *
 from util import *
+from cost import *
+from layer import *
 
 try:
     datapath = '/data/lisa/data/mnist/mnist.pkl'
