@@ -2,6 +2,9 @@ import numpy as np
 import theano
 import theano.tensor as T
 
+from layer import *
+
+
 def NLL_mul(probs, targets):
     return - T.sum(targets * T.log(probs)) / probs.shape[0]
 

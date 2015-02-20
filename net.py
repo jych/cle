@@ -8,6 +8,7 @@ from theano.sandbox.rng_mrg import MRG_RandomStreams
 from theano.compat.python2x import OrderedDict
 from theano.sandbox.cuda.basic_ops import gpu_contiguous
 from util import *
+from layer import *
 
 
 class Net(Layer):
