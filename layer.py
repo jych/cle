@@ -91,7 +91,7 @@ class Layer(NonLin, object):
 
 class FullyConnectedLayer(Layer):
     """
-    Implementations of Layer
+    Implementations of fully connected layer
 
     Parameters
     ----------
@@ -112,6 +112,23 @@ class FullyConnectedLayer(Layer):
     @property
     def params(self):
         return [self.W, self.b]
+
+    def fprop(self, x):
+        z = T.dot(x, self.W) + self.b
+        z = self.nonlin(z)
+        return z
+
+
+class OnehotLayer(Layer):
+    """
+    Transform a scalar to one-hot vector
+
+    Parameters
+    ----------
+    todo..
+    """
+    def __init__(self, max_labels)
+        self.max_labels = max_labels
 
     def fprop(self, x):
         z = T.dot(x, self.W) + self.b

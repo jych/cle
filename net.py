@@ -7,6 +7,41 @@ from util import *
 from layer import *
 
 
+#class Net(Layer):
+#    """
+#    Abstract class for networks
+
+#    Parameters
+#    ----------
+#    todo..
+#    """
+#    def __init__(self, layers, edges):
+        pass
+
+#    @property
+#    def params(self):
+#        pass
+
+#    def fprop(self, x=None):
+#        pass
+
+
+#class SeqNet(Net):
+
+#    def __init__(self, name, *layers):
+#        self.name = name
+#        self.layers = layers
+
+#    @property
+#    def params(self):
+#        return flatten([layer.params for layer in self.layers])
+
+#    def fprop(self, x=None):
+#        for layer in self.layers:
+#            x = layer.fprop(x)
+#        return x
+
+
 class Net(Layer):
     """
     Abstract class for networks
@@ -15,29 +50,24 @@ class Net(Layer):
     ----------
     todo..
     """
-    def __init__(self, layers, edges):
-        pass
+    def __init__(self, nodes, edges):
+        self.nodes = nodes
+        self.edges = edges
 
     @property
     def params(self):
-        pass
+        return []
 
-    def fprop(self, x=None):
-        pass
+    def fprop(self, x):
 
+        
 
-class SeqNet(Net):
-    # Temporary class
-    def __init__(self, name, *layers):
-        self.name = name
-        self.layers = layers
-
-    @property
-    def params(self):
-        return flatten([layer.params for layer in self.layers])
-
-    def fprop(self, x=None):
-        for layer in self.layers:
-            x = layer.fprop(x)
         return x
+
+    @classmethod
+    def add_node(self, node):
+        self.nodes.append(node)
+
+    def add_edge(self, edge):
+        self.edges.append(edge)
 
