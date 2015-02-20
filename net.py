@@ -47,7 +47,6 @@ class Activ(object):
     def linear(self, z):
         return z
 
-
     def relu (self, z):
         return z * (z > 0.)
 
