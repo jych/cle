@@ -39,7 +39,11 @@ class ParamInit(object):
         return sharedX(self.initializer(np.zeros(shape)))
 
 
-class Activ(object):
+class Nonlin(object):
+
+    def apply(self, nonlin):
+
+        return getattr(self, nonlin)()
 
     def linear(self, z):
         return z
@@ -57,7 +61,7 @@ class Activ(object):
         return T.nnet.tanh(z)
 
 
-class Layer(object, Activ):
+class Layer(object, Nonlin):
     # Abstract class for layers
     def __init__(self):
         pass
@@ -70,19 +74,6 @@ class Layer(object, Activ):
         return x
 
 
-class Net(Layer):
-    # Abstract class for networks
-    def __init__(self, layers, edges):
-        pass
-
-    @property
-    def params(self):
-        pass
-
-    def fprop(self, x=None):
-        pass
-
-
 class FullyConnectedLayer(Layer):
     # Implementations of Layer
     def __init__(self,
@@ -92,8 +83,11 @@ class FullyConnectedLayer(Layer):
                  unit='relu',
                  init_W=ParamInit('randn'),
                  init_b=ParamInit('zeros')):
+        """
         self.__dict__.update(locals())
         del self.self
+        """
+        self.nonlin = 
         self.W = init_W.get(n_in, n_out)
         self.b = init_b.get(n_out)
 
@@ -149,6 +143,20 @@ class MulticlassCostLayer(CostLayer):
     def fprop(self, p, y=None):
         y = self.target if y is None else y
         return - T.sum(y * T.log(p)) / p.shape[0]
+
+
+class Net(Layer):
+    # Abstract class for networks
+    def __init__(self, layers, edges):
+        pass
+
+    @property
+    def params(self):
+        pass
+
+    def fprop(self, x=None):
+        pass
+
 
 
 class SeqNet(Net):
