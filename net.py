@@ -98,30 +98,30 @@ class FullyConnectedLayer(Layer):
         return z
 
 
-class DataLayer(Layer):
+#class DataLayer(Layer):
 
-    def __init__(self):
-        self.sym = T.fmatrix()
+#    def __init__(self):
+#        self.sym = T.fmatrix()
 
-    def fprop(self):
-        return self.sym
+#    def fprop(self):
+#        return self.sym
 
 
-class DesignMatrixDataLayer(DataLayer):
+#class DesignMatrixDataLayer(DataLayer):
 
-    def __init__(self, name, np_data, batch_size=None):
-        self.name = name
-        self.n_data = np_data.shape[0]
-        self.batch_size = batch_size if batch_size is not None else self.n_data
-        self.sharedX_data = sharedX(np_data)
-        self.sym_data = T.fmatrix()
+#    def __init__(self, name, np_data, batch_size=None):
+#        self.name = name
+#        self.n_data = np_data.shape[0]
+#        self.batch_size = batch_size if batch_size is not None else self.n_data
+#        self.sharedX_data = sharedX(np_data)
+#        self.sym_data = T.fmatrix()
 
-    def fprop(self, x=None):
-        return self.sym_data
+#    def fprop(self, x=None):
+#        return self.sym_data
 
-    def get_batch(self, i):
-        i = i % (self.n_data / self.batch_size + 1)
-        return self.sharedX_data[i*self.batch_size: (i+1)*self.batch_size]
+#    def get_batch(self, i):
+#        i = i % (self.n_data / self.batch_size + 1)
+#        return self.sharedX_data[i*self.batch_size: (i+1)*self.batch_size]
 
 
 class CostLayer(Layer):
@@ -155,7 +155,6 @@ class Net(Layer):
 
     def fprop(self, x=None):
         pass
-
 
 
 class SeqNet(Net):
