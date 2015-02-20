@@ -81,8 +81,7 @@ class Layer(NonLin, object):
     def __init__(self):
         pass
 
-    @property
-    def params(self):
+    def get_params(self):
         return []
 
     def fprop(self, x=None):
@@ -109,8 +108,7 @@ class FullyConnectedLayer(Layer):
         self.W = init_W.get(n_in, n_out)
         self.b = init_b.get(n_out)
 
-    @property
-    def params(self):
+    def get_params(self):
         return [self.W, self.b]
 
     def fprop(self, x):
@@ -127,7 +125,7 @@ class OnehotLayer(Layer):
     ----------
     todo..
     """
-    def __init__(self, max_labels)
+    def __init__(self, max_labels):
         self.max_labels = max_labels
 
     def fprop(self, x):
@@ -137,6 +135,18 @@ class OnehotLayer(Layer):
             x.T.flatten()], 1
         )
         return one_hot
+
+
+class IdentityLayer(Layer):
+    """
+    Identity layer
+
+    Parameters
+    ----------
+    todo..
+    """
+    def fprop(self, x):
+        return x
 
 
 #class DataLayer(Layer):

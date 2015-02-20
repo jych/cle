@@ -1,45 +1,10 @@
-import cPickle, gzip, os, sys, time, re
+import cPickle, gzip, os, sys, time, re, ipdb
 import numpy as np
 
 from theano.compat.python2x import OrderedDict
 from theano.sandbox.cuda.basic_ops import gpu_contiguous
 from util import *
 from layer import *
-
-
-#class Net(Layer):
-#    """
-#    Abstract class for networks
-
-#    Parameters
-#    ----------
-#    todo..
-#    """
-#    def __init__(self, layers, edges):
-        pass
-
-#    @property
-#    def params(self):
-#        pass
-
-#    def fprop(self, x=None):
-#        pass
-
-
-#class SeqNet(Net):
-
-#    def __init__(self, name, *layers):
-#        self.name = name
-#        self.layers = layers
-
-#    @property
-#    def params(self):
-#        return flatten([layer.params for layer in self.layers])
-
-#    def fprop(self, x=None):
-#        for layer in self.layers:
-#            x = layer.fprop(x)
-#        return x
 
 
 class Net(Layer):
@@ -54,20 +19,22 @@ class Net(Layer):
         self.nodes = nodes
         self.edges = edges
 
-    @property
-    def params(self):
-        return []
+    def get_params(self):
+        return flatten([node.get_params() for node in self.nodes])
 
     def fprop(self, x):
-
-        
+        ipdb.set_trace()
+        evals = []
+        z = self.nodes['cost'].fprop(self.nodes[self.edges['cost']])
 
         return x
 
-    @classmethod
+    def compute_cost(self, x, y):
+        y_hat = self.fprop(x)
+        return self.cost.fprop(y, y_hat)
+
     def add_node(self, node):
         self.nodes.append(node)
 
     def add_edge(self, edge):
         self.edges.append(edge)
-

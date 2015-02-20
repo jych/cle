@@ -1,17 +1,18 @@
+import numpy as np
+import theano.tensor as T
 
 
-
-class Optimizer(object) :
+class Optimizer(object):
     def __init__(self) : pass
 
 
 
-class RMSprop(Optimizer) :
+class RMSProp(Optimizer):
     def __init__(self, 
                  learning_rate, 
-                 momentum=.9, 
-                 averaging_coeff=.95, 
-                 stabilizer=.0001) :
+                 momentum=0.9, 
+                 averaging_coeff=0.95, 
+                 stabilizer=.0001):
         self.__dict__.updates(locals())
 
     def updates(cost, params) :
@@ -38,4 +39,3 @@ class RMSprop(Optimizer) :
             updates[param] = param + updated_inc
 
         return updates
-
