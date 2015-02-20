@@ -41,16 +41,27 @@ class ParamInit(object):
 
 RNG = MRG_RandomStreams(max(np.random.RandomState(1364).randint(2 ** 15), 1))
 
-ActFcn = {
-    'linear': lambda z: z,
-    'relu': lambda z: T.switch(z > 0., z, 0.*z),
-    'sigmoid': lambda z: T.nnet.sigmoid(z),
-    'softmax': lambda z: T.nnet.softmax(z),
-    'tanh': lambda z: T.nnet.tanh(z),
-}
+
+class Activ(object):
+
+    def linear(self, z):
+        return z
 
 
-class Layer(object):
+    def relu (self, z):
+        return z * (z > 0.)
+
+    def sigmoid(self, z):
+        return T.nnet.sigmoid(z)
+
+    def softmax(self, z):
+        return T.nnet.softmax(z)
+
+    def tanh(self, z):
+        return T.nnet.tanh(z)
+
+
+class Layer(object, Activ):
     # Abstract class for layers
     def __init__(self):
         pass
@@ -157,22 +168,6 @@ class MulticlassCostLayer(CostLayer):
     def fprop(self, p, y=None):
         y = self.target if y is None else y
         return - T.sum(y * T.log(p)) / p.shape[0]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
