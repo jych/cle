@@ -24,7 +24,7 @@ l2 = FullyConnectedLayer(name='h2',
                          init_W=init_W,
                          init_b=init_b)
 
-net = SeqNet('net', X, l1,    l2)
+net = FeedForwardNet('net', X, l1, l2)
 cost = NLL_mul(net.fprop(), Y.fprop())
 ipdb.set_trace()
 

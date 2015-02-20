@@ -76,7 +76,7 @@ class Net(Layer):
         pass
 
 
-class SeqNet(Net):
+class FeedForwardNet(Net):
     def __init__(self, name, *layers):
         self.name = name
         self.layers = layers
