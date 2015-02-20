@@ -13,7 +13,8 @@ try:
     datapath = '/data/lisa/data/mnist/mnist.pkl'
     (train_x, train_y), (valid_x, valid_y), (test_x, test_y) = np.load(datapath)
 except IOError:
-    datapath = '/home/junyoung/data/mnist/mnist.pkl'
+    #datapath = '/home/junyoung/data/mnist/mnist.pkl'
+    datapath = '/work/mnist/mnist.pkl'
     (train_x, train_y), (valid_x, valid_y), (test_x, test_y) = np.load(datapath)
 
 # data
