@@ -41,9 +41,9 @@ class ParamInit(object):
 
 class Nonlin(object):
 
-    def apply(self, nonlin):
+    def which_nonlin(self, nonlin):
 
-        return getattr(self, nonlin)()
+        return getattr(self, nonlin)
 
     def linear(self, z):
         return z
@@ -83,11 +83,8 @@ class FullyConnectedLayer(Layer):
                  unit='relu',
                  init_W=ParamInit('randn'),
                  init_b=ParamInit('zeros')):
-        """
-        self.__dict__.update(locals())
-        del self.self
-        """
-        self.nonlin = 
+
+        self.nonlin = self.which_nonlin(unit)
         self.W = init_W.get(n_in, n_out)
         self.b = init_b.get(n_out)
 
@@ -96,7 +93,9 @@ class FullyConnectedLayer(Layer):
         return [self.W, self.b]
 
     def fprop(self, x):
-        return ActFcn[self.unit](T.dot(x, self.W) + self.b)
+        z = T.dot(x, self.W) + self.b
+        z = self.nonlin(z)
+        return z
 
 
 class DataLayer(Layer):
