@@ -131,9 +131,12 @@ class OnehotLayer(Layer):
         self.max_labels = max_labels
 
     def fprop(self, x):
-        z = T.dot(x, self.W) + self.b
-        z = self.nonlin(z)
-        return z
+        one_hot = tensor.zeros((x.shape[0], self.max_labels))
+        one_hot = tensor.set_subtensor(
+            one_hot[tensor.arange(x.size) % x.shape[0],
+            x.T.flatten()], 1
+        )
+        return one_hot
 
 
 #class DataLayer(Layer):
