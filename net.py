@@ -61,7 +61,7 @@ class Nonlin(object):
         return T.nnet.tanh(z)
 
 
-class Layer(object, Nonlin):
+class Layer(Nonlin, object):
     # Abstract class for layers
     def __init__(self):
         pass
