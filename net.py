@@ -11,12 +11,20 @@ from util import *
 
 
 class ParamInit(object):
+    """
+    WRITEME
+
+    Parameters
+    ----------
+    todo..
+    """
     def __init__(self,
                  init_type='randn',
                  mean=0.,
                  stddev=0.01,
                  low=-0.1,
                  high=0.1):
+
         self.initializer = {
             'rand': lambda x: np.random.uniform(low=low,
                                                 high=high,
@@ -39,8 +47,14 @@ class ParamInit(object):
         return sharedX(self.initializer(np.zeros(shape)))
 
 
-class Nonlin(object):
+class NonLin(object):
+    """
+    WRITEME
 
+    Parameters
+    ----------
+    todo..
+    """
     def which_nonlin(self, nonlin):
 
         return getattr(self, nonlin)
@@ -61,8 +75,14 @@ class Nonlin(object):
         return T.nnet.tanh(z)
 
 
-class Layer(Nonlin, object):
-    # Abstract class for layers
+class Layer(NonLin, object):
+    """
+    Abstract class for layers
+
+    Parameters
+    ----------
+    todo..
+    """
     def __init__(self):
         pass
 
@@ -75,7 +95,13 @@ class Layer(Nonlin, object):
 
 
 class FullyConnectedLayer(Layer):
-    # Implementations of Layer
+    """
+    Implementations of Layer
+
+    Parameters
+    ----------
+    todo..
+    """
     def __init__(self,
                  name,
                  n_in,
@@ -125,7 +151,13 @@ class FullyConnectedLayer(Layer):
 
 
 class CostLayer(Layer):
+    """
+    Implementations of cost layer
 
+    Parameters
+    ----------
+    todo..
+    """
     def __init__(self, name):
         pass
 
@@ -134,7 +166,13 @@ class CostLayer(Layer):
 
 
 class MulticlassCostLayer(CostLayer):
+    """
+    Implementations of cost layer of multi-class case
 
+    Parameters
+    ----------
+    todo..
+    """
     def __init__(self, name, target):
         self.name = name
         self.target = target
@@ -145,7 +183,13 @@ class MulticlassCostLayer(CostLayer):
 
 
 class Net(Layer):
-    # Abstract class for networks
+    """
+    Abstract class for networks
+
+    Parameters
+    ----------
+    todo..
+    """
     def __init__(self, layers, edges):
         pass
 
