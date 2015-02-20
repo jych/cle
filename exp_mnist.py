@@ -1,4 +1,7 @@
 import ipdb
+import theano
+import theano.tensor as T
+
 from net import *
 from util import *
 from cost import *
