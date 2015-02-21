@@ -28,7 +28,6 @@ valbatch_iter = BatchProvider(data_list=(DesignMatrix(val_x),
                                          DesignMatrix(val_y)),
                               batch_size=batch_size)
 
-
 # Choose the random initialization method
 init_W, init_b = ParamInit('randn'), ParamInit('zeros')
 
@@ -76,9 +75,11 @@ edges = {
     #'h2': 'cost',
     #'onehot': 'cost'
 }
+
 # Your model will build the Theano computational graph
 # Based on given nodes and edges
 model = Net(nodes=nodes, edges=edges)
+
 # You have already defined your nodes and edges
 # But you want to add another nodes and edges
 # It's not too late, add the nodes and edges
@@ -131,12 +132,11 @@ for e in xrange(40):
     print 'epoch: %d, tr_nll: %f, tr_err: %f, val_nll: %f, val_err: %f'\
         %(e + 1, tr_cost, tr_err, val_cost, val_err)
 
-
 # What are not done yet
 # 1. Monitoring
 # 2. Serialization / Checkpoint
-# 3. RNN
-# 4. CNN
-# 5. Dropout / Regularization
+# 3. Dropout / Regularization
+# 4. RNN
+# 5. CNN
 # 6. VAE
 # 7. Predefined nets: larger building block such as MLP, ConvNet and Stacked RNN
