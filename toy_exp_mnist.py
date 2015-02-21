@@ -134,7 +134,7 @@ for e in xrange(40):
 # What are not done yet
 # 1. Monitoring
 # 2. Serialization / Checkpoint
-# 3. Dropout / Regularization
+# 3. Dropout / Regularization: we should implement dropout using Theano.clone
 # 4. RNN
 # 5. CNN
 # 6. VAE
