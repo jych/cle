@@ -114,11 +114,11 @@ cost_fn = theano.function(
 
 # Train loop
 for e in xrange(40):
+    t0 = time.time()
     tr_cost = 0
     tr_err = 0
     val_cost = 0
     val_err = 0
-    t0 = time.time()
     for batch in trbatch_iter:
         this_cost, this_err = cost_fn(*batch)
         tr_cost += this_cost
@@ -132,7 +132,7 @@ for e in xrange(40):
     val_cost /= num_batches
     val_err /= num_batches
     elapsed = time.time() - t0
-    print 'epoch: %d elapsed: %f, tr_nll: %f, tr_err: %f, val_nll: %f, val_err: %f'\
+    print 'epoch %d elapsed %f, tr_nll: %f, tr_err: %f, val_nll: %f, val_err: %f'\
         %(e + 1, elapsed, tr_cost, tr_err, val_cost, val_err)
 
 # What are not done yet
