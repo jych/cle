@@ -11,7 +11,7 @@ class ParamInit(object):
 
     Parameters
     ----------
-    todo..
+    .. todo::
     """
     def __init__(self,
                  init_type='randn',
@@ -48,7 +48,7 @@ class NonLin(object):
 
     Parameters
     ----------
-    todo..
+    .. todo::
     """
     def which_nonlin(self, nonlin):
 
@@ -76,7 +76,7 @@ class Layer(NonLin, object):
 
     Parameters
     ----------
-    todo..
+    .. todo::
     """
     def __init__(self):
         pass
@@ -94,7 +94,7 @@ class Input(Layer):
 
     Parameters
     ----------
-    todo..
+    .. todo::
     """
     def __init__(self, inp):
         #if not isinstance(type(inp), T.TensorVariable):
@@ -108,7 +108,7 @@ class FullyConnectedLayer(Layer):
 
     Parameters
     ----------
-    todo..
+    .. todo::
     """
     def __init__(self,
                  name,
@@ -137,18 +137,17 @@ class OnehotLayer(Layer):
 
     Parameters
     ----------
-    todo..
+    .. todo::
     """
     def __init__(self, max_labels):
         self.max_labels = max_labels
 
     def fprop(self, x):
         one_hot = T.zeros((x.shape[0], self.max_labels))
-        idx = T.lvector()
-        #one_hot = T.set_subtensor(
-        #    one_hot[T.arange(x.size) % x.shape[0], x.T.flatten()], 1
-        #)
-        one_hot = T.set_subtensor(x[T.arange(x.shape[0]), idx], 1)
+        one_hot = T.set_subtensor(
+            one_hot[T.arange(x.size) % x.shape[0], x.T.flatten()], 1
+        )
+        #one_hot = T.set_subtensor(x[T.arange(x.shape[0]), x], 1)
         return one_hot
 
 
@@ -158,7 +157,7 @@ class IdentityLayer(Layer):
 
     Parameters
     ----------
-    todo..
+    .. todo::
     """
     def fprop(self, x):
         return x

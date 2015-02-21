@@ -1,10 +1,11 @@
 import numpy as np
 import theano.tensor as T
 
+from util import *
+
 
 class Optimizer(object):
     def __init__(self) : pass
-
 
 
 class RMSProp(Optimizer):
@@ -12,13 +13,13 @@ class RMSProp(Optimizer):
                  learning_rate, 
                  momentum=0.9, 
                  averaging_coeff=0.95, 
-                 stabilizer=.0001):
-        self.__dict__.updates(locals())
+                 stabilizer=0.0001):
+        self.__dict__.update(locals())
 
-    def updates(cost, params) :
+    def updates(self, cost, params) :
         updates = OrderedDict()
 
-        for param, grad_param in params, T.grad(cost, params) :
+        for param, grad_param in zip(params, T.grad(cost, params)) :
 
             inc = sharedX(param.get_value() * 0.)
             avg_grad = sharedX(np.zeros_like(param.get_value()))

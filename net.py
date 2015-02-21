@@ -46,19 +46,16 @@ class Net(Layer):
 
     Parameters
     ----------
-    todo..
+    .. todo::
     """
     def __init__(self, nodes, edges):
         self.nodes = nodes
         self.edges = edges
+        self.params = self.get_params()
         self.build_graph()
 
     def get_params(self):
-        return flatten([node.get_params() for node in self.nodes])
-
-    def fprop(self, x):
-
-        return x
+        return flatten([node.get_params() for node in self.nodes.values()])
 
     def build_graph(self):
         sym_to_idx = {node:i for i, node in enumerate(self.nodes)}

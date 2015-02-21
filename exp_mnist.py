@@ -23,10 +23,11 @@ batch_iter = BatchProvider(data_list=(DesignMatrix(tr_x),
                            batch_size=batch_size)
 
 init_W, init_b = ParamInit('randn'), ParamInit('zeros')
-x = T.fmatrix()
-y = T.fmatrix()
-x = Input(x)
-y = Input(y)
+inp = T.fmatrix()
+#tar = T.fmatrix()
+tar = T.lvector()
+x = Input(inp)
+y = Input(tar)
 
 proj = IdentityLayer()
 onehot = OnehotLayer(max_labels=10)
@@ -54,11 +55,12 @@ cost = model.nodes['cost'].out
 # You can access any output of a node by simply doing
 # model.nodes[$node_name].out
 
+optimizer = RMSProp(0.001)
 cost_fn = theano.function(
-    inputs=[x, y],
+    inputs=[inp, tar],
     outputs=[cost],
     on_unused_input='ignore',
-    updates=rms_prop({W1: g_W1, B1: g_B1, V1: g_V1, C1: g_C1}, __lr)
+    updates=optimizer.updates(cost, model.params)
 )
 
 for data_batch in batch_iter:
