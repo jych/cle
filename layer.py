@@ -103,35 +103,6 @@ class Input(Layer):
         self.out = inp
 
 
-class FullyConnectedLayer(Layer):
-    """
-    Implementations of fully connected layer
-
-    Parameters
-    ----------
-    .. todo::
-    """
-    def __init__(self,
-                 name,
-                 n_in,
-                 n_out,
-                 unit='relu',
-                 init_W=ParamInit('randn'),
-                 init_b=ParamInit('zeros')):
-
-        self.nonlin = self.which_nonlin(unit)
-        self.W = init_W.get(n_in, n_out)
-        self.b = init_b.get(n_out)
-
-    def get_params(self):
-        return [self.W, self.b]
-
-    def fprop(self, x):
-        z = T.dot(x, self.W) + self.b
-        z = self.nonlin(z)
-        return z
-
-
 class OnehotLayer(Layer):
     """
     Transform a scalar to one-hot vector
@@ -164,3 +135,92 @@ class IdentityLayer(Layer):
 
     def fprop(self, x):
         return x
+
+
+class FullyConnectedLayer(Layer):
+    """
+    Fully connected layer
+
+    Parameters
+    ----------
+    .. todo::
+    """
+    def __init__(self,
+                 name,
+                 n_in,
+                 n_out,
+                 unit='relu',
+                 init_W=ParamInit('randn'),
+                 init_b=ParamInit('zeros')):
+
+        self.nonlin = self.which_nonlin(unit)
+        self.W = init_W.get(n_in, n_out)
+        self.b = init_b.get(n_out)
+
+    def get_params(self):
+        return [self.W, self.b]
+
+    def fprop(self, x):
+        z = T.dot(x, self.W) + self.b
+        z = self.nonlin(z)
+        return z
+
+
+class ConvLayer(Layer):
+    """
+    Convolutional layer
+
+    Parameters
+    ----------
+    .. todo::
+    """
+    def __init__(self):
+        raise NotImplementedError(
+            str(type(self)) + " does not implement Layer.init.")
+
+    def get_params(self):
+        return []
+
+    def fprop(self, x=None):
+        raise NotImplementedError(
+            str(type(self)) + " does not implement Layer.fprop.")
+
+
+class RecurrentLayer(Layer):
+    """
+    Basic recurrent layer
+
+    Parameters
+    ----------
+    .. todo::
+    """
+    def __init__(self):
+        raise NotImplementedError(
+            str(type(self)) + " does not implement Layer.init.")
+
+    def get_params(self):
+        return []
+
+    def fprop(self, x=None):
+        raise NotImplementedError(
+            str(type(self)) + " does not implement Layer.fprop.")
+
+
+class LSTM(RecurrentLayer):
+    """
+    LSTM layer
+
+    Parameters
+    ----------
+    .. todo::
+    """
+    def __init__(self):
+        raise NotImplementedError(
+            str(type(self)) + " does not implement Layer.init.")
+
+    def get_params(self):
+        return []
+
+    def fprop(self, x=None):
+        raise NotImplementedError(
+            str(type(self)) + " does not implement Layer.fprop.")
