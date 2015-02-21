@@ -51,7 +51,7 @@ class Net(Layer):
     def __init__(self, nodes, edges):
         self.nodes = nodes
         self.edges = edges
-        self.out = self.build_graph()
+        self.build_graph()
 
     def get_params(self):
         return flatten([node.get_params() for node in self.nodes])
@@ -66,22 +66,20 @@ class Net(Layer):
         sparse_matrix =\
             linked_list_to_sparse_matrix(self.nodes, self.edges, sym_to_idx)
         sorted_edges = topological_sort(self.edges)
-        ipdb.set_trace()
         while sorted_edges:
             node = sorted_edges.popleft()
             if isinstance(self.nodes[node], Input):
-                inps.append(self.nodes[node])
                 continue
-            self.nodes[node].fprop(     )
-            ipdb.set_trace()
-
-        ipdb.set_trace()
-
-        return G
-
-    def compute_cost(self, x, y):
-        y_hat = self.fprop(x)
-        return self.cost.fprop(y, y_hat)
+            parent = np.where(sparse_matrix[:, sym_to_idx[node]]==1)[0]
+            if len(parent) > 1:
+                inp = []
+                for idx in parent:
+                    parent_node = idx_to_sym[idx]
+                    inp.append(self.nodes[parent_node].out)
+            else:
+                parent_node = idx_to_sym[parent[0]]
+                inp = self.nodes[parent_node].out
+            self.nodes[node].out = self.nodes[node].fprop(inp)
 
     def add_node(self, node):
         self.nodes.append(node)

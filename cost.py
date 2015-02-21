@@ -56,6 +56,6 @@ class MulCrossEntropyLayer(CostLayer):
     def __init__(self, name):
         self.name = name
 
-    def fprop(self, y, y_hat):
+    def fprop(self, x):
+        y_hat, y = x
         return NllMul(y, y_hat)
-

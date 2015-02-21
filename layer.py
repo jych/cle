@@ -97,8 +97,8 @@ class Input(Layer):
     todo..
     """
     def __init__(self, inp):
-        if not isinstance(type(inp), T.var.TensorVariable):
-            raise ValueError("Input is not Theano variable.")
+        #if not isinstance(type(inp), T.TensorVariable):
+        #    raise ValueError("Input is not Theano variable.")
         self.out = inp
 
 
@@ -144,9 +144,11 @@ class OnehotLayer(Layer):
 
     def fprop(self, x):
         one_hot = T.zeros((x.shape[0], self.max_labels))
-        one_hot = T.set_subtensor(
-            one_hot[T.arange(x.size) % x.shape[0], x.T.flatten()], 1
-        )
+        idx = T.lvector()
+        #one_hot = T.set_subtensor(
+        #    one_hot[T.arange(x.size) % x.shape[0], x.T.flatten()], 1
+        #)
+        one_hot = T.set_subtensor(x[T.arange(x.shape[0]), idx], 1)
         return one_hot
 
 
@@ -160,32 +162,3 @@ class IdentityLayer(Layer):
     """
     def fprop(self, x):
         return x
-
-
-#class DataLayer(Layer):
-
-#    def __init__(self):
-#        self.sym = T.fmatrix()
-
-#    def fprop(self):
-#        return self.sym
-
-
-#class DesignMatrixDataLayer(DataLayer):
-
-#    def __init__(self, name, np_data, batch_size=None):
-#        self.name = name
-#        self.n_data = np_data.shape[0]
-#        self.batch_size = batch_size if batch_size is not None else self.n_data
-#        self.sharedX_data = sharedX(np_data)
-#        self.sym_data = T.fmatrix()
-
-#    def fprop(self, x=None):
-#        return self.sym_data
-
-#    def get_batch(self, i):
-#        i = i % (self.n_data / self.batch_size + 1)
-#        return self.sharedX_data[i*self.batch_size: (i+1)*self.batch_size]
-
-
-

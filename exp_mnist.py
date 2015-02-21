@@ -25,6 +25,8 @@ batch_iter = BatchProvider(data_list=(DesignMatrix(tr_x),
 init_W, init_b = ParamInit('randn'), ParamInit('zeros')
 x = T.fmatrix()
 y = T.fmatrix()
+x = Input(x)
+y = Input(y)
 
 proj = IdentityLayer()
 onehot = OnehotLayer(max_labels=10)
@@ -46,13 +48,15 @@ cost = MulCrossEntropyLayer(name='cost')
 # Topological sorting on directed acyclic graph (DAG)
 # Build DAG based on depth-first search
 nodes = {'proj': proj, 'onehot': onehot, 'x': x, 'h1': h1, 'h2': h2, 'y': y, 'cost': cost}
-edges = {'x': 'proj', 'y': 'onehot', 'x': 'h1', 'h1': 'h2', 'h2': 'cost', 'y': 'cost'}
+edges = {'x': 'proj', 'y': 'onehot', 'proj': 'h1', 'h1': 'h2', 'h2': 'cost', 'onehot': 'cost'}
 model = Net(nodes=nodes, edges=edges)
-cost = model.out
+cost = model.nodes['cost'].out
+# You can access any output of a node by simply doing
+# model.nodes[$node_name].out
 
 cost_fn = theano.function(
     inputs=[x, y],
-    outputs=cost,
+    outputs=[cost],
     on_unused_input='ignore',
     updates=rms_prop({W1: g_W1, B1: g_B1, V1: g_V1, C1: g_C1}, __lr)
 )
