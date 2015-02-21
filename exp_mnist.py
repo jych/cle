@@ -9,13 +9,16 @@ from layer import *
 from opt import *
 from data import *
 
+
+# Toy example to use cle!
+
+# Set your dataset
 try:
     datapath = '/data/lisa/data/mnist/mnist.pkl'
     (tr_x, tr_y), (val_x, val_y), (test_x, test_y) = np.load(datapath)
 except IOError:
     datapath = '/home/junyoung/data/mnist/mnist.pkl'
     (tr_x, tr_y), (val_x, val_y), (test_x, test_y) = np.load(datapath)
-
 batch_size = 128
 num_batches = tr_x.shape[0] / batch_size
 trbatch_iter = BatchProvider(data_list=(DesignMatrix(tr_x),
@@ -26,7 +29,7 @@ valbatch_iter = BatchProvider(data_list=(DesignMatrix(val_x),
                               batch_size=batch_size)
 
 
-
+# Choose the random initialization method
 init_W, init_b = ParamInit('randn'), ParamInit('zeros')
 
 # Define nodes: objects
@@ -74,6 +77,7 @@ model = Net(nodes=nodes, edges=edges)
 
 # You can access any output of a node by simply doing
 # model.nodes[$node_name].out
+# This is the most cool part :)
 cost = model.nodes['cost'].out
 err = error(predict(model.nodes['h2'].out), predict(model.nodes['onehot'].out))
 
