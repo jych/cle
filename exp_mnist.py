@@ -56,6 +56,9 @@ cost = MulCrossEntropyLayer(name='cost')
 
 # Topological sorting on directed acyclic graph (DAG)
 # Build DAG based on depth-first search
+# You will fill in your node and edge lists
+# and fed them to the model constructor
+# Your model is smart enough to take care of the rest
 nodes = {
     'x': x,
     'y': y,
