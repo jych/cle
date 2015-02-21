@@ -61,22 +61,31 @@ cost = MulCrossEntropyLayer(name='cost')
 # Your model is smart enough to take care of the rest
 nodes = {
     'x': x,
-    'y': y,
+    #'y': y,
     'proj': proj,
-    'onehot': onehot,
+    #'onehot': onehot,
     'h1': h1,
     'h2': h2,
-    'cost': cost
+    #'cost': cost
 }
 edges = {
     'x': 'proj',
-    'y': 'onehot',
+    #'y': 'onehot',
     'proj': 'h1',
     'h1': 'h2',
-    'h2': 'cost',
-    'onehot': 'cost'
+    #'h2': 'cost',
+    #'onehot': 'cost'
 }
+# Your model will build the Theano computational graph
+# Based on given nodes and edges
 model = Net(nodes=nodes, edges=edges)
+# You have already defined your nodes and edges
+# But you want to add another nodes and edges
+# It's not too late, add the nodes and edges
+# Then, build the Theano computational graph again
+model.add_node({'y': y, 'onehot': onehot, 'cost': cost})
+model.add_edge({'y': 'onehot', 'onehot': 'cost', 'h2': 'cost'})
+model.build_graph()
 
 # You can access any output of a node by simply doing
 # model.nodes[$node_name].out

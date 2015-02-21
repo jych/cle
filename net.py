@@ -5,7 +5,7 @@ from layer import *
 from collections import deque
 
 
-def linked_list_to_sparse_matrix(nodes, edges, sym_to_idx):
+def build_parent_matrix(nodes, edges, sym_to_idx):
     """
     Mapping generator between nodes and indices
 
@@ -29,13 +29,17 @@ def topological_sort(graph):
     """
     GRAY, BLACK = 0, 1
     order, enter, state = deque(), set(graph), {}
+    this_graph = dict()
     for node in graph:
         if graph.get(node, ()) is not list:
-            graph[node] = [graph[node]]
+            this_graph[node] = [graph[node]]
+        else:
+            this_graph[node] = graph[node]
+
 
     def dfs(node):
         state[node] = GRAY
-        for k in graph.get(node, ()):
+        for k in this_graph.get(node, ()):
             sk = state.get(k, None)
             if sk == GRAY:
                 raise ValueError("cycle")
@@ -72,7 +76,7 @@ class Net(Layer):
         sym_to_idx = {node:i for i, node in enumerate(self.nodes)}
         idx_to_sym = {i:node for i, node in enumerate(self.nodes)}
         sparse_matrix =\
-            linked_list_to_sparse_matrix(self.nodes, self.edges, sym_to_idx)
+            build_parent_matrix(self.nodes, self.edges, sym_to_idx)
         sorted_edges = topological_sort(self.edges)
         while sorted_edges:
             node = sorted_edges.popleft()
@@ -90,7 +94,9 @@ class Net(Layer):
             self.nodes[node].out = self.nodes[node].fprop(inp)
 
     def add_node(self, node):
-        self.nodes.append(node)
+        for key, val in node.items():
+            self.nodes[key] = val
 
     def add_edge(self, edge):
-        self.edges.append(edge)
+        for key, val in edge.items():
+            self.edges[key] = val

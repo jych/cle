@@ -160,5 +160,8 @@ class IdentityLayer(Layer):
     ----------
     .. todo::
     """
+    def __init__(self):
+        pass
+
     def fprop(self, x):
         return x
