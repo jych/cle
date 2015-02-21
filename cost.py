@@ -4,19 +4,33 @@ import theano.tensor as T
 from layer import *
 
 
-def NllMul(y, y_hat):
-    nll =  -T.sum(y * T.log(y_hat), axis=-1)
+def NllBin(y, y_hat):
+    """
+    Binary cross-entropy
+
+    Parameters
+    ----------
+    todo..
+    """
+    nll = -T.sum(y * T.log(y_hat) + (1-y) * T.log(1-y_hat), axis=-1)
     return nll.mean()
 
 
-def NllBin(y, y_hat):
-    nll = -T.sum(y * T.log(y_hat) + (1-y) * T.log(1-y_hat), axis=-1)
+def NllMul(y, y_hat):
+    """
+    Multi cross-entropy
+
+    Parameters
+    ----------
+    todo..
+    """
+    nll =  -T.sum(y * T.log(y_hat), axis=-1)
     return nll.mean()
 
 
 class BinCrossEntropyLayer(Layer):
     """
-    Implementations of cross-entropy
+    Binary cross-entropy layer
 
     Parameters
     ----------
@@ -31,7 +45,7 @@ class BinCrossEntropyLayer(Layer):
 
 class MulCrossEntropyLayer(Layer):
     """
-    Implementations of cross-entropy
+    Multi cross-entropy layer
 
     Parameters
     ----------
