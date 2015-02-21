@@ -2,14 +2,24 @@ import numpy as np
 
 
 class Data(object) :
+    """
+    Abstract class for data
+
+    Parameters
+    ----------
+    .. todo::
+    """
     def __init__(self):
-        pass
+        raise NotImplementedError(
+            str(type(self)) + " does not implement Data.init.")
 
     def num_data(self):
-        pass
+        raise NotImplementedError(
+            str(type(self)) + " does not implement Data.num_data.")
 
     def batch(self, i):
-        pass
+        raise NotImplementedError(
+            str(type(self)) + " does not implement Data.batch.")
 
 
 class DesignMatrix(Data):
@@ -22,7 +32,6 @@ class DesignMatrix(Data):
 
     def batch(self, i, size):
         return self.data[i*size: (i+1)*size]
-
 
 
 class BatchProvider(object):

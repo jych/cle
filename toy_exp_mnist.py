@@ -1,4 +1,3 @@
-import ipdb
 import theano
 import theano.tensor as T
 

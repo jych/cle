@@ -51,7 +51,6 @@ class NonLin(object):
     .. todo::
     """
     def which_nonlin(self, nonlin):
-
         return getattr(self, nonlin)
 
     def linear(self, z):
