@@ -5,7 +5,7 @@ from layer import *
 from collections import deque
 
 
-def build_parent_matrix(nodes, edges, sym_to_idx):
+def build_parent_matrix(nodes, edges, sym2idx):
     """
     Mapping generator between nodes and indices
 
@@ -13,10 +13,10 @@ def build_parent_matrix(nodes, edges, sym_to_idx):
     ----------
     .. todo::
     """
-    sparse_matrix = np.zeros((len(nodes), len(nodes)))
+    parent_map = np.zeros((len(nodes), len(nodes)))
     for node in edges:
-        sparse_matrix[sym_to_idx[node], sym_to_idx[edges[node]]] = 1
-    return sparse_matrix
+        parent_map[sym2idx[node], sym2idx[edges[node]]] = 1
+    return parent_map
 
 
 def topological_sort(graph):
@@ -66,6 +66,8 @@ class Net(Layer):
     def __init__(self, nodes, edges):
         self.nodes = nodes
         self.edges = edges
+        self.sym2idx = {node:i for i, node in enumerate(self.nodes)}
+        self.idx2sym = {i:node for i, node in enumerate(self.nodes)}
         self.params = self.get_params()
         self.build_graph()
 
@@ -73,29 +75,30 @@ class Net(Layer):
         return flatten([node.get_params() for node in self.nodes.values()])
 
     def build_graph(self):
-        sym_to_idx = {node:i for i, node in enumerate(self.nodes)}
-        idx_to_sym = {i:node for i, node in enumerate(self.nodes)}
-        sparse_matrix =\
-            build_parent_matrix(self.nodes, self.edges, sym_to_idx)
+        parent_map =\
+            build_parent_matrix(self.nodes, self.edges, self.sym2idx)
         sorted_edges = topological_sort(self.edges)
         while sorted_edges:
             node = sorted_edges.popleft()
             if isinstance(self.nodes[node], Input):
                 continue
-            parent = np.where(sparse_matrix[:, sym_to_idx[node]]==1)[0]
+            parent = np.where(parent_map[:, self.sym2idx[node]]==1)[0]
             if len(parent) > 1:
                 inp = []
                 for idx in parent:
-                    parent_node = idx_to_sym[idx]
+                    parent_node = self.idx2sym[idx]
                     inp.append(self.nodes[parent_node].out)
             else:
-                parent_node = idx_to_sym[parent[0]]
+                parent_node = self.idx2sym[parent[0]]
                 inp = self.nodes[parent_node].out
             self.nodes[node].out = self.nodes[node].fprop(inp)
 
     def add_node(self, node):
         for key, val in node.items():
             self.nodes[key] = val
+        self.sym2idx = {node:i for i, node in enumerate(self.nodes)}
+        self.idx2sym = {i:node for i, node in enumerate(self.nodes)}
+        self.params = self.get_params()
 
     def add_edge(self, edge):
         for key, val in edge.items():
