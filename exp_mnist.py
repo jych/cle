@@ -23,11 +23,12 @@ batch_iter = BatchProvider(data_list=(DesignMatrix(tr_x),
                            batch_size=batch_size)
 
 init_W, init_b = ParamInit('randn'), ParamInit('zeros')
+
+# Define nodes: objects
 inp = T.fmatrix()
 tar = T.lvector()
 x = Input(inp)
 y = Input(tar)
-
 proj = IdentityLayer()
 onehot = OnehotLayer(max_labels=10)
 h1 = FullyConnectedLayer(name='h1',
@@ -47,14 +48,33 @@ cost = MulCrossEntropyLayer(name='cost')
 
 # Topological sorting on directed acyclic graph (DAG)
 # Build DAG based on depth-first search
-nodes = {'proj': proj, 'onehot': onehot, 'x': x, 'h1': h1, 'h2': h2, 'y': y, 'cost': cost}
-edges = {'x': 'proj', 'y': 'onehot', 'proj': 'h1', 'h1': 'h2', 'h2': 'cost', 'onehot': 'cost'}
+nodes = {
+    'x': x,
+    'y': y,
+    'proj': proj,
+    'onehot': onehot,
+    'h1': h1,
+    'h2': h2,
+    'cost': cost
+}
+edges = {
+    'x': 'proj',
+    'y': 'onehot',
+    'proj': 'h1',
+    'h1': 'h2',
+    'h2': 'cost',
+    'onehot': 'cost'
+}
 model = Net(nodes=nodes, edges=edges)
-cost = model.nodes['cost'].out
+
 # You can access any output of a node by simply doing
 # model.nodes[$node_name].out
+cost = model.nodes['cost'].out
 
+# Define your optimizer
 optimizer = RMSProp(0.001)
+
+# Compile your cost function
 cost_fn = theano.function(
     inputs=[inp, tar],
     outputs=[cost],
@@ -63,6 +83,7 @@ cost_fn = theano.function(
     allow_input_downcast=True
 )
 
+# Train loop
 for data_batch in batch_iter:
     cost += cost_fn(*data_batch)
 cost /= num_batches

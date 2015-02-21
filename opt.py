@@ -5,7 +5,8 @@ from util import *
 
 
 class Optimizer(object):
-    def __init__(self) : pass
+    def __init__(self):
+        pass
 
 
 class RMSProp(Optimizer):
@@ -16,22 +17,22 @@ class RMSProp(Optimizer):
                  stabilizer=0.0001):
         self.__dict__.update(locals())
 
-    def updates(self, cost, params) :
+    def updates(self, cost, params):
         updates = OrderedDict()
 
-        for param, grad_param in zip(params, T.grad(cost, params)) :
+        for param, grad_param in zip(params, T.grad(cost, params)):
 
             inc = sharedX(param.get_value() * 0.)
             avg_grad = sharedX(np.zeros_like(param.get_value()))
             avg_grad_sqr = sharedX(np.zeros_like(param.get_value()))
 
-            new_avg_grad = self.averaging_coeff * avg_grad \
+            new_avg_grad = self.averaging_coeff * avg_grad\
                 + (1 - self.averaging_coeff) * grad_param
-            new_avg_grad_sqr = self.averaging_coeff * avg_grad_sqr \
+            new_avg_grad_sqr = self.averaging_coeff * avg_grad_sqr\
                 + (1 - self.averaging_coeff) * grad_param**2
 
-            normalized_grad = grad_param / \
-                T.sqrt( new_avg_grad_sqr - new_avg_grad**2 + self.stabilizer )
+            normalized_grad = grad_param /\
+                T.sqrt(new_avg_grad_sqr - new_avg_grad**2 + self.stabilizer)
             updated_inc = self.momentum * inc - self.learning_rate * normalized_grad
 
             updates[avg_grad] = new_avg_grad
