@@ -77,9 +77,10 @@ class Net(Layer):
     def build_graph(self):
         parent_map =\
             build_parent_matrix(self.nodes, self.edges, self.sym2idx)
-        sorted_edges = topological_sort(self.edges)
-        while sorted_edges:
-            node = sorted_edges.popleft()
+        sorted_nodes = topological_sort(self.edges)
+        self.sorted_nodes = sorted_nodes
+        while sorted_nodes:
+            node = sorted_nodes.popleft()
             if isinstance(self.nodes[node], Input):
                 continue
             parent = np.where(parent_map[:, self.sym2idx[node]]==1)[0]

@@ -90,6 +90,7 @@ model.build_graph()
 # You can access any output of a node by simply doing
 # model.nodes[$node_name].out
 # This is the most cool part :)
+# Super easy to monitor cost and states with same function
 cost = model.nodes['cost'].out
 err = error(predict(model.nodes['h2'].out), predict(model.nodes['onehot'].out))
 
