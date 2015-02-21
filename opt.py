@@ -1,14 +1,12 @@
-import ipdb
 import numpy as np
 import theano.tensor as T
 
 from itertools import izip
+from theano.compat import six
 from theano.compat.python2x import OrderedDict
 from util import *
 
 
-# Things to add
-# 1. Simple Momentum
 class Optimizer(object):
     def __init__(self):
         pass
@@ -34,6 +32,49 @@ class Optimizer(object):
                                     grad * (scaling_num / scaling_den))
 
         return grads
+
+
+class Momentum(Optimizer):
+    """
+    .. todo::
+
+        WRITEME
+    """
+    def __init__(self, 
+                 learning_rate, 
+                 init_momentum=0.9, 
+                 nesterov_momentum=False,
+                 gradient_clipping=False):
+        self.__dict__.update(locals())
+        del self.self
+        self.momentum = init_momentum
+        self.nesterov_momentum = nesterov_momentum
+
+    def get_updates(self, cost, params):
+        """
+        .. todo::
+
+            WRITEME
+        """
+        grads = OrderedDict(izip(params, T.grad(cost, params)))
+        updates = OrderedDict()
+
+        if self.gradient_clipping:
+            grads = self.clip_gradients(grads)
+
+        for param, grad in six.iteritems(grads):
+            vel = sharedX(param.get_value() * 0.)
+            if param.name is not None:
+                vel.name = 'vel_' + param.name
+
+            updates[vel] = self.momentum * vel - self.learning_rate * grad
+
+            inc = updates[vel]
+            if self.nesterov_momentum:
+                inc = self.momentum * inc - self.learning_rate * grad
+            updates[param] = param + inc
+
+        return updates
 
 
 class RMSProp(Optimizer):
@@ -159,7 +200,7 @@ class Adam(Optimizer):
 
             updates[avg_grad_sqr] = new_avg_grad_sqr
             updates[velocity[param]] = new_velocity
-            updates[param] = param + learning_rate * normalized_velocity
+            updates[param] = param + self.learning_rate * normalized_velocity
 
         updates[counter] = counter + 1
 

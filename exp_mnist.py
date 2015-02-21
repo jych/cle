@@ -81,8 +81,10 @@ model = Net(nodes=nodes, edges=edges)
 cost = model.nodes['cost'].out
 err = error(predict(model.nodes['h2'].out), predict(model.nodes['onehot'].out))
 
-# Define your optimizer [RMSProp / Adam]
-optimizer = RMSProp(
+# Define your optimizer [Momentum(Nesterov) / RMSProp / Adam]
+#optimizer = Momentum(
+#optimizer = RMSProp(
+optimizer = Adam(
     learning_rate=0.001,
     gradient_clipping=1
 )
@@ -97,7 +99,7 @@ cost_fn = theano.function(
 )
 
 # Train loop
-for e in xrange(100):
+for e in xrange(40):
     tr_cost = 0
     tr_err = 0
     val_cost = 0
