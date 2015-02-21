@@ -7,7 +7,8 @@ from theano.compat.python2x import OrderedDict
 from util import *
 
 
-
+# Things to add
+# 1. Simple Momentum
 class Optimizer(object):
     def __init__(self):
         pass

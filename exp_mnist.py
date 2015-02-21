@@ -76,7 +76,8 @@ model = Net(nodes=nodes, edges=edges)
 # model.nodes[$node_name].out
 cost = model.nodes['cost'].out
 err = error(predict(model.nodes['h2'].out), predict(model.nodes['onehot'].out))
-# Define your optimizer
+
+# Define your optimizer [RMSProp / Adam]
 optimizer = RMSProp(
     learning_rate=0.001,
     gradient_clipping=1
