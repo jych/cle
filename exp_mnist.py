@@ -121,3 +121,10 @@ for e in xrange(40):
     val_err /= num_batches
     print 'epoch: %d, tr_nll: %f, tr_err: %f, val_nll: %f, val_err: %f'\
         %(e + 1, tr_cost, tr_err, val_cost, val_err)
+
+
+# Whar are need to be done
+# 1. Monitoring
+# 2. Serialization / Checkpoint
+# 3. RNN
+# 4. CNN
