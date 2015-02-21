@@ -1,5 +1,6 @@
 import theano
 import theano.tensor as T
+import time
 
 from net import *
 from util import *
@@ -117,6 +118,7 @@ for e in xrange(40):
     tr_err = 0
     val_cost = 0
     val_err = 0
+    t0 = time.time()
     for batch in trbatch_iter:
         this_cost, this_err = cost_fn(*batch)
         tr_cost += this_cost
@@ -129,8 +131,9 @@ for e in xrange(40):
     tr_err /= num_batches
     val_cost /= num_batches
     val_err /= num_batches
-    print 'epoch: %d, tr_nll: %f, tr_err: %f, val_nll: %f, val_err: %f'\
-        %(e + 1, tr_cost, tr_err, val_cost, val_err)
+    elapsed = time.time() - t0
+    print 'epoch: %d elapsed: %f, tr_nll: %f, tr_err: %f, val_nll: %f, val_err: %f'\
+        %(e + 1, elapsed, tr_cost, tr_err, val_cost, val_err)
 
 # What are not done yet
 # 1. Monitoring
