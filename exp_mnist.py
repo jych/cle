@@ -123,8 +123,11 @@ for e in xrange(40):
         %(e + 1, tr_cost, tr_err, val_cost, val_err)
 
 
-# Whar are need to be done
+# What are not done yet
 # 1. Monitoring
 # 2. Serialization / Checkpoint
 # 3. RNN
 # 4. CNN
+# 5. Dropout / Regularization
+# 6. VAE
+# 7. Predefined nets: larger building block such as MLP, ConvNet and Stacked RNN
