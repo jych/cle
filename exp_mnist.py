@@ -11,22 +11,23 @@ from data import *
 
 try:
     datapath = '/data/lisa/data/mnist/mnist.pkl'
-    (train_x, train_y), (valid_x, valid_y), (test_x, test_y) = np.load(datapath)
+    (tr_x, tr_y), (val_x, val_y), (test_x, test_y) = np.load(datapath)
 except IOError:
     datapath = '/home/junyoung/data/mnist/mnist.pkl'
-    (train_x, train_y), (valid_x, valid_y), (test_x, test_y) = np.load(datapath)
+    (tr_x, tr_y), (val_x, val_y), (test_x, test_y) = np.load(datapath)
 
 batch_size = 128
-num_batches = train_x.shape[0] / batch_size
-batch_iter = BatchProvider(data_list=(DesignMatrix(train_x), DesignMatrix(one_hot(train_y))),
+num_batches = tr_x.shape[0] / batch_size
+batch_iter = BatchProvider(data_list=(DesignMatrix(tr_x),
+                                      DesignMatrix(one_hot(tr_y))),
                            batch_size=batch_size)
 
 init_W, init_b = ParamInit('randn'), ParamInit('zeros')
-inputs = T.fmatrix()
-targets = T.fmatrix()
+x = T.fmatrix()
+y = T.fmatrix()
 
-x = IdentityLayer()
-y = OnehotLayer(max_labels=10)
+proj = IdentityLayer()
+onehot = OnehotLayer(max_labels=10)
 h1 = FullyConnectedLayer(name='h1',
                          n_in=784,
                          n_out=1000,
@@ -42,17 +43,16 @@ h2 = FullyConnectedLayer(name='h2',
                          init_b=init_b)
 cost = MulCrossEntropyLayer(name='cost')
 
+# Topological sorting on directed acyclic graph (DAG)
 # Build DAG based on depth-first search
-# reference: B & B page 301
-nodes = {'x':x, 'h1':h1, 'h2':h2, 'y':y, 'cost':cost}
-edges = {'h1':'x', 'h2':'h1', 'cost':['h2', 'y']}
+nodes = {'proj': proj, 'onehot': onehot, 'x': x, 'h1': h1, 'h2': h2, 'y': y, 'cost': cost}
+edges = {'x': 'proj', 'y': 'onehot', 'x': 'h1', 'h1': 'h2', 'h2': 'cost', 'y': 'cost'}
 model = Net(nodes=nodes, edges=edges)
-cost = model.compute_cost(inputs, targets)
+cost = model.out
 
-ipdb.set_trace()
 cost_fn = theano.function(
     inputs=[x, y],
-    outputs=[cost],
+    outputs=cost,
     on_unused_input='ignore',
     updates=rms_prop({W1: g_W1, B1: g_B1, V1: g_V1, C1: g_C1}, __lr)
 )

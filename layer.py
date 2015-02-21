@@ -57,7 +57,7 @@ class NonLin(object):
     def linear(self, z):
         return z
 
-    def relu (self, z):
+    def relu(self, z):
         return z * (z > 0.)
 
     def sigmoid(self, z):
@@ -86,6 +86,20 @@ class Layer(NonLin, object):
 
     def fprop(self, x=None):
         return x
+
+
+class Input(Layer):
+    """
+    Abstract class for layers
+
+    Parameters
+    ----------
+    todo..
+    """
+    def __init__(self, inp):
+        if not isinstance(type(inp), T.var.TensorVariable):
+            raise ValueError("Input is not Theano variable.")
+        self.out = inp
 
 
 class FullyConnectedLayer(Layer):
@@ -129,10 +143,9 @@ class OnehotLayer(Layer):
         self.max_labels = max_labels
 
     def fprop(self, x):
-        one_hot = tensor.zeros((x.shape[0], self.max_labels))
-        one_hot = tensor.set_subtensor(
-            one_hot[tensor.arange(x.size) % x.shape[0],
-            x.T.flatten()], 1
+        one_hot = T.zeros((x.shape[0], self.max_labels))
+        one_hot = T.set_subtensor(
+            one_hot[T.arange(x.size) % x.shape[0], x.T.flatten()], 1
         )
         return one_hot
 
