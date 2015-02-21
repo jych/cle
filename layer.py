@@ -147,7 +147,6 @@ class OnehotLayer(Layer):
         one_hot = T.set_subtensor(
             one_hot[T.arange(x.size) % x.shape[0], x.T.flatten()], 1
         )
-        #one_hot = T.set_subtensor(x[T.arange(x.shape[0]), x], 1)
         return one_hot
 
 

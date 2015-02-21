@@ -24,7 +24,6 @@ batch_iter = BatchProvider(data_list=(DesignMatrix(tr_x),
 
 init_W, init_b = ParamInit('randn'), ParamInit('zeros')
 inp = T.fmatrix()
-#tar = T.fmatrix()
 tar = T.lvector()
 x = Input(inp)
 y = Input(tar)
@@ -59,8 +58,9 @@ optimizer = RMSProp(0.001)
 cost_fn = theano.function(
     inputs=[inp, tar],
     outputs=[cost],
+    updates=optimizer.updates(cost, model.params),
     on_unused_input='ignore',
-    updates=optimizer.updates(cost, model.params)
+    allow_input_downcast=True
 )
 
 for data_batch in batch_iter:

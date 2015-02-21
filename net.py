@@ -9,6 +9,13 @@ from collections import deque
 
 
 def linked_list_to_sparse_matrix(nodes, edges, sym_to_idx):
+    """
+    Mapping generator between nodes and indices
+
+    Parameters
+    ----------
+    .. todo::
+    """
     sparse_matrix = np.zeros((len(nodes), len(nodes)))
     for node in edges:
         sparse_matrix[sym_to_idx[node], sym_to_idx[edges[node]]] = 1
@@ -16,6 +23,13 @@ def linked_list_to_sparse_matrix(nodes, edges, sym_to_idx):
 
 
 def topological_sort(graph):
+    """
+    Topological sort
+
+    Parameters
+    ----------
+    None
+    """
     GRAY, BLACK = 0, 1
     order, enter, state = deque(), set(graph), {}
     for node in graph:
