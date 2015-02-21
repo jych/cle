@@ -49,14 +49,6 @@ def dropout(x, p, rng):
     )
 
 
-def NLL_mul(probs, targets):
-    return - T.sum(targets * T.log(probs)) / probs.shape[0]
-
-
-def NLL_bin(probs, targets):
-    return - T.sum(targets * T.log(probs) + (1-targets) * T.log(1-probs)) / probs.shape[0]
-
-
 def predict(probs):
     return T.argmax(probs, axis=-1)
 

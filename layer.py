@@ -79,13 +79,15 @@ class Layer(NonLin, object):
     .. todo::
     """
     def __init__(self):
-        pass
+        raise NotImplementedError(
+            str(type(self)) + " does not implement Layer.init.")
 
     def get_params(self):
         return []
 
     def fprop(self, x=None):
-        return x
+        raise NotImplementedError(
+            str(type(self)) + " does not implement Layer.fprop.")
 
 
 class Input(Layer):

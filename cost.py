@@ -15,22 +15,7 @@ def NllBin(y, y_hat):
     return nll.mean()
 
 
-class CostLayer(Layer):
-    """
-    Implementations of cost layer
-
-    Parameters
-    ----------
-    todo..
-    """
-    def __init__(self, name):
-        pass
-
-    def fprop(self, x, y):
-        pass
-
-
-class BinCrossEntropyLayer(CostLayer):
+class BinCrossEntropyLayer(Layer):
     """
     Implementations of cross-entropy
 
@@ -45,7 +30,7 @@ class BinCrossEntropyLayer(CostLayer):
         return NllBin(y, y_hat)
 
 
-class MulCrossEntropyLayer(CostLayer):
+class MulCrossEntropyLayer(Layer):
     """
     Implementations of cross-entropy
 
