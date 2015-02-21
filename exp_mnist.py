@@ -19,8 +19,9 @@ except IOError:
 batch_size = 128
 num_batches = tr_x.shape[0] / batch_size
 batch_iter = BatchProvider(data_list=(DesignMatrix(tr_x),
-                                      DesignMatrix(one_hot(tr_y))),
+                                      DesignMatrix(tr_y)),
                            batch_size=batch_size)
+
 
 init_W, init_b = ParamInit('randn'), ParamInit('zeros')
 
@@ -70,21 +71,27 @@ model = Net(nodes=nodes, edges=edges)
 # You can access any output of a node by simply doing
 # model.nodes[$node_name].out
 cost = model.nodes['cost'].out
-
+err = error(predict(model.nodes['h2'].out), predict(model.nodes['onehot'].out))
 # Define your optimizer
 optimizer = RMSProp(0.001)
 
 # Compile your cost function
 cost_fn = theano.function(
     inputs=[inp, tar],
-    outputs=[cost],
+    outputs=[cost, err],
     updates=optimizer.updates(cost, model.params),
     on_unused_input='ignore',
     allow_input_downcast=True
 )
 
 # Train loop
-for data_batch in batch_iter:
-    cost += cost_fn(*data_batch)
-cost /= num_batches
-print cost
+for e in xrange(100):
+    tr_cost = 0
+    tr_err = 0
+    for data_batch in batch_iter:
+        this_cost, this_err = cost_fn(*data_batch)
+        tr_cost += this_cost
+        tr_err += this_err
+    tr_cost /= num_batches
+    tr_err /= num_batches
+    print 'epoch: %d, nll: %f, err: %f' %(e + 1, tr_cost, tr_err)
