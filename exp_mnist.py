@@ -18,9 +18,13 @@ except IOError:
 
 batch_size = 128
 num_batches = tr_x.shape[0] / batch_size
-batch_iter = BatchProvider(data_list=(DesignMatrix(tr_x),
-                                      DesignMatrix(tr_y)),
-                           batch_size=batch_size)
+trbatch_iter = BatchProvider(data_list=(DesignMatrix(tr_x),
+                                        DesignMatrix(tr_y)),
+                             batch_size=batch_size)
+valbatch_iter = BatchProvider(data_list=(DesignMatrix(val_x),
+                                         DesignMatrix(val_y)),
+                              batch_size=batch_size)
+
 
 
 init_W, init_b = ParamInit('randn'), ParamInit('zeros')
@@ -73,13 +77,16 @@ model = Net(nodes=nodes, edges=edges)
 cost = model.nodes['cost'].out
 err = error(predict(model.nodes['h2'].out), predict(model.nodes['onehot'].out))
 # Define your optimizer
-optimizer = RMSProp(0.001)
+optimizer = RMSProp(
+    learning_rate=0.001,
+    gradient_clipping=1
+)
 
 # Compile your cost function
 cost_fn = theano.function(
     inputs=[inp, tar],
     outputs=[cost, err],
-    updates=optimizer.updates(cost, model.params),
+    updates=optimizer.get_updates(cost, model.params),
     on_unused_input='ignore',
     allow_input_downcast=True
 )
@@ -88,10 +95,19 @@ cost_fn = theano.function(
 for e in xrange(100):
     tr_cost = 0
     tr_err = 0
-    for data_batch in batch_iter:
-        this_cost, this_err = cost_fn(*data_batch)
+    val_cost = 0
+    val_err = 0
+    for batch in trbatch_iter:
+        this_cost, this_err = cost_fn(*batch)
         tr_cost += this_cost
         tr_err += this_err
+    for batch in valbatch_iter:
+        this_cost, this_err = cost_fn(*batch)
+        val_cost += this_cost
+        val_err += this_err
     tr_cost /= num_batches
     tr_err /= num_batches
-    print 'epoch: %d, nll: %f, err: %f' %(e + 1, tr_cost, tr_err)
+    val_cost /= num_batches
+    val_err /= num_batches
+    print 'epoch: %d, tr_nll: %f, tr_err: %f, val_nll: %f, val_err: %f'\
+        %(e + 1, tr_cost, tr_err, val_cost, val_err)

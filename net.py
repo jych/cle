@@ -1,8 +1,5 @@
-import cPickle, gzip, os, sys, time, re, ipdb
 import numpy as np
 
-from theano.compat.python2x import OrderedDict
-from theano.sandbox.cuda.basic_ops import gpu_contiguous
 from util import *
 from layer import *
 from collections import deque
