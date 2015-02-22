@@ -18,7 +18,7 @@ class Training(object):
                  data,
                  model,
                  optimizer,
-                 inputs,
+                 #inputs,
                  outputs,
                  monitor=None,
                  extension=None):
@@ -30,34 +30,15 @@ class Training(object):
         self.monitor = monitor
         self.extension = extension
         
-        if type(inputs) is not list:
-            inputs = [inputs]
-        self.inputs = inputs
+        #if type(inputs) is not list:
+        #    inputs = [inputs]
+        self.inputs = model.get_inputs()
         if type(outputs) is not list:
             outputs = [outputs]
         self.outputs = outputs
         self.cost_fn = self.build_training_graph()
         self.trainlog = TrainLog()
 
-    def get_theano_graph(self, updates=[]):
-        return theano.function(inputs=self.inputs,
-                               outputs=self.outputs,
-                               updates=updates,
-                               on_unused_input='ignore',
-                               allow_input_downcast=True)
-
-    def find_extension(self, name):
-        try:
-            exts = [extension for extension in self.extension
-                    if extension.name==name]
-            if len(exts) > 0:
-                return_val = 1
-            else:
-                return_val = 0
-            return return_val, exts
-        except:
-            return (0, None)
-        
     def build_training_graph(self):
         cost = self.model.nodes['cost'].out
         grads = OrderedDict(izip(self.model.params,
@@ -68,6 +49,13 @@ class Training(object):
                 grads = ext.apply(grads)
         updates = self.optimizer.get_updates(grads)
         return self.get_theano_graph(updates)
+
+    def get_theano_graph(self, updates=[]):
+        return theano.function(inputs=self.inputs,
+                               outputs=self.outputs,
+                               updates=updates,
+                               on_unused_input='ignore',
+                               allow_input_downcast=True)
 
     def run(self):
         logger.info("Starting main loop")    
@@ -97,6 +85,18 @@ class Training(object):
             self.monitor.t0 = time.time()
             self.monitor(self.trainlog)
         return True
+
+    def find_extension(self, name):
+        try:
+            exts = [extension for extension in self.extension
+                    if extension.name==name]
+            if len(exts) > 0:
+                return_val = 1
+            else:
+                return_val = 0
+            return return_val, exts
+        except:
+            return (0, None)
 
     def check_termination_criteria(self):
         tok, exts = self.find_extension('ext_terms')

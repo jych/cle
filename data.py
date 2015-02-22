@@ -30,8 +30,9 @@ class Data(object) :
 
 class DesignMatrix(Data):
 
-    def __init__(self, data, which_set, batch_size):
-        self.data = data[which_set]
+    def __init__(self, name, data, batch_size):
+        self.name = name
+        self.data = data
         self.ndata = self.num_examples()
         self.batch_size = batch_size if batch_size is not None else self.ndata
         self.nbatch = self.ndata / self.batch_size + 1
@@ -40,8 +41,10 @@ class DesignMatrix(Data):
     def num_examples(self): 
         return self.data[0].shape[0]
 
-    def batch(self, data, i, size):
-        return data[i*size:(i+1)*size]
+    def batch(self, data, i):
+        size = self.batch_size
+        ndata = self.ndata
+        return data[i*size:min((i+1)*size, ndata)]
 
     def __iter__(self):
         return self
@@ -49,8 +52,7 @@ class DesignMatrix(Data):
     def next(self):
         self.index += 1
         if self.index < self.nbatch:
-            return (self.batch(data, self.index, self.batch_size)
-                    for data in self.data)
+            return (self.batch(data, self.index) for data in self.data)
         else:
             self.index = -1
             raise StopIteration()

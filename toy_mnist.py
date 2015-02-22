@@ -27,9 +27,12 @@ except IOError:
 
 batch_size = 128
 num_batches = tr_x.shape[0] / batch_size
-data = {'train': (tr_x, tr_y), 'valid': (val_x, val_y), 'test': (test_x, test_y)}
-trdata = MNIST(data, 'train', batch_size)
-valdata = MNIST(data, 'valid', batch_size)
+trdata = MNIST(name='train',
+               data=(tr_x, tr_y),
+               batch_size=batch_size)
+valdata = MNIST(name='valid',
+                data=(val_x, val_y),
+                batch_size=batch_size)
 
 # Choose the random initialization method
 init_W, init_b = ParamInit('randn'), ParamInit('zeros')
@@ -104,15 +107,23 @@ extension = [
     GradientClipping(),
     EpochCount(40)
 ]
-monitor = Monitor(model, ['cost', 'err'])
+monitor = Monitor(
+    model=model,
+    freq=100,
+    #opt_ch=['cost', 'err'],
+    dd_ch=['cost', 'err'],
+    data=[trdata, valdata]
+)
+monitor.build_monitor_graph(outputs=[cost, err])
 
-toy_mnist = Training(data=trdata,
-                     model=model,
-                     optimizer=optimizer,
-                     inputs=[inp, tar],
-                     outputs=[cost, err],
-                     monitor=monitor,
-                     extension=extension)
+toy_mnist = Training(
+    data=trdata,
+    model=model,
+    optimizer=optimizer,
+    outputs=[cost, err],
+    monitor=monitor,
+    extension=extension
+)
 toy_mnist.run()
 
 # What are not done yet

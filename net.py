@@ -70,6 +70,12 @@ class Net(Layer):
         self.idx2sym = {i:node for i, node in enumerate(self.nodes)}
         self.params = self.get_params()
 
+    def get_inputs(self):
+        inputs = [node.out for node in self.nodes.values()
+                  if node.__class__ is Input]
+        inputs.sort(key=lambda x:x.name)
+        return inputs
+
     def get_params(self):
         return flatten([node.get_params() for node in self.nodes.values()])
 

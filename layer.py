@@ -150,7 +150,6 @@ class FullyConnectedLayer(Layer):
                  unit='relu',
                  init_W=ParamInit('randn'),
                  init_b=ParamInit('zeros')):
-
         self.nonlin = self.which_nonlin(unit)
         self.W = init_W.get(n_in, n_out)
         self.b = init_b.get(n_out)
