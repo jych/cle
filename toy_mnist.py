@@ -104,12 +104,13 @@ extension = [
     GradientClipping(),
     EpochCount(40)
 ]
-monitor = Monitor(model, ['cost'])
+monitor = Monitor(model, ['cost', 'err'])
 
 toy_mnist = Training(data=trdata,
                      model=model,
                      optimizer=optimizer,
                      inputs=[inp, tar],
+                     outputs=[cost, err],
                      monitor=monitor,
                      extension=extension)
 toy_mnist.run()

@@ -19,7 +19,7 @@ class Training(object):
                  model,
                  optimizer,
                  inputs,
-                 outputs=None,
+                 outputs,
                  monitor=None,
                  extension=None):
         self.data = data
@@ -29,22 +29,19 @@ class Training(object):
             self.monitor = Monitor(model)
         self.monitor = monitor
         self.extension = extension
-
+        
+        if type(inputs) is not list:
+            inputs = [inputs]
         self.inputs = inputs
+        if type(outputs) is not list:
+            outputs = [outputs]
         self.outputs = outputs
         self.cost_fn = self.build_training_graph()
-
         self.trainlog = TrainLog()
 
-    def get_theano_graph(self,
-                         outputs=None,
-                         updates=[]):
-        if outputs is None:
-            outputs = self.outputs
-        if outputs is not list:
-            outputs = [outputs]
+    def get_theano_graph(self, updates=[]):
         return theano.function(inputs=self.inputs,
-                               outputs=outputs,
+                               outputs=self.outputs,
                                updates=updates,
                                on_unused_input='ignore',
                                allow_input_downcast=True)
@@ -70,7 +67,7 @@ class Training(object):
             for ext in exts:
                 grads = ext.apply(grads)
         updates = self.optimizer.get_updates(grads)
-        return self.get_theano_graph(cost, updates)
+        return self.get_theano_graph(updates)
 
     def run(self):
         logger.info("Starting main loop")    
