@@ -27,9 +27,15 @@ except IOError:
 
 batch_size = 128
 num_batches = tr_x.shape[0] / batch_size
+
 trdata = MNIST(name='train',
                data=(tr_x, tr_y),
                batch_size=batch_size)
+
+mnt_trdata = MNIST(name='train',
+                   data=(tr_x, tr_y),
+                   batch_size=batch_size)
+
 valdata = MNIST(name='valid',
                 data=(val_x, val_y),
                 batch_size=batch_size)
@@ -112,7 +118,7 @@ monitor = Monitor(
     freq=100,
     #opt_ch=['cost', 'err'],
     dd_ch=['cost', 'err'],
-    data=[trdata, valdata]
+    data=[mnt_trdata, valdata]
 )
 monitor.build_monitor_graph(outputs=[cost, err])
 

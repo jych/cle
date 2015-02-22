@@ -30,12 +30,12 @@ class Data(object) :
 
 class DesignMatrix(Data):
 
-    def __init__(self, name, data, batch_size):
+    def __init__(self, name, data, batch_size=None):
         self.name = name
         self.data = data
-        self.ndata = self.num_examples()
         self.batch_size = batch_size if batch_size is not None else self.ndata
-        self.nbatch = self.ndata / self.batch_size + 1
+        self.ndata = self.num_examples()
+        self.nbatch = int(np.ceil(self.ndata / float(self.batch_size)))
         self.index = -1
 
     def num_examples(self): 
@@ -45,6 +45,7 @@ class DesignMatrix(Data):
         size = self.batch_size
         ndata = self.ndata
         return data[i*size:min((i+1)*size, ndata)]
+        #return data[i*size:(i+1)*size]
 
     def __iter__(self):
         return self
