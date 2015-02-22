@@ -36,8 +36,8 @@ class BinCrossEntropyLayer(Layer):
     ----------
     todo..
     """
-    def __init__(self, name):
-        self.name = name
+    def __init__(self):
+        pass
 
     def fprop(self, y, y_hat):
         return NllBin(y, y_hat)
@@ -51,8 +51,8 @@ class MulCrossEntropyLayer(Layer):
     ----------
     todo..
     """
-    def __init__(self, name):
-        self.name = name
+    def __init__(self):
+        pass
 
     def fprop(self, x):
         y_hat, y = x

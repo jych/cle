@@ -69,7 +69,6 @@ class Net(Layer):
         self.sym2idx = {node:i for i, node in enumerate(self.nodes)}
         self.idx2sym = {i:node for i, node in enumerate(self.nodes)}
         self.params = self.get_params()
-        self.build_graph()
 
     def get_params(self):
         return flatten([node.get_params() for node in self.nodes.values()])

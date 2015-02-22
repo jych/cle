@@ -16,8 +16,8 @@ class ParamInit(object):
                  init_type='randn',
                  mean=0.,
                  stddev=0.01,
-                 low=-0.1,
-                 high=0.1):
+                 low=-0.08,
+                 high=0.08):
 
         self.initializer = {
             'rand': lambda x: np.random.uniform(low=low,
@@ -145,7 +145,6 @@ class FullyConnectedLayer(Layer):
     .. todo::
     """
     def __init__(self,
-                 name,
                  n_in,
                  n_out,
                  unit='relu',

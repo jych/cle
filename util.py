@@ -55,3 +55,13 @@ def predict(probs):
 
 def error(labels, pred_labels):
     return T.mean(T.neq(pred_labels, labels))
+
+
+def unpack(arg):
+    if isinstance(arg, (list, tuple)):
+        if len(arg) == 1:
+            return arg[0]
+        else:
+            return list[arg]
+    else:
+        return arg

@@ -1,3 +1,4 @@
+import ipdb
 import numpy as np
 import theano.tensor as T
 
@@ -7,12 +8,16 @@ from theano.compat.python2x import OrderedDict
 from util import *
 
 
-class Optimizer(object):
+class GradientClipping(object):
     def __init__(self):
-        pass
+        """
+        .. todo::
 
+            WRITEME
+        """
+        self.name = 'ext_grads'
 
-    def clip_gradients(self, grads):
+    def apply(self, grads):
         """
         .. todo::
 
@@ -33,6 +38,24 @@ class Optimizer(object):
 
         return grads
 
+class Optimizer(object):
+    def __init__(self, learning_rate):
+        """
+        .. todo::
+
+            WRITEME
+        """
+        self.learning_rate = sharedX(learning_rate)
+        self.updates = []
+
+    def get_updates(self):
+        """
+        .. todo::
+
+            WRITEME
+        """
+        pass
+
 
 class Momentum(Optimizer):
     """
@@ -41,26 +64,18 @@ class Momentum(Optimizer):
         WRITEME
     """
     def __init__(self, 
-                 learning_rate, 
-                 init_momentum=0.9, 
-                 nesterov_momentum=False,
-                 gradient_clipping=False):
+                 momentum=0.9, 
+                 nesterov_momentum=False):
         self.__dict__.update(locals())
         del self.self
-        self.momentum = init_momentum
-        self.nesterov_momentum = nesterov_momentum
 
-    def get_updates(self, cost, params):
+    def get_updates(self, grads):
         """
         .. todo::
 
             WRITEME
         """
-        grads = OrderedDict(izip(params, T.grad(cost, params)))
         updates = OrderedDict()
-
-        if self.gradient_clipping:
-            grads = self.clip_gradients(grads)
 
         for param, grad in six.iteritems(grads):
             vel = sharedX(param.get_value() * 0.)
@@ -84,27 +99,20 @@ class RMSProp(Optimizer):
         WRITEME
     """
     def __init__(self, 
-                 learning_rate, 
-                 init_momentum=0.9, 
+                 momentum=0.9, 
                  averaging_coeff=0.95, 
-                 stabilizer=0.0001,
-                 gradient_clipping=False):
+                 stabilizer=0.0001):
         self.__dict__.update(locals())
         del self.self
-        self.momentum = init_momentum
 
-    def get_updates(self, cost, params):
+    def get_updates(self, grads):
         """
         .. todo::
 
             WRITEME
         """
-        grads = OrderedDict(izip(params, T.grad(cost, params)))
         updates = OrderedDict()
 
-        if self.gradient_clipping:
-            grads = self.clip_gradients(grads)
- 
         for param in grads.keys():
             inc = sharedX(param.get_value() * 0.)
             avg_grad = sharedX(np.zeros_like(param.get_value()))
@@ -152,28 +160,23 @@ class Adam(Optimizer):
     SOFTWARE.
     """
     def __init__(self,
-                 learning_rate,
-                 init_momentum=0.9,
+                 momentum=0.9,
                  averaging_coeff=0.99,
                  stabilizer=1e-4,
-                 gradient_clipping=False):
+                 **kwargs):
         self.__dict__.update(locals())
         del self.self
-        self.momentum = init_momentum
+        super(Adam, self).__init__(**kwargs)
 
-    def get_updates(self, cost, params):
+    def get_updates(self, grads):
         """
         .. todo::
 
             WRITEME
         """
-        grads = OrderedDict(izip(params, T.grad(cost, params)))
         updates = OrderedDict()
         velocity = OrderedDict()
         counter = sharedX(0, 'counter')
-
-        if self.gradient_clipping:
-            grads = self.clip_gradients(grads)
 
         for param in grads.keys():
             avg_grad_sqr = sharedX(np.zeros_like(param.get_value()))
