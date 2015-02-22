@@ -5,6 +5,7 @@ import time
 
 from cost import *
 from data import *
+from ext import *
 from layer import *
 from monitor import Monitor
 from opt import *
@@ -95,12 +96,13 @@ cost = model.nodes['cost'].out
 err = error(predict(model.nodes['h2'].out), predict(model.nodes['onehot'].out))
 
 # Define your optimizer [Momentum(Nesterov) / RMSProp / Adam]
-optimizer = Adam(
+optimizer = RMSProp(
     learning_rate=0.001
 )
 
 extension = [
-    GradientClipping()
+    GradientClipping(),
+    EpochCount(40)
 ]
 monitor = Monitor(model, ['cost'])
 

@@ -1,42 +1,10 @@
-import ipdb
 import numpy as np
 import theano.tensor as T
 
-from itertools import izip
 from theano.compat import six
 from theano.compat.python2x import OrderedDict
 from util import *
 
-
-class GradientClipping(object):
-    def __init__(self):
-        """
-        .. todo::
-
-            WRITEME
-        """
-        self.name = 'ext_grads'
-
-    def apply(self, grads):
-        """
-        .. todo::
-
-            WRITEME
-        """
-        g_norm = 0.
-        for grad in grads.values():
-            grad /= 128
-            g_norm += (grad ** 2).sum()
-        not_finite = T.or_(T.isnan(g_norm), T.isinf(g_norm))
-        g_norm = T.sqrt(g_norm)
-        scaling_num = 5
-        scaling_den = T.maximum(5, g_norm)
-        for param, grad in grads.items():
-            grads[param] = T.switch(not_finite,
-                                    0.1 * param,
-                                    grad * (scaling_num / scaling_den))
-
-        return grads
 
 class Optimizer(object):
     def __init__(self, learning_rate):
@@ -65,9 +33,11 @@ class Momentum(Optimizer):
     """
     def __init__(self, 
                  momentum=0.9, 
-                 nesterov_momentum=False):
+                 nesterov_momentum=False,
+                 **kwargs):
         self.__dict__.update(locals())
         del self.self
+        super(Momentum, self).__init__(**kwargs)
 
     def get_updates(self, grads):
         """
@@ -101,9 +71,11 @@ class RMSProp(Optimizer):
     def __init__(self, 
                  momentum=0.9, 
                  averaging_coeff=0.95, 
-                 stabilizer=0.0001):
+                 stabilizer=0.0001,
+                 **kwargs):
         self.__dict__.update(locals())
         del self.self
+        super(RMSProp, self).__init__(**kwargs)
 
     def get_updates(self, grads):
         """
