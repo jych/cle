@@ -96,9 +96,9 @@ class Net(Layer):
     def build_map(self):
         nodes = uniqify(flatten(self.graph))
         names = [node.name for node in nodes]
-        inputs = [[ele.name for edge in tolist(edges[0])]
+        inputs = [[edge.name for edge in tolist(edges[0])]
                   for edges in self.graph]
-        outputs = [[ele.name for edge in tolist(edges[1])]
+        outputs = [[edge.name for edge in tolist(edges[1])]
                   for edges in self.graph]
         seen = []
         for inps in inputs:

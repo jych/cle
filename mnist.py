@@ -5,4 +5,4 @@ from data import *
 class MNIST(DesignMatrix):
 
     def theano_vars(self):
-        return [T.fmatrix('x'), T.lvector('y')]
+        return [T.fmatrix('inp'), T.lvector('out')]
