@@ -48,7 +48,7 @@ class Training(PickleMixin):
     def build_training_graph(self):
         self.grads = OrderedDict(izip(self.model.params,
                                       T.grad(self.cost, self.model.params)))
-        self.run_extension('ext_opt')
+        self.run_extension('ext_grad')
         updates = self.optimizer.get_updates(self.grads)
         return self.get_theano_graph(updates)
 
