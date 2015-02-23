@@ -185,7 +185,30 @@ class ConvLayer(Layer):
 
 class RecurrentLayer(Layer):
     """
-    Basic recurrent layer
+    Base recurrent layer
+
+    Parameters
+    ----------
+    .. todo::
+    """
+    def __init__(self):
+        raise NotImplementedError(
+            str(type(self)) + " does not implement Layer.init.")
+
+    def get_params(self):
+        return []
+
+    def fprop(self, x=None):
+        raise NotImplementedError(
+            str(type(self)) + " does not implement Layer.fprop.")
+    def get_init_state(self, batch_size)
+        n_out = self.get_dim(name)
+        return T.zeros((batch_size, n_out))
+
+
+class SimpleRecurrent(RecurrentLayer):
+    """
+    Naive recurrent layer
 
     Parameters
     ----------
@@ -214,6 +237,12 @@ class RecurrentLayer(Layer):
         z_t = self.nonlin(z_t)
         z_t.name = self.name
         return z_t
+
+    def get_dim(self, name):
+        if name == 'mask':
+            return 0
+        if name in :q
+
 
 
 class LSTM(RecurrentLayer):
