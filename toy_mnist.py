@@ -24,6 +24,7 @@ try:
 except IOError:
     datapath = '/home/junyoung/data/mnist/mnist.pkl'
     (tr_x, tr_y), (val_x, val_y), (test_x, test_y) = np.load(datapath)
+savepath = '/home/junyoung/repos/cle/exps/mnist.pkl'
 
 batch_size = 128
 num_batches = tr_x.shape[0] / batch_size
@@ -31,11 +32,6 @@ num_batches = tr_x.shape[0] / batch_size
 trdata = MNIST(name='train',
                data=(tr_x, tr_y),
                batch_size=batch_size)
-
-mnt_trdata = MNIST(name='train',
-                   data=(tr_x, tr_y),
-                   batch_size=batch_size)
-
 valdata = MNIST(name='valid',
                 data=(val_x, val_y),
                 batch_size=batch_size)
@@ -103,6 +99,8 @@ model.build_graph()
 # Super easy to monitor cost and states with same function
 cost = model.nodes['cost'].out
 err = error(predict(model.nodes['h2'].out), predict(model.nodes['onehot'].out))
+cost.name = 'cost'
+err.name = 'error_rate'
 
 # Define your optimizer [Momentum(Nesterov) / RMSProp / Adam]
 #optimizer = RMSProp(
@@ -113,22 +111,17 @@ optimizer = Adam(
 
 extension = [
     GradientClipping(),
-    EpochCount(40)
+    EpochCount(10),
+    Monitoring(freq=100,
+               ddout=[cost, err],
+               data=[valdata])    
 ]
-monitor = Monitor(
-    model=model,
-    freq=100,
-    dd_ch=['cost', 'err'],
-    data=[mnt_trdata, valdata]
-)
-monitor.build_monitor_graph(outputs=[cost, err])
 
 toy_mnist = Training(
     data=trdata,
     model=model,
     optimizer=optimizer,
     outputs=[cost, err],
-    monitor=monitor,
     extension=extension
 )
 toy_mnist.run()

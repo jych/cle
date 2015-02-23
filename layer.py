@@ -18,7 +18,6 @@ class ParamInit(object):
                  stddev=0.01,
                  low=-0.08,
                  high=0.08):
-
         self.initializer = {
             'rand': lambda x: np.random.uniform(low=low,
                                                 high=high,

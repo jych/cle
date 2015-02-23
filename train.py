@@ -1,11 +1,12 @@
 import ipdb
 import logging
+import os
 import theano
 import time
 
 from itertools import izip
 from layer import *
-from monitor import Monitor, TrainLog
+from monitor import Monitor
 from opt import *
 from util import *
 
@@ -14,39 +15,39 @@ logger = logging.getLogger(__name__)
 
 
 class Training(object):
+    """
+    WRITEME
+
+    Parameters
+    ----------
+    .. todo::
+    """
     def __init__(self,
                  data,
                  model,
                  optimizer,
-                 #inputs,
                  outputs,
-                 monitor=None,
                  extension=None):
         self.data = data
         self.model = model
         self.optimizer = optimizer
-        if monitor is None:
-            self.monitor = Monitor(model)
-        self.monitor = monitor
         self.extension = extension
         
-        #if type(inputs) is not list:
-        #    inputs = [inputs]
         self.inputs = model.get_inputs()
         outputs = tolist(outputs)
         self.outputs = outputs
+
         self.cost_fn = self.build_training_graph()
         self.trainlog = TrainLog()
 
+        self.endloop = 0
+       
     def build_training_graph(self):
         cost = self.model.nodes['cost'].out
-        grads = OrderedDict(izip(self.model.params,
-                                 T.grad(cost, self.model.params)))
-        tok, exts = self.find_extension('ext_grads')
-        if tok:
-            for ext in exts:
-                grads = ext.apply(grads)
-        updates = self.optimizer.get_updates(grads)
+        self.grads = OrderedDict(izip(self.model.params,
+                                      T.grad(cost, self.model.params)))
+        self.run_extension('ext_opt')
+        updates = self.optimizer.get_updates(self.grads)
         return self.get_theano_graph(updates)
 
     def get_theano_graph(self, updates=[]):
@@ -64,8 +65,10 @@ class Training(object):
     def run_epoch(self):
         while self.run_batch():
             pass
-        self.monitor._epoch_seen += 1
-        self.check_termination_criteria()
+        self.trainlog._epoch_seen += 1
+        self.run_extension('ext_term')
+        if self.end_training():
+            return False
         return True
 
     def run_batch(self):
@@ -75,14 +78,10 @@ class Training(object):
             return False
         batch_t0 = time.time()
         this_cost = self.cost_fn(*batch)
-        batch_t1 = time.time() - batch_t0
-        self.trainlog._times.append(batch_t1)
+        self.trainlog._times.append(time.time() - batch_t0)
         self.trainlog._batches.append(this_cost)
-        self.monitor._batch_seen += 1
-        if np.mod(self.monitor._batch_seen, self.monitor.freq)==0 or\
-            self.monitor._batch_seen==1:
-            self.monitor.t0 = time.time()
-            self.monitor(self.trainlog)
+        self.trainlog._batch_seen += 1
+        self.run_extension('ext_monitor')
         return True
 
     def find_extension(self, name):
@@ -97,12 +96,31 @@ class Training(object):
         except:
             return (0, None)
 
-    def check_termination_criteria(self):
-        tok, exts = self.find_extension('ext_terms')
+    def run_extension(self, name):
+        tok, exts = self.find_extension(name)
         if tok:
             for ext in exts:
-                if ext.validate():
-                    raise TrainingEnd
+                ext.exe(self)
+
+    def end_training(self):
+        return self.endloop
+
 
 class TrainingEnd(Exception):
     pass
+
+
+class TrainLog(object):
+    """
+    Training log class
+
+    Parameters
+    ----------
+    .. todo::
+    """
+    def __init__(self):
+        self._batches = []
+        self._times = []
+        self._ddmonitors = [] 
+        self._epoch_seen = 0 
+        self._batch_seen = 0 

@@ -70,3 +70,29 @@ def tolist(arg):
     if type(arg) is not list:
         arg = [arg]
     return arg
+
+
+class PickleMixin(object):
+    """
+    Hack for pickling: borrowed from Kyle Kastner
+
+    ----------
+    .. todo::
+    """
+    def __getstate__(self):
+        if not hasattr(self, '_pickle_skip_list'):
+            self._pickle_skip_list = []
+            for k, v in self.__dict__.items():
+                try:
+                    f = tempfile.TemporaryFile()
+                    cPickle.dump(v, f)
+                except:
+                    self._pickle_skip_list.append(k)
+        state = OrderedDict()
+        for k, v in self.__dict__.items():
+            if k not in self._pickle_skip_list:
+                state[k] = v
+        return state
+ 
+    def __setstate__(self, state):
+        self.__dict__ = state
