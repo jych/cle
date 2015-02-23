@@ -58,11 +58,8 @@ h2 = FullyConnectedLayer(n_in=1000,
                          init_b=init_b)
 cost = MulCrossEntropyLayer()
 
-# Topological sorting on directed acyclic graph (DAG)
-# Build DAG based on depth-first search
 # You will fill in your node and edge lists
 # and fed them to the model constructor
-# Your model is smart enough to take care of the rest
 nodes = {
     'x': x,
     #'y': y,
@@ -82,7 +79,9 @@ edges = {
 }
 
 # Your model will build the Theano computational graph
-# Based on given nodes and edges
+# based on topological sorting on given nodes and edges
+# It will Build a DAG using depth-first search
+# Your model is smart enough to take care of the rest
 model = Net(nodes=nodes, edges=edges)
 
 # You have already defined your nodes and edges
