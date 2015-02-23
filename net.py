@@ -110,7 +110,6 @@ class Net(Layer):
             for out in outs:
                 if out not in seen:
                     seen.append(out)
-
         sym2idx = OrderedDict()
         idx2sym = OrderedDict()
         for i, node in enumerate(seen):
