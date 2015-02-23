@@ -33,8 +33,7 @@ class Training(object):
         #if type(inputs) is not list:
         #    inputs = [inputs]
         self.inputs = model.get_inputs()
-        if type(outputs) is not list:
-            outputs = [outputs]
+        outputs = tolist(outputs)
         self.outputs = outputs
         self.cost_fn = self.build_training_graph()
         self.trainlog = TrainLog()

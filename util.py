@@ -65,3 +65,8 @@ def unpack(arg):
             return list[arg]
     else:
         return arg
+
+def tolist(arg):
+    if type(arg) is not list:
+        arg = [arg]
+    return arg

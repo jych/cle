@@ -67,6 +67,15 @@ class NonLin(object):
     def tanh(self, z):
         return T.nnet.tanh(z)
 
+    def steeper_sigmoid(self, z):
+        return 1. / (1. + T.exp(-3.75 * z))
+
+    def hard_tanh(self, z):
+        return T.clip(z, -1., 1.)
+
+    def hard_sigmoid(self, z):
+        return T.clip(z + 0.5, 0., 1.)
+
 
 class Layer(NonLin, object):
     """

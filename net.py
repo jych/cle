@@ -31,11 +31,7 @@ def topological_sort(graph):
     order, enter, state = deque(), set(graph), {}
     this_graph = dict()
     for node in graph:
-        if graph.get(node, ()) is not list:
-            this_graph[node] = [graph[node]]
-        else:
-            this_graph[node] = graph[node]
-
+        this_graph[node] = tolist(graph[node])
 
     def dfs(node):
         state[node] = GRAY

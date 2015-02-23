@@ -45,7 +45,6 @@ class DesignMatrix(Data):
         size = self.batch_size
         ndata = self.ndata
         return data[i*size:min((i+1)*size, ndata)]
-        #return data[i*size:(i+1)*size]
 
     def __iter__(self):
         return self
