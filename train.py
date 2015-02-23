@@ -6,7 +6,6 @@ import time
 
 from itertools import izip
 from layer import *
-from monitor import Monitor
 from opt import *
 from util import *
 

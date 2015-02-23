@@ -7,7 +7,6 @@ from cost import *
 from data import *
 from ext import *
 from layer import *
-from monitor import Monitor
 from opt import *
 from net import *
 from train import *
@@ -123,6 +122,7 @@ toy_mnist = Training(
     data=trdata,
     model=model,
     optimizer=optimizer,
+    cost=cost,
     outputs=[cost, err],
     extension=extension
 )
