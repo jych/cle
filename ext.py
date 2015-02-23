@@ -133,6 +133,8 @@ class Monitoring(object):
             optch = [out.name for out in mainloop.outputs]
             for i, out in enumerate(optch):
                 this_mean = np.asarray(log._batches)[srt: end, i].mean()
+                if this_mean is np.nan:
+                    raise ValueError("NaN occured in output.")
                 logger.info("\t%s: %f" % (out, this_mean))
             self.monitor_data_based_channels(mainloop)
 
@@ -162,4 +164,27 @@ class Picklize(object):
             try:
                 secure_pickle_dump(mainloop, path)
             except Exception:
-                raise            
+                raise
+
+def unpickle(path):
+    """
+    .. todo::
+
+        WRITEME
+    """
+    f = open(path, 'rb')
+    m = cPickle.load(f)
+    f.close()
+    return m
+
+
+def initialize_from_pkl(arg, path):
+    """
+    .. todo::
+
+        WRITEME
+    """
+    f = open(path, 'rb')
+    m = cPickle.load(f)
+    arg.__setstate__(m.__dict__)
+    f.close()

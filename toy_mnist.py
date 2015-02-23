@@ -103,8 +103,7 @@ err.name = 'error_rate'
 # Define your optimizer [Momentum(Nesterov) / RMSProp / Adam]
 #optimizer = RMSProp(
 optimizer = Adam(
-    lr=0.001,
-    b2=0.01
+    lr=0.001
 )
 
 extension = [
