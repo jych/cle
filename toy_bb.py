@@ -31,7 +31,7 @@ trdata = BouncingBalls(name='train',
                        batch_size=batch_size)
 
 # Choose the random initialization method
-init_W, init_U, init_b = ParamInit('randn'), ParamInit('ortho'), ParamInit('zeros')
+init_W, init_U, init_b = InitParams('randn'), InitParams('ortho'), InitParams('zeros')
 
 # Define nodes: objects
 inp, tar = trdata.theano_vars()
@@ -66,13 +66,13 @@ extension = [
              path=savepath)
 ]
 
-toy_mnist = Training(
-    name='toy_mnist',
+mainloop= Training(
+    name='toy_bb',
     data=trdata,
     model=model,
     optimizer=optimizer,
     cost=cost,
-    outputs=[cost, err],
+    outputs=[cost],
     extension=extension
 )
-toy_mnist.run()
+mainloop.run()

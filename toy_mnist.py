@@ -36,7 +36,7 @@ valdata = MNIST(name='valid',
                 batch_size=batch_size)
 
 # Choose the random initialization method
-init_W, init_b = ParamInit('randn'), ParamInit('zeros')
+init_W, init_b = InitParams('randn'), InitParams('zeros')
 
 # Define nodes: objects
 inp, tar = trdata.theano_vars()

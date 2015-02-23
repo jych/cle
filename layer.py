@@ -6,7 +6,7 @@ import theano.tensor as T
 from util import *
 
 
-class ParamInit(object):
+class InitParams(object):
     """
     WRITEME
 
