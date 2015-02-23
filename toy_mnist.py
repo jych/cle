@@ -105,8 +105,10 @@ cost = model.nodes['cost'].out
 err = error(predict(model.nodes['h2'].out), predict(model.nodes['onehot'].out))
 
 # Define your optimizer [Momentum(Nesterov) / RMSProp / Adam]
-optimizer = RMSProp(
-    learning_rate=0.001
+#optimizer = RMSProp(
+optimizer = Adam(
+    lr=0.001,
+    b2=0.01
 )
 
 extension = [
@@ -116,7 +118,6 @@ extension = [
 monitor = Monitor(
     model=model,
     freq=100,
-    #opt_ch=['cost', 'err'],
     dd_ch=['cost', 'err'],
     data=[mnt_trdata, valdata]
 )

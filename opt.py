@@ -7,13 +7,13 @@ from util import *
 
 
 class Optimizer(object):
-    def __init__(self, learning_rate):
+    def __init__(self, lr):
         """
         .. todo::
 
             WRITEME
         """
-        self.learning_rate = sharedX(learning_rate)
+        self.lr = sharedX(lr)
         self.updates = []
 
     def get_updates(self):
@@ -68,11 +68,7 @@ class RMSProp(Optimizer):
 
         WRITEME
     """
-    def __init__(self, 
-                 momentum=0.9, 
-                 averaging_coeff=0.95, 
-                 stabilizer=0.0001,
-                 **kwargs):
+    def __init__(self, mom=0.9, coeff=0.95, e=1e-4, **kwargs):
         self.__dict__.update(locals())
         del self.self
         super(RMSProp, self).__init__(**kwargs)
@@ -85,57 +81,32 @@ class RMSProp(Optimizer):
         """
         updates = OrderedDict()
 
-        for param in grads.keys():
-            inc = sharedX(param.get_value() * 0.)
-            avg_grad = sharedX(np.zeros_like(param.get_value()))
-            avg_grad_sqr = sharedX(np.zeros_like(param.get_value()))
+        for p, g in grads.items():
+            u = sharedX(p.get_value() * 0.)
+            avg_grad = sharedX(p.get_value() * 0.)
+            sqr_grad = sharedX(p.get_value() * 0.)
+            m_t = self.coeff * avg_grad
+            avg_grad_t = self.coeff * avg_grad + (1 - self.coeff) * g
+            sqr_grad_t = self.coeff * sqr_grad + (1 - self.coeff) * g**2
+            g_t = g / T.sqrt(sqr_grad_t - avg_grad_t**2 + self.e)
+            u_t = self.mom * u - self.lr * g_t
+            p_t = p + u_t
 
-            new_avg_grad = self.averaging_coeff * avg_grad\
-                + (1 - self.averaging_coeff) * grads[param]
-            new_avg_grad_sqr = self.averaging_coeff * avg_grad_sqr\
-                + (1 - self.averaging_coeff) * grads[param]**2
-
-            normalized_grad = grads[param] /\
-                T.sqrt(new_avg_grad_sqr - new_avg_grad**2 + self.stabilizer)
-            updated_inc = self.momentum * inc - self.learning_rate * normalized_grad
-
-            updates[avg_grad] = new_avg_grad
-            updates[avg_grad_sqr] = new_avg_grad_sqr
-            updates[inc] = updated_inc
-            updates[param] = param + updated_inc
+            updates[avg_grad] = avg_grad_t
+            updates[sqr_grad] = sqr_grad_t
+            updates[u] = u_t
+            updates[p] = p_t
 
         return updates
 
 
 class Adam(Optimizer):
     """
-    The MIT License (MIT)
+    .. todo::
 
-    Copyright (c) 2015 Alec Radford
-
-    Permission is hereby granted, free of charge, to any person obtaining a copy
-    of this software and associated documentation files (the "Software"), to deal
-    in the Software without restriction, including without limitation the rights
-    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-    copies of the Software, and to permit persons to whom the Software is
-    furnished to do so, subject to the following conditions:
-
-    The above copyright notice and this permission notice shall be included in all
-    copies or substantial portions of the Software.
-
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-    SOFTWARE.
+        WRITEME
     """
-    def __init__(self,
-                 momentum=0.9,
-                 averaging_coeff=0.99,
-                 stabilizer=1e-4,
-                 **kwargs):
+    def __init__(self, b1=0.1, b2=0.001, e=1e-8, **kwargs):
         self.__dict__.update(locals())
         del self.self
         super(Adam, self).__init__(**kwargs)
@@ -147,36 +118,23 @@ class Adam(Optimizer):
             WRITEME
         """
         updates = OrderedDict()
-        velocity = OrderedDict()
-        counter = sharedX(0, 'counter')
+        m = OrderedDict()
+        v = OrderedDict()
+        cnt = sharedX(0, 'counter')
 
-        for param in grads.keys():
-            avg_grad_sqr = sharedX(np.zeros_like(param.get_value()))
-            velocity[param] = sharedX(np.zeros_like(param.get_value()))
+        for p, g in grads.items():
+            m = sharedX(p.get_value() * 0.)
+            v = sharedX(p.get_value() * 0.)
+            m_t = (1. - self.b1) * m + self.b1 * g
+            v_t = (1. - self.b2) * v + self.b2 * T.sqr(g)
+            m_t_hat = m_t / (1. - (1. - self.b1)**(cnt + 1))
+            v_t_hat = v_t / (1. - (1. - self.b2)**(cnt + 1))
+            g_t = m_t_hat / (T.sqrt(v_t_hat) + self.e)
+            p_t = p - self.lr * g_t
+            updates[m] = m_t
+            updates[v] = v_t
+            updates[p] = p_t
 
-            next_counter = counter + 1.
-
-            fix_first_moment = 1. - self.momentum**next_counter
-            fix_second_moment = 1. - self.averaging_coeff**next_counter
-
-            if param.name is not None:
-                avg_grad_sqr.name = 'avg_grad_sqr_' + param.name
-
-            new_avg_grad_sqr = self.averaging_coeff*avg_grad_sqr \
-                + (1 - self.averaging_coeff)*T.sqr(grads[param])
-
-            rms_grad_t = T.sqrt(new_avg_grad_sqr)
-            rms_grad_t = T.maximum(rms_grad_t, self.stabilizer)
-            new_velocity = self.momentum * velocity[param] \
-                - (1 - self.momentum) * grads[param]
-
-            normalized_velocity = (new_velocity * T.sqrt(fix_second_moment)) \
-                / (rms_grad_t * fix_first_moment)
-
-            updates[avg_grad_sqr] = new_avg_grad_sqr
-            updates[velocity[param]] = new_velocity
-            updates[param] = param + self.learning_rate * normalized_velocity
-
-        updates[counter] = counter + 1
+        updates[cnt] = cnt + 1
 
         return updates
