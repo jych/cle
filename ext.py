@@ -127,7 +127,7 @@ class Monitoring(object):
             logger.info("")
             logger.info("Monitoring step")
             logger.info("***************")
-            logger.info("\tTime elapsed: %f" % t)
+            logger.info("\tElapsed time: %f" % t)
             logger.info("\tEpochs  seen: %d" % log._epoch_seen)
             logger.info("\tBatches seen: %d" % log._batch_seen)
             optch = [out.name for out in mainloop.outputs]
