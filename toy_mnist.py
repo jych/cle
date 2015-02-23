@@ -129,9 +129,9 @@ toy_mnist = Training(
 toy_mnist.run()
 
 # What are not done yet
-# 1. Serialization / Checkpoint
+# 1. Serialization / Checkpoint      Thanks to Kyle and Blocks
 # 2. Dropout / Regularization: we should implement dropout using Theano.clone
-# 3. RNN
-# 4. CNN
-# 5. VAE
+# 3. RNN                             jych is doing
+# 4. CNN                             donghyunlee is doing
+# 5. VAE                             laurent-dinh????????? :)
 # 6. Predefined nets: larger building block such as MLP, ConvNet and Stacked RNN

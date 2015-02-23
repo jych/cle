@@ -158,7 +158,7 @@ class Picklize(object):
             pklpath = mainloop.name + '.pkl'
             path = os.path.join(self.path, pklpath)
             logger.info("")
-            logger.info("Saving model to %s" % path)
+            logger.info("Saving model to: %s" % path)
             try:
                 secure_pickle_dump(mainloop, path)
             except Exception:
