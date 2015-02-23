@@ -165,3 +165,31 @@ class Picklize(object):
                 secure_pickle_dump(mainloop, path)
             except Exception:
                 raise
+
+
+class EarlyStopping(object):
+    """
+    .. todo::
+
+        WRITEME
+    """
+    def __init__(self, freq, path):
+        self.name = 'ext_save'
+        self.freq = freq
+        if not os.path.exists(path):
+            os.makedirs(path)
+        self.path = path
+
+    def exe(self, mainloop):
+        """
+        Pickle the mainloop
+        """
+        if np.mod(mainloop.trainlog._epoch_seen, self.freq)==0:
+            pklpath = mainloop.name + '_best.pkl'
+            path = os.path.join(self.path, pklpath)
+            logger.info("")
+            logger.info("Saving model to: %s" % path)
+            try:
+                secure_pickle_dump(mainloop, path)
+            except Exception:
+                raise

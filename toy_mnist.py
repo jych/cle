@@ -101,8 +101,8 @@ cost.name = 'cost'
 err.name = 'error_rate'
 
 # Define your optimizer [Momentum(Nesterov) / RMSProp / Adam]
-#optimizer = RMSProp(
-optimizer = Adam(
+optimizer = RMSProp(
+#optimizer = Adam(
     lr=0.001
 )
 
@@ -130,6 +130,7 @@ toy_mnist.run()
 # What are not done yet
 # 1. Monitoring                      done!
 # 2. Serialization / Checkpoint      done! Thanks to kastnerkyle and Blocks
+#                                    working on early stopping
 # 3. Dropout: use Theano.clone
 # 4. Other Regularization
 # 5. RNN                             jych is doing
