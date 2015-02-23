@@ -52,12 +52,6 @@ class Net(Layer):
         self.build_parent_map(graph)
         self.params = self.get_params()
 
-    def get_inputs(self):
-        inputs = [node.out for node in self.nodes.values()
-                  if node.__class__ is Input]
-        inputs.sort(key=lambda x:x.name)
-        return inputs
-
     def set_nodes(self):
         nodes = uniqify(flatten(self.graph))
         self.nodes = {}
@@ -70,6 +64,9 @@ class Net(Layer):
             pairs[0] = tolist(pairs[0])
             for node in pairs[0]:
                 self.edges[node.name] = pairs[1].name
+
+    def backtrace(self, idx):
+        return np.where(self.parent_map[:, idx]==1)[0]
 
     def build_graph(self):
         sorted_nodes = topological_sort(self.edges)
@@ -90,9 +87,6 @@ class Net(Layer):
                 inp = parent_node.out
             self.nodes[nodeid].out = self.nodes[nodeid].fprop(inp)
     
-    def backtrace(self, idx):
-        return np.where(self.parent_map[:, idx]==1)[0]
-
     def build_map(self):
         nodes = uniqify(flatten(self.graph))
         names = [node.name for node in nodes]
@@ -134,6 +128,12 @@ class Net(Layer):
                 parent_map[self.sym2idx[parent.name],
                            self.sym2idx[child.name]] = 1
         self.parent_map = parent_map
+
+    def get_inputs(self):
+        inputs = [node.out for node in self.nodes.values()
+                  if node.__class__ is Input]
+        inputs.sort(key=lambda x:x.name)
+        return inputs
 
     def get_params(self):
         return flatten([node.get_params() for node in self.nodes.values()])

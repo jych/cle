@@ -5,4 +5,4 @@ from data import *
 class BouncingBalls(DesignMatrix):
 
     def theano_vars(self):
-        return [T.fmatrix('x'), T.fmatrix('y')]
+        return [T.fmatrix('inp'), T.fmatrix('out')]
