@@ -121,4 +121,28 @@ def secure_pickle_dump(object_, path):
     except:
         if "temp" in locals():
             os.remove(temp.name)
-        raise    
+        raise
+
+
+def unpickle(path):
+    """
+    .. todo::
+
+        WRITEME
+    """
+    f = open(path, 'rb')
+    m = cPickle.load(f)
+    f.close()
+    return m
+
+
+def initialize_from_pkl(arg, path):
+    """
+    .. todo::
+
+        WRITEME
+    """
+    f = open(path, 'rb')
+    m = cPickle.load(f)
+    arg.__setstate__(m.__dict__)
+    f.close()

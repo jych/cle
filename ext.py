@@ -165,26 +165,3 @@ class Picklize(object):
                 secure_pickle_dump(mainloop, path)
             except Exception:
                 raise
-
-def unpickle(path):
-    """
-    .. todo::
-
-        WRITEME
-    """
-    f = open(path, 'rb')
-    m = cPickle.load(f)
-    f.close()
-    return m
-
-
-def initialize_from_pkl(arg, path):
-    """
-    .. todo::
-
-        WRITEME
-    """
-    f = open(path, 'rb')
-    m = cPickle.load(f)
-    arg.__setstate__(m.__dict__)
-    f.close()
