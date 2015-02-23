@@ -21,6 +21,10 @@ def one_hot(labels, nC=None):
         code[i, j] = 1.
     return code
 
+def T_one_hot(labels, nC=None):
+    if nC is None: nC = T.max(labels) + 1
+    ranges = T.shape_padleft(T.arange(nC), labels.ndim)
+    return T.cast( T.eq(ranges, T.shape_padright(labels, 1)), 'floatX')
 
 def flatten(nested_list):
     flattened =\

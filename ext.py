@@ -10,8 +10,16 @@ from util import *
 
 logger = logging.getLogger(__name__)
 
+class Extension(object):
+    def exe(self, mainloop):
+        """
+        .. todo::
 
-class GradientClipping(object):
+            WRITEME
+        """
+        raise NotImplementedError()
+
+class GradientClipping(Extension):
     def __init__(self):
         """
         .. todo::
@@ -41,7 +49,7 @@ class GradientClipping(object):
         mainloop.grads = grads
 
 
-class EpochCount(object):
+class EpochCount(Extension):
     def __init__(self, num_epoch):
         """
         .. todo::
@@ -61,7 +69,7 @@ class EpochCount(object):
             mainloop.endloop = 1
 
 
-class Monitoring(object):
+class Monitoring(Extension):
     def __init__(self, freq, ddout=None, data=None):
         """
         .. todo::
@@ -139,7 +147,7 @@ class Monitoring(object):
             self.monitor_data_based_channels(mainloop)
 
 
-class Picklize(object):
+class Picklize(Extension):
     """
     .. todo::
 
@@ -167,7 +175,7 @@ class Picklize(object):
                 raise
 
 
-class EarlyStopping(object):
+class EarlyStopping(Extension):
     """
     .. todo::
 
