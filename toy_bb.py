@@ -18,44 +18,45 @@ from mnist import MNIST
 
 # Set your dataset
 try:
-    datapath = '/data/lisa/data/mnist/mnist.pkl'
+    datapath = '/data/lisatmp3/chungjun/bouncing_balls/bouncing_ball_2balls_16wh_20len_50000cases.npy'
     (tr_x, tr_y), (val_x, val_y), (test_x, test_y) = np.load(datapath)
 except IOError:
-    datapath = '/home/junyoung/data/mnist/mnist.pkl'
-    (tr_x, tr_y), (val_x, val_y), (test_x, test_y) = np.load(datapath)
+    datapath = '/home/junyoung/data/bouncing_balls/bouncing_ball_2balls_16wh_20len_50000cases.npy'
+    tr_x = np.load(datapath)
 savepath = '/home/junyoung/repos/cle/saved/'
 
 batch_size = 128
 num_batches = tr_x.shape[0] / batch_size
 
-trdata = MNIST(name='train',
-               data=(tr_x, tr_y),
-               batch_size=batch_size)
-valdata = MNIST(name='valid',
-                data=(val_x, val_y),
-                batch_size=batch_size)
+trdata = BouncingBalls(name='train',
+                       data=tr_x,
+                       batch_size=batch_size)
 
 # Choose the random initialization method
-init_W, init_b = ParamInit('randn'), ParamInit('zeros')
+init_W, init_U, init_b = ParamInit('randn'), ParamInit('ortho'), ParamInit('zeros')
 
 # Define nodes: objects
 inp, tar = trdata.theano_vars()
 x = Input(inp)
 y = Input(tar)
 proj = IdentityLayer()
-onehot = OnehotLayer(max_labels=10)
-h1 = FullyConnectedLayer(n_in=784,
-                         n_out=1000,
-                         unit='relu',
-                         init_W=init_W,
-                         init_b=init_b)
+onehot = IdentityLayer()
+h1 = RecurrentLayer(name='h1',
+                    n_in=256,
+                    n_out=200,
+                    unit='tanh',
+                    init_W=init_W,
+                    init_U=init_U,
+                    init_b=init_b)
 
-h2 = FullyConnectedLayer(n_in=1000,
-                         n_out=10,
-                         unit='softmax',
-                         init_W=init_W,
-                         init_b=init_b)
-cost = MulCrossEntropyLayer()
+h2 = RecurrentLayer(name='h2',
+                    n_in=256,
+                    n_out=200,
+                    unit='tanh',
+                    init_W=init_W,
+                    init_U=init_U,
+                    init_b=init_b)
+cost = MSELayer()
 
 # You will fill in your node and edge lists
 # and fed them to the model constructor

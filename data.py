@@ -33,8 +33,8 @@ class DesignMatrix(Data):
     def __init__(self, name, data, batch_size=None):
         self.name = name
         self.data = data
-        self.batch_size = batch_size if batch_size is not None else self.ndata
         self.ndata = self.num_examples()
+        self.batch_size = batch_size if batch_size is not None else self.ndata
         self.nbatch = int(np.ceil(self.ndata / float(self.batch_size)))
         self.index = -1
 

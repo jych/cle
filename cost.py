@@ -1,3 +1,4 @@
+import ipdb
 import numpy as np
 import theano.tensor as T
 
@@ -28,6 +29,18 @@ def NllMul(y, y_hat):
     return nll.mean()
 
 
+def MSE(y, y_hat):
+    """
+    Mean squared error
+
+    Parameters
+    ----------
+    todo..
+    """
+    mse =  T.sum(T.sqr(y - y_hat), axis=-1)
+    return mse.mean()
+
+
 class BinCrossEntropyLayer(Layer):
     """
     Binary cross-entropy layer
@@ -36,8 +49,8 @@ class BinCrossEntropyLayer(Layer):
     ----------
     todo..
     """
-    def __init__(self):
-        pass
+    def __init__(self, name):
+        self.name = name
 
     def fprop(self, y, y_hat):
         return NllBin(y, y_hat)
@@ -51,9 +64,28 @@ class MulCrossEntropyLayer(Layer):
     ----------
     todo..
     """
-    def __init__(self):
-        pass
+    def __init__(self, name):
+        self.name = name
 
     def fprop(self, x):
-        y_hat, y = x
+        x.sort(key=lambda x:x.name)
+        y, y_hat = x
         return NllMul(y, y_hat)
+
+
+class MSELayer(Layer):
+    """
+    Mean squared error layer
+
+    Parameters
+    ----------
+    todo..
+    """
+    def __init__(self, name):
+        self.name = name
+
+    def fprop(self, x):
+        x.sort(key=lambda x:x.name)
+        y, y_hat = x
+        ipdb.set_trace()
+        return NllMul(y, y_hat)       

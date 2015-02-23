@@ -62,8 +62,7 @@ class Net(Layer):
     def __init__(self, nodes, edges):
         self.nodes = nodes
         self.edges = edges
-        self.sym2idx = {node:i for i, node in enumerate(self.nodes)}
-        self.idx2sym = {i:node for i, node in enumerate(self.nodes)}
+        self.build_map(self.nodes)
         self.params = self.get_params()
 
     def get_inputs(self):
@@ -76,15 +75,15 @@ class Net(Layer):
         return flatten([node.get_params() for node in self.nodes.values()])
 
     def build_graph(self):
-        parent_map =\
+        self.parent_map =\
             build_parent_matrix(self.nodes, self.edges, self.sym2idx)
         sorted_nodes = topological_sort(self.edges)
         self.sorted_nodes = sorted_nodes
         while sorted_nodes:
             node = sorted_nodes.popleft()
             if isinstance(self.nodes[node], Input):
-                continue
-            parent = np.where(parent_map[:, self.sym2idx[node]]==1)[0]
+                continue 
+            parent = self.backtrace(self.sym2idx[node])
             if len(parent) > 1:
                 inp = []
                 for idx in parent:
@@ -95,11 +94,18 @@ class Net(Layer):
                 inp = self.nodes[parent_node].out
             self.nodes[node].out = self.nodes[node].fprop(inp)
 
-    def add_node(self, node):
-        for key, val in node.items():
+    def backtrace(self, idx):
+        parent = np.where(self.parent_map[:, idx]==1)[0]
+        return parent
+
+    def build_map(self, syms):
+        self.sym2idx = {sym:i for i, sym in enumerate(syms)}
+        self.idx2sym = {i:sym for i, sym in enumerate(syms)}
+
+    def add_node(self, nodes):
+        for key, val in nodes.items():
             self.nodes[key] = val
-        self.sym2idx = {node:i for i, node in enumerate(self.nodes)}
-        self.idx2sym = {i:node for i, node in enumerate(self.nodes)}
+        self.build_map(self.nodes)
         self.params = self.get_params()
 
     def add_edge(self, edge):

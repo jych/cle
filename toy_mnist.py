@@ -40,41 +40,37 @@ init_W, init_b = ParamInit('randn'), ParamInit('zeros')
 
 # Define nodes: objects
 inp, tar = trdata.theano_vars()
-x = Input(inp)
-y = Input(tar)
-proj = IdentityLayer()
-onehot = OnehotLayer(max_labels=10)
-h1 = FullyConnectedLayer(n_in=784,
+x = Input(name='x', inp=inp)
+y = Input(name='y', inp=tar)
+proj = IdentityLayer(name='x')
+onehot = OnehotLayer(name='y', max_labels=10)
+h1 = FullyConnectedLayer(name='h1',
+                         n_in=784,
                          n_out=1000,
                          unit='relu',
                          init_W=init_W,
                          init_b=init_b)
 
-h2 = FullyConnectedLayer(n_in=1000,
+h2 = FullyConnectedLayer(name='y_hat',
+                         n_in=1000,
                          n_out=10,
                          unit='softmax',
                          init_W=init_W,
                          init_b=init_b)
-cost = MulCrossEntropyLayer()
+cost = MulCrossEntropyLayer(name='cost')
 
 # You will fill in your node and edge lists
 # and fed them to the model constructor
 nodes = {
     'x': x,
-    #'y': y,
     'proj': proj,
-    #'onehot': onehot,
     'h1': h1,
-    'h2': h2,
-    #'cost': cost
+    'h2': h2
 }
 edges = {
     'x': 'proj',
-    #'y': 'onehot',
     'proj': 'h1',
-    'h1': 'h2',
-    #'h2': 'cost',
-    #'onehot': 'cost'
+    'h1': 'h2'
 }
 
 # Your model will build the Theano computational graph
@@ -102,7 +98,6 @@ err.name = 'error_rate'
 
 # Define your optimizer [Momentum(Nesterov) / RMSProp / Adam]
 optimizer = RMSProp(
-#optimizer = Adam(
     lr=0.001
 )
 

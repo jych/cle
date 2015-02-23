@@ -1,3 +1,4 @@
+import ipdb
 import numpy as np
 import theano.tensor as T
 
@@ -104,9 +105,10 @@ class Input(Layer):
     ----------
     .. todo::
     """
-    def __init__(self, inp):
+    def __init__(self, name, inp):
         #if not isinstance(type(inp), T.TensorVariable):
         #    raise ValueError("Input is not Theano variable.")
+        self.name = name
         self.out = inp
 
 
@@ -118,15 +120,17 @@ class OnehotLayer(Layer):
     ----------
     .. todo::
     """
-    def __init__(self, max_labels):
+    def __init__(self, name, max_labels):
+        self.name = name
         self.max_labels = max_labels
 
     def fprop(self, x):
-        one_hot = T.zeros((x.shape[0], self.max_labels))
-        one_hot = T.set_subtensor(
-            one_hot[T.arange(x.size) % x.shape[0], x.T.flatten()], 1
+        z = T.zeros((x.shape[0], self.max_labels))
+        z = T.set_subtensor(
+            z[T.arange(x.size) % x.shape[0], x.T.flatten()], 1
         )
-        return one_hot
+        z.name = self.name
+        return z
 
 
 class IdentityLayer(Layer):
@@ -137,10 +141,11 @@ class IdentityLayer(Layer):
     ----------
     .. todo::
     """
-    def __init__(self):
-        pass
+    def __init__(self, name):
+        self.name = name
 
     def fprop(self, x):
+        x.name = self.name
         return x
 
 
@@ -153,11 +158,13 @@ class FullyConnectedLayer(Layer):
     .. todo::
     """
     def __init__(self,
+                 name,
                  n_in,
                  n_out,
                  unit='relu',
                  init_W=ParamInit('randn'),
                  init_b=ParamInit('zeros')):
+        self.name = name
         self.nonlin = self.which_nonlin(unit)
         self.W = init_W.get(n_in, n_out)
         self.b = init_b.get(n_out)
@@ -168,6 +175,7 @@ class FullyConnectedLayer(Layer):
     def fprop(self, x):
         z = T.dot(x, self.W) + self.b
         z = self.nonlin(z)
+        z.name = self.name
         return z
 
 
@@ -199,16 +207,28 @@ class RecurrentLayer(Layer):
     ----------
     .. todo::
     """
-    def __init__(self):
-        raise NotImplementedError(
-            str(type(self)) + " does not implement Layer.init.")
+    def __init__(self,
+                 name,
+                 n_in,
+                 n_out,
+                 unit='tanh',
+                 init_W=ParamInit('randn'),
+                 init_U=ParamInit('ortho'),
+                 init_b=ParamInit('zeros')):
+        self.name = name
+        self.nonlin = self.which_nonlin(unit)
+        self.W = init_W.get(n_in, n_out)
+        self.U = init_U.get(n_out, n_out)
+        self.b = init_b.get(n_out)
 
     def get_params(self):
-        return []
+        return [self.W, self.U, self.b]
 
-    def fprop(self, x=None):
-        raise NotImplementedError(
-            str(type(self)) + " does not implement Layer.fprop.")
+    def fprop(self, x, z):
+        z_t = T.dot(x, self.W) + T.dot(z, self.U) + self.b
+        z_t = self.nonlin(z_t)
+        z_t.name = self.name
+        return z_t
 
 
 class LSTM(RecurrentLayer):

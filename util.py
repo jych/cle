@@ -67,6 +67,8 @@ def unpack(arg):
             return arg[0]
         else:
             return list[arg]
+    elif type(arg) is np.ndarray:
+        return arg[0]
     else:
         return arg
 
