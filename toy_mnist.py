@@ -98,7 +98,7 @@ extension = [
              path=savepath)
 ]
 
-toy_mnist = Training(
+mainloop = Training(
     name='toy_mnist',
     data=trdata,
     model=model,
@@ -107,7 +107,7 @@ toy_mnist = Training(
     outputs=[cost, err],
     extension=extension
 )
-toy_mnist.run()
+mainloop.run()
 
 # What are not done yet
 # 1. Monitoring                      done!
