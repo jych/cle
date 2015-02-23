@@ -28,6 +28,7 @@ def flatten(nested_list):
         if isinstance(i, (list, tuple)) else l + [i], lst, [])
     return flattened(nested_list)
 
+
 def uniqify(seq): 
    seen = {}
    result = []
@@ -36,6 +37,7 @@ def uniqify(seq):
        seen[ele] = 1
        result.append(ele)
    return result
+
 
 def castX(value):
     return theano._asarray(value, dtype=theano.config.floatX)
