@@ -62,29 +62,6 @@ class EpochCount(object):
             mainloop.endloop = 1
 
 
-class DataDrivenMonitoring(object):
-    def __init__(self, TheanoArgs):
-        """
-        .. todo::
-
-            WRITEME
-        """
-        self.name = 'ext_monitor'
-
-
-    def exe(self, mainloop):
-        """
-        .. todo::
-
-            WRITEME
-        """
-        self._cnt += 1
-        if np.mod(self._cnt, self.num_epoch)==0:
-            return True
-        else:
-            return False
-
-
 class Monitoring(object):
     def __init__(self, freq, ddout=None, data=None):
         """
