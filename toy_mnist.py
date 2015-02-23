@@ -109,7 +109,7 @@ optimizer = Adam(
 
 extension = [
     GradientClipping(),
-    EpochCount(10),
+    EpochCount(40),
     Monitoring(freq=100,
                ddout=[cost, err],
                data=[valdata]),

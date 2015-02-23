@@ -26,12 +26,14 @@ class Training(PickleMixin):
                  data,
                  model,
                  optimizer,
+                 cost,
                  outputs,
                  extension=None):
         self.name = name
         self.data = data
         self.model = model
         self.optimizer = optimizer
+        self.cost = cost
         self.extension = extension
         
         self.inputs = model.get_inputs()
@@ -44,9 +46,8 @@ class Training(PickleMixin):
         self.endloop = 0
        
     def build_training_graph(self):
-        cost = self.model.nodes['cost'].out
         self.grads = OrderedDict(izip(self.model.params,
-                                      T.grad(cost, self.model.params)))
+                                      T.grad(self.cost, self.model.params)))
         self.run_extension('ext_opt')
         updates = self.optimizer.get_updates(self.grads)
         return self.get_theano_graph(updates)
@@ -59,7 +60,7 @@ class Training(PickleMixin):
                                allow_input_downcast=True)
 
     def run(self):
-        logger.info("Starting main loop")    
+        logger.info("Entering main loop")    
         while self.run_epoch():
             pass
                  
