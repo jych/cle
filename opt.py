@@ -1,7 +1,6 @@
 import numpy as np
 import theano.tensor as T
 
-from theano.compat import six
 from theano.compat.python2x import OrderedDict
 from util import *
 
@@ -32,8 +31,8 @@ class Momentum(Optimizer):
         WRITEME
     """
     def __init__(self, 
-                 momentum=0.9, 
-                 nesterov_momentum=False,
+                 mom=0.9, 
+                 nesterov=False,
                  **kwargs):
         self.__dict__.update(locals())
         del self.self
@@ -46,19 +45,14 @@ class Momentum(Optimizer):
             WRITEME
         """
         updates = OrderedDict()
-
-        for param, grad in six.iteritems(grads):
-            vel = sharedX(param.get_value() * 0.)
-            if param.name is not None:
-                vel.name = 'vel_' + param.name
-
-            updates[vel] = self.momentum * vel - self.learning_rate * grad
-
-            inc = updates[vel]
-            if self.nesterov_momentum:
-                inc = self.momentum * inc - self.learning_rate * grad
-            updates[param] = param + inc
-
+        for p, g in grads.items():
+            u = sharedX(param.get_value() * 0.)
+            u_t = self.mom * u - self.lr * g
+            if self.nesterov:
+                u_t = self.mom * u_t - self.lr * g
+            p_t = p + u_t
+            updates[u] = u_t
+            updates[p] = p_t
         return updates
 
 
@@ -91,7 +85,6 @@ class RMSProp(Optimizer):
             g_t = g / T.sqrt(sqr_grad_t - avg_grad_t**2 + self.e)
             u_t = self.mom * u - self.lr * g_t
             p_t = p + u_t
-
             updates[avg_grad] = avg_grad_t
             updates[sqr_grad] = sqr_grad_t
             updates[u] = u_t
