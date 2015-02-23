@@ -1,4 +1,8 @@
+import cPickle
 import numpy as np
+import os
+import shutil
+import tempfile
 import theano
 import theano.tensor as T
 from theano.tensor.shared_randomstreams import RandomStreams
@@ -74,7 +78,7 @@ def tolist(arg):
 
 class PickleMixin(object):
     """
-    Hack for pickling: borrowed from Kyle Kastner
+    This code is brought from Kyle Kastner
 
     ----------
     .. todo::
@@ -96,3 +100,25 @@ class PickleMixin(object):
  
     def __setstate__(self, state):
         self.__dict__ = state
+
+
+def secure_pickle_dump(object_, path):
+    """
+    This code is brought from Blocks
+    Robust serialization - does not corrupt your files when failed.
+
+    Parameters
+    ----------
+    object_ : object
+        The object to be saved to the disk.
+    path : str
+        The destination path.
+    """
+    try:
+        with tempfile.NamedTemporaryFile(delete=False) as temp:
+            cPickle.dump(object_, temp)
+        shutil.move(temp.name, path)
+    except:
+        if "temp" in locals():
+            os.remove(temp.name)
+        raise    

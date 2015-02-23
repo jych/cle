@@ -14,7 +14,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-class Training(object):
+class Training(PickleMixin):
     """
     WRITEME
 
@@ -23,11 +23,13 @@ class Training(object):
     .. todo::
     """
     def __init__(self,
+                 name,
                  data,
                  model,
                  optimizer,
                  outputs,
                  extension=None):
+        self.name = name
         self.data = data
         self.model = model
         self.optimizer = optimizer
@@ -67,6 +69,7 @@ class Training(object):
             pass
         self.trainlog._epoch_seen += 1
         self.run_extension('ext_term')
+        self.run_extension('ext_save')
         if self.end_training():
             return False
         return True

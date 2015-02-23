@@ -1,6 +1,7 @@
 import ipdb
-import numpy as np
 import logging
+import numpy as np
+import os
 import theano.tensor as T
 
 from itertools import izip
@@ -27,18 +28,16 @@ class GradientClipping(object):
         """
         grads = mainloop.grads
         g_norm = 0.
-        for grad in grads.values():
-            grad /= 128
-            g_norm += (grad ** 2).sum()
+        for g in grads.values():
+            g /= 128
+            g_norm += (g**2).sum()
         not_finite = T.or_(T.isnan(g_norm), T.isinf(g_norm))
         g_norm = T.sqrt(g_norm)
         scaling_num = 5
         scaling_den = T.maximum(5, g_norm)
-        for param, grad in grads.items():
-            grads[param] = T.switch(not_finite,
-                                    0.1 * param,
-                                    grad * (scaling_num / scaling_den))
-
+        r = scaling_num / scaling_den
+        for p, g in grads.items():
+            grads[p] = T.switch(not_finite, 0.1 * p, g * r)
         mainloop.grads = grads
 
 
@@ -76,6 +75,11 @@ class Monitoring(object):
         self.monitor_fn = None
 
     def monitor_data_based_channels(self, mainloop):
+        """
+        .. todo::
+
+            WRITEME
+        """
         if self.monitor_fn is None:
             inputs = mainloop.model.get_inputs()
             self.build_computational_graph(inputs, self.ddout)
@@ -91,6 +95,8 @@ class Monitoring(object):
             for record, data in zip(data_record, self.data):
                 for i, ch in enumerate(self.ddout):
                     this_mean = record[:, i].mean()
+                    if this_mean is np.nan:
+                        raise ValueError("NaN occured in output.")
                     this_ch.append(this_mean)
                     logger.info("\t%s_%s: %f" % (data.name, ch.name, this_mean))
             mainloop.trainlog._ddmonitors.append(this_ch)
@@ -98,6 +104,11 @@ class Monitoring(object):
             pass
 
     def build_computational_graph(self, inputs, outputs):
+        """
+        .. todo::
+
+            WRITEME
+        """
         self.monitor_fn = theano.function(inputs, outputs,
                                           on_unused_input='ignore',
                                           allow_input_downcast=True)
@@ -124,3 +135,31 @@ class Monitoring(object):
                 this_mean = np.asarray(log._batches)[srt: end, i].mean()
                 logger.info("\t%s: %f" % (out, this_mean))
             self.monitor_data_based_channels(mainloop)
+
+
+class Picklize(object):
+    """
+    .. todo::
+
+        WRITEME
+    """
+    def __init__(self, freq, path):
+        self.name = 'ext_save'
+        self.freq = freq
+        if not os.path.exists(path):
+            os.makedirs(path)
+        self.path = path
+
+    def exe(self, mainloop):
+        """
+        Pickle the mainloop
+        """
+        if np.mod(mainloop.trainlog._epoch_seen, self.freq)==0:
+            pklpath = mainloop.name + '.pkl'
+            path = os.path.join(self.path, pklpath)
+            logger.info("")
+            logger.info("Saving model to %s" % path)
+            try:
+                secure_pickle_dump(mainloop, path)
+            except Exception:
+                raise            
