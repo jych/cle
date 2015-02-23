@@ -23,7 +23,7 @@ try:
 except IOError:
     datapath = '/home/junyoung/data/mnist/mnist.pkl'
     (tr_x, tr_y), (val_x, val_y), (test_x, test_y) = np.load(datapath)
-savepath = '/home/junyoung/repos/cle/exps/'
+savepath = '/home/junyoung/repos/cle/saved/'
 
 batch_size = 128
 num_batches = tr_x.shape[0] / batch_size
@@ -130,8 +130,8 @@ toy_mnist.run()
 # What are not done yet
 # 1. Monitoring                      done!
 # 2. Serialization / Checkpoint      done! Thanks to Kyle and Blocks
-# 3. Dropout
-# 4. Other Regul.: use Theano.clone
+# 3. Dropout: use Theano.clone
+# 4. Other Regularization
 # 5. RNN                             jych is doing
 # 6. CNN                             donghyunlee is doing
 # 7. VAE                             laurent-dinh????????? :)
