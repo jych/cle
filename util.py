@@ -1,3 +1,4 @@
+import ipdb
 import cPickle
 import numpy as np
 import os
@@ -22,11 +23,19 @@ def one_hot(labels, nC=None):
 
 
 def flatten(nested_list):
-    flattened_list = []
-    for x in nested_list:
-        flattened_list.extend(x)
-    return flattened_list
+    flattened =\
+        lambda lst: reduce(lambda l, i: l + flatten(i)\
+        if isinstance(i, (list, tuple)) else l + [i], lst, [])
+    return flattened(nested_list)
 
+def uniqify(seq): 
+   seen = {}
+   result = []
+   for ele in seq:
+       if ele in seen: continue
+       seen[ele] = 1
+       result.append(ele)
+   return result
 
 def castX(value):
     return theano._asarray(value, dtype=theano.config.floatX)
@@ -71,6 +80,7 @@ def unpack(arg):
         return arg[0]
     else:
         return arg
+
 
 def tolist(arg):
     if type(arg) is not list:

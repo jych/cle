@@ -68,7 +68,6 @@ class MulCrossEntropyLayer(Layer):
         self.name = name
 
     def fprop(self, x):
-        x.sort(key=lambda x:x.name)
         y, y_hat = x
         return NllMul(y, y_hat)
 
@@ -85,7 +84,5 @@ class MSELayer(Layer):
         self.name = name
 
     def fprop(self, x):
-        x.sort(key=lambda x:x.name)
         y, y_hat = x
-        ipdb.set_trace()
         return NllMul(y, y_hat)       

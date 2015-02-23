@@ -42,8 +42,7 @@ init_W, init_b = ParamInit('randn'), ParamInit('zeros')
 inp, tar = trdata.theano_vars()
 x = Input(name='x', inp=inp)
 y = Input(name='y', inp=tar)
-proj = IdentityLayer(name='x')
-onehot = OnehotLayer(name='y', max_labels=10)
+onehot = OnehotLayer('onehot', max_labels=10)
 h1 = FullyConnectedLayer(name='h1',
                          n_in=784,
                          n_out=1000,
@@ -51,7 +50,7 @@ h1 = FullyConnectedLayer(name='h1',
                          init_W=init_W,
                          init_b=init_b)
 
-h2 = FullyConnectedLayer(name='y_hat',
+h2 = FullyConnectedLayer(name='h2',
                          n_in=1000,
                          n_out=10,
                          unit='softmax',
@@ -61,30 +60,18 @@ cost = MulCrossEntropyLayer(name='cost')
 
 # You will fill in your node and edge lists
 # and fed them to the model constructor
-nodes = {
-    'x': x,
-    'proj': proj,
-    'h1': h1,
-    'h2': h2
-}
-edges = {
-    'x': 'proj',
-    'proj': 'h1',
-    'h1': 'h2'
-}
+graph = [
+    [x, h1],
+    [h1, h2],
+    [[onehot, h2], cost],
+    [y, onehot]
+]
 
 # Your model will build the Theano computational graph
 # based on topological sorting on given nodes and edges
 # It will Build a DAG using depth-first search
 # Your model is smart enough to take care of the rest
-model = Net(nodes=nodes, edges=edges)
-
-# You have already defined your nodes and edges
-# But you want to add another nodes and edges
-# It's not too late, add the nodes and edges
-# Then, build the Theano computational graph again
-model.add_node({'y': y, 'onehot': onehot, 'cost': cost})
-model.add_edge({'y': 'onehot', 'onehot': 'cost', 'h2': 'cost'})
+model = Net(graph=graph)
 model.build_graph()
 
 # You can access any output of a node by simply doing

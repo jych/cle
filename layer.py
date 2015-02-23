@@ -1,5 +1,6 @@
 import ipdb
 import numpy as np
+import scipy
 import theano.tensor as T
 
 from util import *
@@ -65,7 +66,7 @@ class NonLin(object):
         return T.nnet.softmax(z)
 
     def tanh(self, z):
-        return T.nnet.tanh(z)
+        return T.tanh(z)
 
     def steeper_sigmoid(self, z):
         return 1. / (1. + T.exp(-3.75 * z))
@@ -106,9 +107,8 @@ class Input(Layer):
     .. todo::
     """
     def __init__(self, name, inp):
-        #if not isinstance(type(inp), T.TensorVariable):
-        #    raise ValueError("Input is not Theano variable.")
         self.name = name
+        inp.name = name
         self.out = inp
 
 
@@ -131,22 +131,6 @@ class OnehotLayer(Layer):
         )
         z.name = self.name
         return z
-
-
-class IdentityLayer(Layer):
-    """
-    Identity layer
-
-    Parameters
-    ----------
-    .. todo::
-    """
-    def __init__(self, name):
-        self.name = name
-
-    def fprop(self, x):
-        x.name = self.name
-        return x
 
 
 class FullyConnectedLayer(Layer):
@@ -224,7 +208,8 @@ class RecurrentLayer(Layer):
     def get_params(self):
         return [self.W, self.U, self.b]
 
-    def fprop(self, x, z):
+    def fprop(self, h):
+        x, z = h
         z_t = T.dot(x, self.W) + T.dot(z, self.U) + self.b
         z_t = self.nonlin(z_t)
         z_t.name = self.name

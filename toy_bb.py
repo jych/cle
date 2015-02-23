@@ -11,10 +11,8 @@ from opt import *
 from net import *
 from train import *
 from util import *
-from mnist import MNIST
+from bouncing_balls import BouncingBalls
 
-
-# Toy example to use cle!
 
 # Set your dataset
 try:
@@ -37,59 +35,31 @@ init_W, init_U, init_b = ParamInit('randn'), ParamInit('ortho'), ParamInit('zero
 
 # Define nodes: objects
 inp, tar = trdata.theano_vars()
-x = Input(inp)
-y = Input(tar)
-proj = IdentityLayer()
-onehot = IdentityLayer()
-h1 = RecurrentLayer(name='h1',
-                    n_in=256,
-                    n_out=200,
-                    unit='tanh',
-                    init_W=init_W,
-                    init_U=init_U,
-                    init_b=init_b)
-
-h2 = RecurrentLayer(name='h2',
-                    n_in=256,
-                    n_out=200,
-                    unit='tanh',
-                    init_W=init_W,
-                    init_U=init_U,
-                    init_b=init_b)
-cost = MSELayer()
-
-# You will fill in your node and edge lists
-# and fed them to the model constructor
+x = Input('h1_inp1', inp)
+h1_0 = Input('h1_inp2', T.fmatrix())
+h1 = RecurrentLayer('h2_inp1', 256, 200, 'tanh', init_W, init_U, init_b)
+h2_0 = Input('h2_inp2', T.fmatrix())
+h2 = RecurrentLayer('cost_inp1', 200, 200, 'tanh', init_W, init_U, init_b)
+y = Input('cost_inp2', tar)
+cost = MSELayer('cost')
 nodes = {
     'x': x,
-    #'y': y,
-    'proj': proj,
-    #'onehot': onehot,
+    'y': y,
     'h1': h1,
     'h2': h2,
-    #'cost': cost
+    'h1_0': h1_0,
+    'h2_0': h2_0,
+    'cost': cost
 }
 edges = {
-    'x': 'proj',
-    #'y': 'onehot',
-    'proj': 'h1',
+    'x': 'h1',
+    'h1_0': 'h1', 
     'h1': 'h2',
-    #'h2': 'cost',
-    #'onehot': 'cost'
+    'h2_0': 'h2',
+    'h2': 'cost',
+    'y': 'cost'
 }
-
-# Your model will build the Theano computational graph
-# based on topological sorting on given nodes and edges
-# It will Build a DAG using depth-first search
-# Your model is smart enough to take care of the rest
 model = Net(nodes=nodes, edges=edges)
-
-# You have already defined your nodes and edges
-# But you want to add another nodes and edges
-# It's not too late, add the nodes and edges
-# Then, build the Theano computational graph again
-model.add_node({'y': y, 'onehot': onehot, 'cost': cost})
-model.add_edge({'y': 'onehot', 'onehot': 'cost', 'h2': 'cost'})
 model.build_graph()
 
 # You can access any output of a node by simply doing
