@@ -74,7 +74,6 @@ class RMSProp(Optimizer):
             WRITEME
         """
         updates = OrderedDict()
-
         for p, g in grads.items():
             u = sharedX(p.get_value() * 0.)
             avg_grad = sharedX(p.get_value() * 0.)
@@ -89,7 +88,6 @@ class RMSProp(Optimizer):
             updates[sqr_grad] = sqr_grad_t
             updates[u] = u_t
             updates[p] = p_t
-
         return updates
 
 
@@ -114,7 +112,6 @@ class Adam(Optimizer):
         m = OrderedDict()
         v = OrderedDict()
         cnt = sharedX(0, 'counter')
-
         for p, g in grads.items():
             m = sharedX(p.get_value() * 0.)
             v = sharedX(p.get_value() * 0.)
@@ -127,7 +124,5 @@ class Adam(Optimizer):
             updates[m] = m_t
             updates[v] = v_t
             updates[p] = p_t
-
         updates[cnt] = cnt + 1
-
         return updates
