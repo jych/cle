@@ -72,7 +72,7 @@ err = error(predict(model.nodes['h2'].out), predict(model.nodes['onehot'].out))
 cost.name = 'cost'
 err.name = 'error_rate'
 
-# Define your optimizer: Momentum(Nesterov, RMSProp, Adam
+# Define your optimizer: Momentum(Nesterov), RMSProp, Adam
 optimizer = RMSProp(
     lr=0.001
 )
