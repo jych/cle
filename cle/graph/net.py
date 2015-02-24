@@ -19,7 +19,6 @@ class Net(object):
         self.set_nodes(nodes)
         self.initialize()
         self.params = self.get_params()
-        self.build_feedforward_graph()
 
     def set_inputs(self, nodes):
         inputs = []
@@ -45,7 +44,7 @@ class Net(object):
                 for par_node in tolist(parent):
                     self.graph[par_node.name] = node.name
 
-    def build_feedforward_graph(self):
+    def build_graph(self):
         sorted_nodes = topological_sort(self.graph)
         while sorted_nodes:
             node = sorted_nodes.popleft()
@@ -56,7 +55,13 @@ class Net(object):
             for par in parent:
                 inp.append(par.out)
             self.nodes[node].out = self.nodes[node].fprop(inp)
-    
+
+    def build_recurrent_graph(self):
+
+    def build_scan_graph(self, *args):
+        
+
+
     def get_params(self):
         return flatten([node.get_params() for node in self.nodes.values()])
 

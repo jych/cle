@@ -64,6 +64,7 @@ nodes = [x, y, onehot, h1, h2, cost]
 
 # Your model will build the Theano computational graph
 model = Net(nodes=nodes)
+model.build_graph()
 
 # You can access any output of a node by simply doing model.nodes[$node_name].out
 cost = model.nodes['cost'].out
