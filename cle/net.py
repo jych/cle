@@ -1,39 +1,6 @@
 import numpy as np
 
-from cle.cle.util import *
-from cle.cle.layers import *
-from cle.cle.layers.layer import *
-from collections import deque
-
-
-def topological_sort(graph):
-    """
-    Topological sort
-
-    Parameters
-    ----------
-    None
-    """
-    GRAY, BLACK = 0, 1
-    order, enter, state = deque(), set(graph), {}
-    this_graph = dict()
-    for node in graph:
-        this_graph[node] = tolist(graph[node])
-    def dfs(node):
-        state[node] = GRAY
-        for k in this_graph.get(node, ()):
-            sk = state.get(k, None)
-            if sk == GRAY:
-                raise ValueError("cycle")
-            if sk == BLACK:
-                continue
-            enter.discard(k)
-            dfs(k)
-        order.appendleft(node)
-        state[node] = BLACK
-    while enter:
-        dfs(enter.pop())
-    return order
+from cle.cle.util import flatten, tolist, topological_sort
 
 
 class Net(object):
@@ -48,7 +15,7 @@ class Net(object):
         if inputs is None:
             inputs = self.set_inputs(nodes)
         self.inputs = inputs
-        self.seg_graph(nodes)
+        self.set_graph(nodes)
         self.set_nodes(nodes)
         self.initialize()
         self.params = self.get_params()
@@ -81,8 +48,8 @@ class Net(object):
         sorted_nodes = topological_sort(self.graph)
         while sorted_nodes:
             node = sorted_nodes.popleft()
-            if isinstance(self.nodes[node], InputLayer):
-                continue 
+            if self.nodes[node].isroot:
+                continue
             parent = self.nodes[node].parent
             inp = []
             for par in parent:

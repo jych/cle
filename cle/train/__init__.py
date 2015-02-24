@@ -1,13 +1,11 @@
 import ipdb
 import logging
 import theano
+import theano.tensor as T
 import time
 
 from itertools import izip
-from cle.cle.layers import *
-from cle.cle.layers.layer import *
-from cle.cle.opt import *
-from cle.cle.util import *
+from cle.cle.util import PickleMixin, OrderedDict, tolist
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

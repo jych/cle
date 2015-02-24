@@ -2,10 +2,10 @@ import ipdb
 import logging
 import numpy as np
 import os
+import theano
 import theano.tensor as T
 
 from itertools import izip
-from cle.cle.util import *
 
 
 logger = logging.getLogger(__name__)

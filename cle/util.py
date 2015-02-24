@@ -6,6 +6,8 @@ import shutil
 import tempfile
 import theano
 import theano.tensor as T
+
+from collections import deque
 from theano.tensor.shared_randomstreams import RandomStreams
 from theano.sandbox.rng_mrg import MRG_RandomStreams
 from theano.compat.python2x import OrderedDict
@@ -14,21 +16,52 @@ from theano.compat.python2x import OrderedDict
 rng = np.random.RandomState((2015, 2, 19))
 
 
-def one_hot(labels, nC=None):
-    nC = np.max(labels) + 1 if nC is None else nC
-    code = np.zeros((len(labels), nC), dtype='float32')
+def topological_sort(graph):
+    """
+    Topological sort
+
+    Parameters
+    ----------
+    None
+    """
+    GRAY, BLACK = 0, 1
+    order, enter, state = deque(), set(graph), {}
+    this_graph = dict()
+    for node in graph:
+        this_graph[node] = tolist(graph[node])
+    def dfs(node):
+        state[node] = GRAY
+        for k in this_graph.get(node, ()):
+            sk = state.get(k, None)
+            if sk == GRAY:
+                raise ValueError("cycle")
+            if sk == BLACK:
+                continue
+            enter.discard(k)
+            dfs(k)
+        order.appendleft(node)
+        state[node] = BLACK
+    while enter:
+        dfs(enter.pop())
+    return order
+
+
+def one_hot(labels, nlabels=None):
+    nlabels = np.max(labels) + 1 if nlabels is None else nlabels
+    code = np.zeros((len(labels), nlabels), dtype='float32')
     for i, j in enumerate(labels):
         code[i, j] = 1.
     return code
 
-def T_one_hot(labels, nC=None):
-    if nC is None: nC = T.max(labels) + 1
-    ranges = T.shape_padleft(T.arange(nC), labels.ndim)
-    return T.cast( T.eq(ranges, T.shape_padright(labels, 1)), 'floatX')
+
+def T_one_hot(labels, nlabels=None):
+    if nlabels is None: nlabels = T.max(labels) + 1
+    ranges = T.shape_padleft(T.arange(nlabels), labels.ndim)
+    return T.cast(T.eq(ranges, T.shape_padright(labels, 1)), 'floatX')
+
 
 def flatten(nested_list):
-    flattened =\
-        lambda lst: reduce(lambda l, i: l + flatten(i)\
+    flattened = lambda lst: reduce(lambda l, i: l + flatten(i)\
         if isinstance(i, (list, tuple)) else l + [i], lst, [])
     return flattened(nested_list)
 
