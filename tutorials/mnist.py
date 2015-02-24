@@ -3,15 +3,14 @@ import theano
 import theano.tensor as T
 import time
 
-from cost import *
-from data import *
-from ext import *
-from layer import *
-from opt import *
-from net import *
-from train import *
-from util import *
-from mnist import MNIST
+from cle.cle.ext import *
+from cle.cle.layers import *
+from cle.cle.layers.layer import *
+from cle.cle.opt import *
+from cle.cle.net import *
+from cle.cle.train import *
+from cle.cle.util import *
+from cle.datasets.mnist import MNIST
 
 
 # Toy example to use cle!
@@ -36,42 +35,34 @@ valdata = MNIST(name='valid',
                 batch_size=batch_size)
 
 # Choose the random initialization method
-init_W, init_b = InitParams('randn'), InitParams('zeros')
+init_W, init_b = InitCell('randn'), InitCell('zeros')
 
 # Define nodes: objects
 inp, tar = trdata.theano_vars()
-x = Input(name='x', inp=inp)
-y = Input(name='y', inp=tar)
-onehot = OnehotLayer('onehot', max_labels=10)
+x = InputLayer(name='inp', root=inp, nout=784)
+y = InputLayer(name='tar', root=tar, nout=1)
+onehot = OnehotLayer(name='onehot',
+                     parent=[y],
+                     nout=10)
 h1 = FullyConnectedLayer(name='h1',
-                         n_in=784,
-                         n_out=1000,
+                         parent=[x],
+                         nout=1000,
                          unit='relu',
                          init_W=init_W,
                          init_b=init_b)
-
 h2 = FullyConnectedLayer(name='h2',
-                         n_in=1000,
-                         n_out=10,
+                         parent=[h1],
+                         nout=10,
                          unit='softmax',
                          init_W=init_W,
                          init_b=init_b)
-cost = MulCrossEntropyLayer(name='cost')
+cost = MulCrossEntropyLayer(name='cost', parent=[onehot, h2])
 
-# You will fill in your node and edge lists
-# and fed them to the model constructor
-graph = [
-    [x, h1],
-    [h1, h2],
-    [[onehot, h2], cost],
-    [y, onehot]
-]
+# You will fill in a list of nodes and fed them to the model constructor
+nodes = [x, y, onehot, h1, h2, cost]
 
 # Your model will build the Theano computational graph
-# based on topological sorting on given nodes and edges
-# It will Build a DAG using depth-first search
-# Your model is smart enough to take care of the rest
-model = Net(graph=graph)
+model = Net(nodes=nodes)
 model.build_graph()
 
 # You can access any output of a node by simply doing

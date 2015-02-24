@@ -2,7 +2,7 @@ import numpy as np
 import theano.tensor as T
 
 from theano.compat.python2x import OrderedDict
-from util import *
+from cle.cle.util import *
 
 
 class Optimizer(object):

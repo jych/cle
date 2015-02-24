@@ -5,7 +5,7 @@ import os
 import theano.tensor as T
 
 from itertools import izip
-from util import *
+from cle.cle.util import *
 
 
 logger = logging.getLogger(__name__)
@@ -18,6 +18,7 @@ class Extension(object):
             WRITEME
         """
         raise NotImplementedError()
+
 
 class GradientClipping(Extension):
     def __init__(self):

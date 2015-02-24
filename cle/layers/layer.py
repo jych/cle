@@ -1,139 +1,11 @@
 import ipdb
 import numpy as np
-import scipy
 import theano.tensor as T
-
-from util import *
-
-
-class InitParams(object):
-    """
-    WRITEME
-
-    Parameters
-    ----------
-    .. todo::
-    """
-    def __init__(self,
-                 init_type='randn',
-                 mean=0.,
-                 stddev=0.01,
-                 low=-0.08,
-                 high=0.08):
-        self.initializer = {
-            'rand': lambda x: np.random.uniform(low=low,
-                                                high=high,
-                                                size=x.shape),
-            'randn': lambda x: np.random.normal(loc=mean,
-                                                scale=stddev,
-                                                size=x.shape),
-            'zeros': lambda x: np.zeros(x.shape),
-            'const': lambda x: np.zeros(x.shape) + mean,
-            'ortho': lambda x: scipy.linalg.orth(
-                np.random.normal(loc=mean, scale=stddev, size=x.shape))
-        }[init_type]
-
-    def set(self, sharedX_var):
-        numpy_var = sharedX_var.get_value()
-        numpy_var = castX(self.initializer(numpy_var))
-        sharedX_var.set_value(numpy_var)
-
-    def get(self, *shape):
-        return sharedX(self.initializer(np.zeros(shape)))
+from cle.cle.layers import StemCell, RandomCell
+from cle.cle.util import *
 
 
-class NonLin(object):
-    """
-    WRITEME
-
-    Parameters
-    ----------
-    .. todo::
-    """
-    def which_nonlin(self, nonlin):
-        return getattr(self, nonlin)
-
-    def linear(self, z):
-        return z
-
-    def relu(self, z):
-        return z * (z > 0.)
-
-    def sigmoid(self, z):
-        return T.nnet.sigmoid(z)
-
-    def softmax(self, z):
-        return T.nnet.softmax(z)
-
-    def tanh(self, z):
-        return T.tanh(z)
-
-    def steeper_sigmoid(self, z):
-        return 1. / (1. + T.exp(-3.75 * z))
-
-    def hard_tanh(self, z):
-        return T.clip(z, -1., 1.)
-
-    def hard_sigmoid(self, z):
-        return T.clip(z + 0.5, 0., 1.)
-
-
-class Layer(NonLin, object):
-    """
-    Abstract class for layers
-
-    Parameters
-    ----------
-    .. todo::
-    """
-    def __init__(self):
-        raise NotImplementedError(
-            str(type(self)) + " does not implement Layer.init.")
-
-    def get_params(self):
-        return []
-
-    def fprop(self, x=None):
-        raise NotImplementedError(
-            str(type(self)) + " does not implement Layer.fprop.")
-
-
-class Input(Layer):
-    """
-    Abstract class for layers
-
-    Parameters
-    ----------
-    .. todo::
-    """
-    def __init__(self, name, inp):
-        self.name = name
-        inp.name = name
-        self.out = inp
-
-
-class OnehotLayer(Layer):
-    """
-    Transform a scalar to one-hot vector
-
-    Parameters
-    ----------
-    .. todo::
-    """
-    def __init__(self, name, max_labels):
-        self.name = name
-        self.max_labels = max_labels
-
-    def fprop(self, x):
-        z = T.zeros((x.shape[0], self.max_labels))
-        z = T.set_subtensor(
-            z[T.arange(x.size) % x.shape[0], x.T.flatten()], 1
-        )
-        z.name = self.name
-        return z
-
-
-class FullyConnectedLayer(Layer):
+class FullyConnectedLayer(StemCell):
     """
     Fully connected layer
 
@@ -142,28 +14,24 @@ class FullyConnectedLayer(Layer):
     .. todo::
     """
     def __init__(self,
-                 name,
-                 n_in,
-                 n_out,
-                 unit='relu',
-                 init_W=ParamInit('randn'),
-                 init_b=ParamInit('zeros')):
-        self.name = name
-        self.nonlin = self.which_nonlin(unit)
-        self.W = init_W.get(n_in, n_out)
-        self.b = init_b.get(n_out)
+                 unit,
+                 **kwargs):
+        self.unit = unit
+        super(FullyConnectedLayer, self).__init__(**kwargs)
 
-    def get_params(self):
-        return [self.W, self.b]
-
-    def fprop(self, x):
-        z = T.dot(x, self.W) + self.b
-        z = self.nonlin(z)
+    def fprop(self, xx):
+        # xx could be a list of inputs.
+        # depending the number of parents.
+        z = T.zeros(self.params[-1].shape)
+        for i, x in enumerate(xx):
+            z += T.dot(x, self.params[i])
+        z += self.params[-1]
+        z = self.nonlin(self.unit)(z)
         z.name = self.name
         return z
 
 
-class ConvLayer(Layer):
+class ConvLayer(StemCell):
     """
     Convolutional layer
 
@@ -175,15 +43,12 @@ class ConvLayer(Layer):
         raise NotImplementedError(
             str(type(self)) + " does not implement Layer.init.")
 
-    def get_params(self):
-        return []
-
     def fprop(self, x=None):
         raise NotImplementedError(
             str(type(self)) + " does not implement Layer.fprop.")
 
 
-class RecurrentLayer(Layer):
+class RecurrentLayer(StemCell):
     """
     Base recurrent layer
 
@@ -201,27 +66,22 @@ class RecurrentLayer(Layer):
     def fprop(self, x=None):
         raise NotImplementedError(
             str(type(self)) + " does not implement Layer.fprop.")
+
+    """
     def get_init_state(self, batch_size)
         n_out = self.get_dim(name)
         return T.zeros((batch_size, n_out))
-
-
+    """
+"""
 class SimpleRecurrent(RecurrentLayer):
-    """
-    Naive recurrent layer
-
-    Parameters
-    ----------
-    .. todo::
-    """
     def __init__(self,
                  name,
                  n_in,
                  n_out,
                  unit='tanh',
-                 init_W=ParamInit('randn'),
-                 init_U=ParamInit('ortho'),
-                 init_b=ParamInit('zeros')):
+                 init_W=InitParams('randn'),
+                 init_U=InitParams('ortho'),
+                 init_b=InitParams('zeros')):
         self.name = name
         self.nonlin = self.which_nonlin(unit)
         self.W = init_W.get(n_in, n_out)
@@ -244,15 +104,7 @@ class SimpleRecurrent(RecurrentLayer):
         if name in :q
 
 
-
 class LSTM(RecurrentLayer):
-    """
-    LSTM layer
-
-    Parameters
-    ----------
-    .. todo::
-    """
     def __init__(self):
         raise NotImplementedError(
             str(type(self)) + " does not implement Layer.init.")
@@ -263,3 +115,4 @@ class LSTM(RecurrentLayer):
     def fprop(self, x=None):
         raise NotImplementedError(
             str(type(self)) + " does not implement Layer.fprop.")
+"""

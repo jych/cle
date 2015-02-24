@@ -4,9 +4,10 @@ import theano
 import time
 
 from itertools import izip
-from layer import *
-from opt import *
-from util import *
+from cle.cle.layers import *
+from cle.cle.layers.layer import *
+from cle.cle.opt import *
+from cle.cle.util import *
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -32,12 +33,10 @@ class Training(PickleMixin):
         self.data = data
         self.model = model
         self.optimizer = optimizer
-        self.cost = cost
-        self.extension = extension
-        
         self.inputs = model.get_inputs()
-        outputs = tolist(outputs)
-        self.outputs = outputs
+        self.cost = cost
+        self.outputs = tolist(outputs)
+        self.extension = extension
 
         self.cost_fn = self.build_training_graph()
         self.trainlog = TrainLog()
