@@ -48,9 +48,9 @@ class Net(object):
         if inputs is None:
             inputs = self.set_inputs(nodes)
         self.inputs = inputs
-        self.build_topology(nodes)
+        self.seg_graph(nodes)
         self.set_nodes(nodes)
-        self.initialize_nodes()
+        self.initialize()
         self.params = self.get_params()
 
     def set_inputs(self, nodes):
@@ -65,11 +65,11 @@ class Net(object):
         for node in nodes:
             self.nodes[node.name] = node
 
-    def initialize_nodes(self):
+    def initialize(self):
         for node in self.nodes.values():
             node.initialize()
 
-    def build_topology(self, nodes):
+    def set_graph(self, nodes):
         self.graph = {}
         for node in nodes:
             if not node.isroot:
