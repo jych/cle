@@ -2,6 +2,7 @@ import ipdb
 import numpy as np
 import scipy
 import theano.tensor as T
+
 from theano.sandbox.rng_mrg import MRG_RandomStreams
 from cle.cle.cost import NllBin, NllMul, MSE
 from cle.cle.util import sharedX, tolist, unpack
@@ -88,6 +89,41 @@ class NonlinCell(object):
         return T.clip(z + 0.5, 0., 1.)
 
 
+class RandomCell(object):
+    seed_rng = np.random.RandomState((2015, 2, 19))
+    """
+    WRITEME
+
+    Parameters
+    ----------
+    .. todo::
+    """
+    def __init__(self,
+                 theano_seed=None,
+                 **kwargs):
+        self.theano_seed = theano_seed
+        
+    def rng(self):
+        if getattr(self, '_rng', None) is None:
+            self._rng = np.random.RandomState(self.seed)
+        return self._rng
+
+    def seed(self):
+        if getattr(self, '_seed', None) is None:
+            self._seed = self.seed_rng.randint(np.iinfo(np.int32).max)
+        return self._seed
+
+    def theano_seed(self):
+        if getattr(self, '_theano_seed', None) is None:
+            self._theano_seed = self.seed_rng.randint(np.iinfo(np.int32).max)
+        return self._theano_seed
+
+    def theano_rng(self):
+        if getattr(self, '_theano_rng', None) is None:
+            self._theano_rng = MRG_RandomStreams(self.theano_seed)
+        return self._theano_rng
+
+
 class StemCell(NonlinCell):
     """
     WRITEME
@@ -123,42 +159,6 @@ class StemCell(NonlinCell):
             self.allocate(self.init_W.get(self.name+'_W'+str(i+1),
                                           (parent.nout, self.nout)))
         self.allocate(self.init_b.get(self.name+'_b', self.nout))
-
-
-class RandomCell(StemCell):
-    seed_rng = np.random.RandomState((2015, 2, 19))
-    """
-    WRITEME
-
-    Parameters
-    ----------
-    .. todo::
-    """
-    def __init__(self,
-                 theano_seed=None,
-                 **kwargs):
-        super(RandomCell, self).__init__(**kwargs)
-        self.theano_seed = theano_seed
-        
-    def rng(self):
-        if getattr(self, '_rng', None) is None:
-            self._rng = np.random.RandomState(self.seed)
-        return self._rng
-
-    def seed(self):
-        if getattr(self, '_seed', None) is None:
-            self._seed = self.seed_rng.randint(np.iinfo(np.int32).max)
-        return self._seed
-
-    def theano_seed(self):
-        if getattr(self, '_theano_seed', None) is None:
-            self._theano_seed = self.seed_rng.randint(np.iinfo(np.int32).max)
-        return self._theano_seed
-
-    def theano_rng(self):
-        if getattr(self, '_theano_rng', None) is None:
-            self._theano_rng = MRG_RandomStreams(self.theano_seed)
-        return self._theano_rng
 
 
 class InputLayer(object):

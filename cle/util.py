@@ -8,6 +8,7 @@ import theano
 import theano.tensor as T
 
 from collections import deque
+from cle.cle.util import secure_pickle_dump
 from theano.tensor.shared_randomstreams import RandomStreams
 from theano.sandbox.rng_mrg import MRG_RandomStreams
 from theano.compat.python2x import OrderedDict
@@ -93,7 +94,7 @@ def shared_int(value, dtype='int32', name=None, borrow=False):
 
 
 def dropout(x, p, rng):
-    theano_rng = MRG_RandomStreams(max(rng.randint(2 ** 15), 1))
+    theano_rng = MRG_RandomStreams(max(rng.randint(2**15), 1))
     assert 0 <= p and p < 1
     return T.switch(
         theano_rng.binomial(p=1-p, size=x.shape, dtype=x.dtype),
