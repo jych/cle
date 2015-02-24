@@ -56,40 +56,19 @@ class RecurrentLayer(StemCell):
     ----------
     .. todo::
     """
-    def __init__(self):
-        raise NotImplementedError(
-            str(type(self)) + " does not implement Layer.init.")
-
-    def get_params(self):
-        return []
-
-    def fprop(self, x=None):
-        raise NotImplementedError(
-            str(type(self)) + " does not implement Layer.fprop.")
-
-    """
     def get_init_state(self, batch_size)
         n_out = self.get_dim(name)
         return T.zeros((batch_size, n_out))
-    """
-"""
+
 class SimpleRecurrent(RecurrentLayer):
     def __init__(self,
-                 name,
-                 n_in,
-                 n_out,
+                 context,
                  unit='tanh',
-                 init_W=InitParams('randn'),
-                 init_U=InitParams('ortho'),
-                 init_b=InitParams('zeros')):
-        self.name = name
-        self.nonlin = self.which_nonlin(unit)
-        self.W = init_W.get(n_in, n_out)
-        self.U = init_U.get(n_out, n_out)
-        self.b = init_b.get(n_out)
-
-    def get_params(self):
-        return [self.W, self.U, self.b]
+                 init_U=InitParams('ortho')
+                 **kwargs):
+        self.unit = unit
+        super(SimpleRecurrent, self).__init__(**kwargs)
+        self.init_U = init_U
 
     def fprop(self, h):
         x, z = h
@@ -98,12 +77,20 @@ class SimpleRecurrent(RecurrentLayer):
         z_t.name = self.name
         return z_t
 
+    def initialize(self):
+        super(SimpleRecurrent, self).initialize() 
+        for i, context in enumerate(self.context):
+            self.allocate(self.init_U.get(self.name+'_U'+str(i+1),
+                                          (context.nout, self.nout)))
+
+    """
     def get_dim(self, name):
         if name == 'mask':
             return 0
         if name in :q
+    """
 
-
+"""
 class LSTM(RecurrentLayer):
     def __init__(self):
         raise NotImplementedError(

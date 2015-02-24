@@ -8,7 +8,6 @@ import theano
 import theano.tensor as T
 
 from collections import deque
-from cle.cle.util import secure_pickle_dump
 from theano.tensor.shared_randomstreams import RandomStreams
 from theano.sandbox.rng_mrg import MRG_RandomStreams
 from theano.compat.python2x import OrderedDict

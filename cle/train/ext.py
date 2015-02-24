@@ -5,6 +5,8 @@ import os
 import theano
 import theano.tensor as T
 
+from cle.cle.graph import TheanoMixin
+from cle.cle.util import secure_pickle_dump
 from itertools import izip
 
 
@@ -70,7 +72,7 @@ class EpochCount(Extension):
             mainloop.endloop = 1
 
 
-class Monitoring(Extension):
+class Monitoring(Extension, TheanoMixin):
     def __init__(self, freq, ddout=None, data=None):
         """
         .. todo::
@@ -91,7 +93,7 @@ class Monitoring(Extension):
         """
         if self.monitor_fn is None:
             inputs = mainloop.model.get_inputs()
-            self.build_computational_graph(inputs, self.ddout)
+            self.monitor_fn = self.build_theano_graph(inputs, self.ddout)
         if self.data is not None:
             data_record = []
             for data in self.data:
@@ -111,16 +113,6 @@ class Monitoring(Extension):
             mainloop.trainlog._ddmonitors.append(this_ch)
         else:
             pass
-
-    def build_computational_graph(self, inputs, outputs):
-        """
-        .. todo::
-
-            WRITEME
-        """
-        self.monitor_fn = theano.function(inputs, outputs,
-                                          on_unused_input='ignore',
-                                          allow_input_downcast=True)
 
     def exe(self, mainloop):
         """

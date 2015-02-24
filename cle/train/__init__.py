@@ -5,13 +5,14 @@ import theano.tensor as T
 import time
 
 from itertools import izip
+from cle.cle.graph import TheanoMixin
 from cle.cle.util import PickleMixin, OrderedDict, tolist
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-class Training(PickleMixin):
+class Training(PickleMixin, TheanoMixin):
     """
     WRITEME
 
@@ -46,14 +47,7 @@ class Training(PickleMixin):
                                       T.grad(self.cost, self.model.params)))
         self.run_extension('ext_grad')
         updates = self.optimizer.get_updates(self.grads)
-        return self.get_theano_graph(updates)
-
-    def get_theano_graph(self, updates=[]):
-        return theano.function(inputs=self.inputs,
-                               outputs=self.outputs,
-                               updates=updates,
-                               on_unused_input='ignore',
-                               allow_input_downcast=True)
+        return self.build_theano_graph(self.inputs, self.outputs, updates)
 
     def run(self):
         logger.info("Entering main loop")    

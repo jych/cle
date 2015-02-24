@@ -6,7 +6,7 @@ import time
 
 from cle.cle.layers import InputLayer, OnehotLayer, MulCrossEntropyLayer, InitCell
 from cle.cle.layers.layer import FullyConnectedLayer
-from cle.cle.net import Net
+from cle.cle.graph.net import Net
 from cle.cle.train import Training
 from cle.cle.train.ext import EpochCount, GradientClipping, Monitoring, Picklize
 from cle.cle.train.opt import RMSProp, Adam, Momentum
@@ -64,18 +64,14 @@ nodes = [x, y, onehot, h1, h2, cost]
 
 # Your model will build the Theano computational graph
 model = Net(nodes=nodes)
-model.build_graph()
 
-# You can access any output of a node by simply doing
-# model.nodes[$node_name].out
-# This is the most cool part :)
-# Super easy to monitor cost and states with same function
+# You can access any output of a node by simply doing model.nodes[$node_name].out
 cost = model.nodes['cost'].out
 err = error(predict(model.nodes['h2'].out), predict(model.nodes['onehot'].out))
 cost.name = 'cost'
 err.name = 'error_rate'
 
-# Define your optimizer [Momentum(Nesterov) / RMSProp / Adam]
+# Define your optimizer: Momentum(Nesterov, RMSProp, Adam
 optimizer = RMSProp(
     lr=0.001
 )
