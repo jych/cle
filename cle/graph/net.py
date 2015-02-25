@@ -56,11 +56,9 @@ class Net(object):
                 inp.append(par.out)
             self.nodes[node].out = self.nodes[node].fprop(inp)
 
-    def build_recurrent_graph(self):
+    #def build_recurrent_graph(self):
 
-    def build_scan_graph(self, *args):
-        
-
+    #def build_scan_graph(self, *args):
 
     def get_params(self):
         return flatten([node.get_params() for node in self.nodes.values()])

@@ -23,13 +23,15 @@ class Extension(object):
 
 
 class GradientClipping(Extension):
-    def __init__(self):
+    def __init__(self, scaler=5, batch_size=1):
         """
         .. todo::
 
             WRITEME
         """
         self.name = 'ext_grad'
+        self.scaler = scaler
+        self.batch_size = batch_size
 
     def exe(self, mainloop):
         """
@@ -38,19 +40,25 @@ class GradientClipping(Extension):
             WRITEME
         """
         grads = mainloop.grads
+        """
         g_norm = 0.
         for g in grads.values():
-            g /= 128
+            g /= self.batch_size
             g_norm += (g**2).sum()
-        not_finite = T.or_(T.isnan(g_norm), T.isinf(g_norm))
         g_norm = T.sqrt(g_norm)
-        scaling_num = 5
-        scaling_den = T.maximum(5, g_norm)
-        r = scaling_num / scaling_den
+        not_finite = T.or_(T.isnan(g_norm), T.isinf(g_norm))
+        scaler = self.scaler / T.maximum(self.scaler, g_norm)
         for p, g in grads.items():
-            grads[p] = T.switch(not_finite, 0.1 * p, g * r)
+            grads[p] = T.switch(not_finite, 0.1 * p, g * scaler)
         mainloop.grads = grads
-
+        """
+        for p, g in grads.items():
+            g /= self.batch_size
+            g_norm = T.sqrt((g**2).sum())
+            not_finite = T.or_(T.isnan(g_norm), T.isinf(g_norm))
+            scaler = self.scaler / T.maximum(self.scaler, g_norm)
+            grads[p] = T.switch(not_finite, 0.1 * p, g * scaler)
+        mainloop.grads = grads
 
 class EpochCount(Extension):
     def __init__(self, num_epoch):

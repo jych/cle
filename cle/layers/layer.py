@@ -2,7 +2,7 @@ import ipdb
 import numpy as np
 import theano.tensor as T
 
-from cle.cle.layers import StemCell, RandomCell
+from cle.cle.layers import StemCell, RandomCell, InitCell
 
 
 class FullyConnectedLayer(StemCell):
@@ -56,7 +56,7 @@ class RecurrentLayer(StemCell):
     ----------
     .. todo::
     """
-    def get_init_state(self, batch_size)
+    def get_init_state(self, batch_size):
         n_out = self.get_dim(name)
         return T.zeros((batch_size, n_out))
 
@@ -64,7 +64,7 @@ class SimpleRecurrent(RecurrentLayer):
     def __init__(self,
                  context,
                  unit='tanh',
-                 init_U=InitParams('ortho')
+                 init_U=InitCell('ortho'),
                  **kwargs):
         self.unit = unit
         super(SimpleRecurrent, self).__init__(**kwargs)
