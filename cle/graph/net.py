@@ -87,11 +87,6 @@ class Net(object):
 
     def get_params(self):
         #return flatten([node.get_params() for node in self.nodes.values()])
-        #params = OrderedDict()
-        #for node in self.nodes.values():
-        #    for key, value in node.get_params().items():
-        #        params[key] = value
-        #return params
         return flatten([node.get_params().values()
                         for node in self.nodes.values()])
 
