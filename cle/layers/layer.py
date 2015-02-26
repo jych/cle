@@ -53,7 +53,7 @@ class ConvLayer(StemCell):
 
 class RecurrentLayer(StemCell):
     """
-    Base recurrent layer
+    Abstract class for recurrent layers
 
     Parameters
     ----------
@@ -78,6 +78,13 @@ class RecurrentLayer(StemCell):
 
 
 class SimpleRecurrent(RecurrentLayer):
+    """
+    Vanilla recurrent layer
+
+    Parameters
+    ----------
+    .. todo::
+    """
     def __init__(self,
                  unit='tanh',
                  **kwargs):
@@ -85,7 +92,7 @@ class SimpleRecurrent(RecurrentLayer):
         self.nonlin = self.which_nonlin(unit)
 
     def fprop(self, xh):
-        # xs is a list of inputs
+        # xh is a list of inputs: [state_belows, state_befores]
         xs, hs = xh
         z = T.zeros(self.nout)
         for x, parent in izip(xs, self.parent):
@@ -97,23 +104,24 @@ class SimpleRecurrent(RecurrentLayer):
         z.name = self.name
         return z
 
-    """
-    def get_dim(self, name):
-        if name == 'mask':
-            return 0
-        if name in :q
-    """
 
-"""
 class LSTM(RecurrentLayer):
-    def __init__(self):
-        raise NotImplementedError(
-            str(type(self)) + " does not implement Layer.init.")
+    """
+    Long short-term memory
 
-    def get_params(self):
-        return []
-
-    def fprop(self, x=None):
-        raise NotImplementedError(
-            str(type(self)) + " does not implement Layer.fprop.")
-"""
+    Parameters
+    ----------
+    .. todo::
+    """
+    def fprop(self, xh):
+        # xh is a list of inputs: [state_belows, state_befores]
+        xs, hs = xh
+        z = T.zeros(self.nout)
+        for x, parent in izip(xs, self.parent):
+            z += T.dot(x, self.params['W_'+parent.name+self.name])
+        for h, recurrent in izip(hs, self.recurrent):
+            z += T.dot(h, self.params['U_'+recurrent.name+self.name])
+        z += self.params['b_'+self.name]
+        z = self.nonlin(z)
+        z.name = self.name
+        return z

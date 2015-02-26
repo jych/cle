@@ -2,7 +2,6 @@ import ipdb
 import numpy as np
 
 from cle.cle.util import flatten, tolist, topological_sort
-from theano.compat.python2x import OrderedDict
 
 
 class Net(object):
