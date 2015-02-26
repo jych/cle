@@ -1,8 +1,8 @@
 import theano.tensor as T
-from data import *
+from cle.cle.data import *
 
 
 class BouncingBalls(DesignMatrix):
 
     def theano_vars(self):
-        return [T.fmatrix('inp'), T.fmatrix('out')]
+        return [T.ftensor('x'), T.ftensor('y')]
