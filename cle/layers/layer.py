@@ -3,9 +3,9 @@ import numpy as np
 import theano.tensor as T
 
 from itertools import izip
-
 from cle.cle.layers import StemCell, RandomCell, InitCell
 from cle.cle.util import tolist
+from theano.compat.python import OrderedDict
 
 
 class FullyConnectedLayer(StemCell):
@@ -66,6 +66,7 @@ class RecurrentLayer(StemCell):
         super(SimpleRecurrent, self).__init__(**kwargs)
         self.recurrent = tolist(recurrent)
         self.init_U = init_U
+        self.init_states = OrderedDict()
 
     def get_init_state(self, batch_size):
         return T.zeros((batch_size, self.n_out))
@@ -105,7 +106,7 @@ class SimpleRecurrent(RecurrentLayer):
         return z
 
 
-class LSTM(RecurrentLayer):
+class LSTM(SimpleRecurrent):
     """
     Long short-term memory
 

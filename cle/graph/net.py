@@ -67,7 +67,9 @@ class Net(object):
         #...
         #>>> pseudo code
         #init_node = node_which_is_rec.get_init_state()
-
+        scan_seq_args = []
+        scan_output_info = []
+        scan_nonseq_args = []
 
 
         while sorted_nodes:
