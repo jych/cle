@@ -56,9 +56,33 @@ class Net(object):
                 inp.append(par.out)
             self.nodes[node].out = self.nodes[node].fprop(inp)
 
-    #def build_recurrent_graph(self):
+    def build_recurrent_graph(self):
+        sorted_nodes = topological_sort(self.graph)
+        # call get_init_state() here, which is basically Theano variables
+        # we do not explicitly set these things outside which will just
+        # increase confusion
+        # A recurrent layer should have a list of T.zeros for each
+        # recurrent object fed-in
+        #...
+        #>>> pseudo code
+        #init_node = node_which_is_rec.get_init_state()
 
-    #def build_scan_graph(self, *args):
+
+
+        while sorted_nodes:
+            node = sorted_nodes.popleft()
+            if self.nodes[node].isroot:
+                continue
+            parent = self.nodes[node].parent
+            inp = []
+            for par in parent:
+                inp.append(par.out)
+            self.nodes[node].out = self.nodes[node].fprop(inp)
+
+
+    def build_scan_graph(self, fn, seq_args, output_info, nonseq_args):
+        # fn should be the model_last_layer.out
+        return theano.scan()
 
     def get_params(self):
         return flatten([node.get_params() for node in self.nodes.values()])
