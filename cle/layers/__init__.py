@@ -3,6 +3,7 @@ import numpy as np
 import scipy
 import theano.tensor as T
 
+from theano.compat.python2x import OrderedDict
 from theano.sandbox.rng_mrg import MRG_RandomStreams
 from cle.cle.cost import NllBin, NllMul, MSE
 from cle.cle.util import sharedX, tolist, unpack
@@ -17,12 +18,12 @@ class InitCell(object):
     .. todo::
     """
     def __init__(self,
-                  init_type='randn',
-                  mean=0.,
-                  stddev=0.01,
-                  low=-0.08,
-                  high=0.08,
-                  **kwargs):
+                 init_type='randn',
+                 mean=0.,
+                 stddev=0.01,
+                 low=-0.08,
+                 high=0.08,
+                 **kwargs):
         super(InitCell, self).__init__(**kwargs)
         self.init_param = self.which_init(init_type)
         self.mean = mean
@@ -61,7 +62,7 @@ class NonlinCell(object):
     ----------
     .. todo::
     """
-    def nonlin(self, which):
+    def which_nonlin(self, which):
         return getattr(self, which)
 
     def linear(self, z):
@@ -102,7 +103,7 @@ class RandomCell(object):
                  theano_seed=None,
                  **kwargs):
         self.theano_seed = theano_seed
-        
+
     def rng(self):
         if getattr(self, '_rng', None) is None:
             self._rng = np.random.RandomState(self.seed)
@@ -142,8 +143,8 @@ class StemCell(NonlinCell):
         self.parent = tolist(parent)
         self.init_W = init_W
         self.init_b = init_b
-        self.params = []
-        
+        self.params = OrderedDict()
+
     def get_params(self):
         return self.params
 
@@ -151,14 +152,14 @@ class StemCell(NonlinCell):
         raise NotImplementedError(
             str(type(self)) + " does not implement Layer.fprop.")
 
-    def allocate(self, x):
-        self.params.append(x)
+    def alloc(self, x):
+        self.params[x.name] = x
 
     def initialize(self):
         for i, parent in enumerate(self.parent):
-            self.allocate(self.init_W.get(self.name+'_W'+str(i+1),
-                                          (parent.nout, self.nout)))
-        self.allocate(self.init_b.get(self.name+'_b', self.nout))
+            self.alloc(self.init_W.get('W_'+parent.name+self.name,
+                                       (parent.nout, self.nout)))
+        self.alloc(self.init_b.get('b_'+self.name, self.nout))
 
 
 class InputLayer(object):
@@ -175,13 +176,14 @@ class InputLayer(object):
         root.name = self.name
         self.out = root
         self.nout = nout
-        self.params = []
+        self.params = OrderedDict()
 
     def get_params(self):
         return self.params
 
     def initialize(self):
         pass
+
 
 class OnehotLayer(StemCell):
     """

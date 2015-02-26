@@ -41,7 +41,7 @@ class Training(PickleMixin, TheanoMixin):
         self.trainlog = TrainLog()
 
         self.endloop = 0
-       
+
     def build_training_graph(self):
         self.grads = OrderedDict(izip(self.model.params,
                                       T.grad(self.cost, self.model.params)))
@@ -50,10 +50,10 @@ class Training(PickleMixin, TheanoMixin):
         return self.build_theano_graph(self.inputs, self.outputs, updates)
 
     def run(self):
-        logger.info("Entering main loop")    
+        logger.info("Entering main loop")
         while self.run_epoch():
             pass
-                 
+
     def run_epoch(self):
         while self.run_batch():
             pass
@@ -80,7 +80,7 @@ class Training(PickleMixin, TheanoMixin):
     def find_extension(self, name):
         try:
             exts = [extension for extension in self.extension
-                    if extension.name==name]
+                    if extension.name == name]
             if len(exts) > 0:
                 return_val = 1
             else:
@@ -114,6 +114,6 @@ class TrainLog(object):
     def __init__(self):
         self._batches = []
         self._times = []
-        self._ddmonitors = [] 
-        self._epoch_seen = 0 
-        self._batch_seen = 0 
+        self._ddmonitors = []
+        self._epoch_seen = 0
+        self._batch_seen = 0

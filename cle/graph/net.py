@@ -1,6 +1,8 @@
+import ipdb
 import numpy as np
 
 from cle.cle.util import flatten, tolist, topological_sort
+from theano.compat.python2x import OrderedDict
 
 
 class Net(object):
@@ -79,13 +81,19 @@ class Net(object):
                 inp.append(par.out)
             self.nodes[node].out = self.nodes[node].fprop(inp)
 
-
     def build_scan_graph(self, fn, seq_args, output_info, nonseq_args):
         # fn should be the model_last_layer.out
         return theano.scan()
 
     def get_params(self):
-        return flatten([node.get_params() for node in self.nodes.values()])
+        #return flatten([node.get_params() for node in self.nodes.values()])
+        #params = OrderedDict()
+        #for node in self.nodes.values():
+        #    for key, value in node.get_params().items():
+        #        params[key] = value
+        #return params
+        return flatten([node.get_params().values()
+                        for node in self.nodes.values()])
 
     def get_inputs(self):
         return self.inputs

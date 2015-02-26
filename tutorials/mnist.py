@@ -23,7 +23,8 @@ try:
 except IOError:
     datapath = '/home/junyoung/data/mnist/mnist.pkl'
     (tr_x, tr_y), (val_x, val_y), (test_x, test_y) = np.load(datapath)
-savepath = '/home/junyoung/repos/cle/saved/'
+#savepath = '/home/junyoung/repos/cle/saved/'
+savepath = '/u/chungjun/repos/cle/saved/'
 
 batch_size = 128
 num_batches = tr_x.shape[0] / batch_size
