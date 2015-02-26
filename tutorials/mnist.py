@@ -1,15 +1,22 @@
 import ipdb
 import numpy as np
-import theano
-import theano.tensor as T
-import time
 
 from cle.cle.graph.net import Net
-from cle.cle.layers import InputLayer, OnehotLayer, MulCrossEntropyLayer, InitCell
+from cle.cle.layers import (
+    InputLayer,
+    OnehotLayer,
+    MulCrossEntropyLayer,
+    InitCell
+)
 from cle.cle.layers.layer import FullyConnectedLayer
 from cle.cle.train import Training
-from cle.cle.train.ext import EpochCount, GradientClipping, Monitoring, Picklize
-from cle.cle.train.opt import RMSProp, Adam, Momentum
+from cle.cle.train.ext import (
+    EpochCount,
+    GradientClipping,
+    Monitoring,
+    Picklize
+)
+from cle.cle.train.opt import RMSProp
 from cle.cle.util import error, predict
 from cle.datasets.mnist import MNIST
 

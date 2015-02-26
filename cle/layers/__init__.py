@@ -170,11 +170,16 @@ class InputLayer(object):
     ----------
     .. todo::
     """
-    def __init__(self, name, root, nout):
+    def __init__(self, name, nout, root=None, target=None):
         self.isroot = True
         self.name = name
         root.name = self.name
-        self.out = root
+        if root is not None:
+            self.out = root
+        elif target is not None:
+            self.out = target
+        if self.out is None:
+            raise AssertionError('You should either provide root or target')
         self.nout = nout
         self.params = OrderedDict()
 

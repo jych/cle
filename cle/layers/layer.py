@@ -5,7 +5,7 @@ import theano.tensor as T
 from itertools import izip
 from cle.cle.layers import StemCell, RandomCell, InitCell
 from cle.cle.util import tolist
-from theano.compat.python import OrderedDict
+from theano.compat.python2x import OrderedDict
 
 
 class FullyConnectedLayer(StemCell):
@@ -65,6 +65,7 @@ class RecurrentLayer(StemCell):
                  **kwargs):
         super(SimpleRecurrent, self).__init__(**kwargs)
         self.recurrent = tolist(recurrent)
+        self.recurrent.append(self)
         self.init_U = init_U
         self.init_states = OrderedDict()
 

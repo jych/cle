@@ -1,9 +1,8 @@
 import ipdb
 import numpy as np
-import theano.tensor as T
 
 
-class Data(object) :
+class Data(object):
     """
     Abstract class for data
 
@@ -38,7 +37,7 @@ class DesignMatrix(Data):
         self.nbatch = int(np.ceil(self.ndata / float(self.batch_size)))
         self.index = -1
 
-    def num_examples(self): 
+    def num_examples(self):
         return self.data[0].shape[0]
 
     def batch(self, data, i):

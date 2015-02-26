@@ -40,7 +40,7 @@ class Net(object):
     def set_graph(self, nodes):
         self.graph = {}
         for node in nodes:
-            if not node.isroot:
+            if not node.isroot or not node.istarget:
                 parent = node.parent
                 for par_node in tolist(parent):
                     self.graph[par_node.name] = node.name
@@ -67,10 +67,18 @@ class Net(object):
         #...
         #>>> pseudo code
         #init_node = node_which_is_rec.get_init_state()
+
+        # Pre scan, set sequences, output infos, non-sequences
         scan_seq_args = []
         scan_output_info = []
         scan_nonseq_args = []
 
+        for node in self.nodes:
+            if hasattr(node, 'get_init_state'):
+                scan_seq_args.append(node.get_init_state())
+        ipdb.set_trace()
+
+        # Post scan, add cost
 
         while sorted_nodes:
             node = sorted_nodes.popleft()

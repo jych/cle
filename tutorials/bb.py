@@ -1,20 +1,20 @@
 import ipdb
-import theano
-import theano.tensor as T
-import time
+import numpy as np
 
-from cost import *
-from data import *
-from ext import *
-from layer import *
-from opt import *
-from net import *
-from train import *
-from util import *
-from bouncing_balls import BouncingBalls
+from cle.cle.graph.net import Net
+from cle.cle.layers import InputLayer, InitCell, MSELayer
+from cle.cle.layers.layer import FullyConnectedLayer, SimpleRecurrent
+from cle.cle.train import Training
+from cle.cle.train.ext import (
+    EpochCount,
+    GradientClipping,
+    Monitoring,
+    Picklize
+)
+from cle.cle.train.opt import Adam
+from cle.datasets.bouncing_balls import BouncingBalls
 
 
-# Set your dataset
 try:
     datapath = '/data/lisatmp3/chungjun/bouncing_balls/bouncing_ball_2balls_16wh_20len_50000cases.npy'
     (tr_x, tr_y), (val_x, val_y), (test_x, test_y) = np.load(datapath)
@@ -31,34 +31,47 @@ trdata = BouncingBalls(name='train',
                        batch_size=batch_size)
 
 # Choose the random initialization method
-init_W, init_U, init_b = InitParams('randn'), InitParams('ortho'), InitParams('zeros')
+init_W, init_U, init_b = InitCell('randn'), InitCell('ortho'), InitCell('zeros')
 
 # Define nodes: objects
 inp, tar = trdata.theano_vars()
-x = Input('x', inp)
-y = Input('y', tar)
-h1_0 = Input('h1_init', T.fmatrix())
-h1 = RecurrentLayer('h1', 256, 200, 'tanh', init_W, init_U, init_b)
-h2_0 = Input('h2_init', T.fmatrix())
-h2 = RecurrentLayer('h2', 200, 200, 'tanh', init_W, init_U, init_b)
-cost = MSELayer('cost')
-graph = [
-    [[x, h1_0], h1],
-    [[h1, h1_0], h2],`
-    [[y, h2], cost],
-]
-model = Net(nodes=nodes, edges=edges)
+x = InputLayer(name='inp', root=inp, nout=256)
+y = InputLayer(name='tar', target=tar, nout=256)
+h1 = SimpleRecurrent(name='h1',
+                     parent=[x],
+                     nout=200,
+                     unit='tanh',
+                     init_W=init_W,
+                     init_U=init_U,
+                     init_b=init_b)
+h2 = SimpleRecurrent(name='h2',
+                     parent=[h1],
+                     nout=200,
+                     unit='tanh',
+                     init_W=init_W,
+                     init_U=init_U,
+                     init_b=init_b)
+h3 = FullyConnectedLayer(name='h3',
+                         parent=[h1],
+                         nout=256,
+                         unit='sigmoid',
+                         init_W=init_W,
+                         init_b=init_b)
+cost = MSELayer(name='cost', parent=[h2])
+
+nodes = [x, y, h1, h2, h3, cost]
+model = Net(nodes=nodes)
 model.build_graph()
 
 cost = model.nodes['cost'].out
 cost.name = 'cost'
 
-optimizer = RMSProp(
+optimizer = Adam(
     lr=0.001
 )
 
 extension = [
-    GradientClipping(),
+    GradientClipping(batch_size),
     EpochCount(40),
     Monitoring(freq=100,
                ddout=[cost]),
@@ -66,7 +79,7 @@ extension = [
              path=savepath)
 ]
 
-mainloop= Training(
+mainloop = Training(
     name='toy_bb',
     data=trdata,
     model=model,
