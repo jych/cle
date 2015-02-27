@@ -38,13 +38,18 @@ class DesignMatrix(Data):
 # They can do whatever crazy hacks for loading
 # preprocessing
 
-    def __init__(self, name, data, batch_size=None):
+    def __init__(self, name, path, batch_size=None):
+        self.path = path
+
         self.name = name
         self.data = data
         self.ndata = self.num_examples()
         self.batch_size = batch_size if batch_size is not None else self.ndata
         self.nbatch = int(np.ceil(self.ndata / float(self.batch_size)))
         self.index = -1
+
+    def load_data(self):
+        np.load()
 
     def num_examples(self):
         return self.data[0].shape[0]
