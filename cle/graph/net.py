@@ -115,19 +115,6 @@ class Net(object):
 
 
 
-            args = list(args)
-            arg_names = (list(sequences_given) + list(states_given) +
-                         list(contexts_given))
-            kwargs = dict(zip(arg_names, args))
-            kwargs.update(rest_kwargs)
-            outputs = getattr(brick, application_function.__name__)(
-                iterate=False, **kwargs)
-            # We want to save the computation graph returned by the
-            # `application_function` when it is called inside the
-            # `theano.scan`.
-            application_call.inner_inputs = args
-            application_call.inner_outputs = pack(outputs)
-            return outputs        
 
         result, updates = theano.scan(
             fn=scan_fn,
