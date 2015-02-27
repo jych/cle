@@ -15,19 +15,14 @@ from cle.cle.train.opt import Adam
 from cle.datasets.bouncing_balls import BouncingBalls
 
 
-try:
-    datapath = '/data/lisatmp3/chungjun/bouncing_balls/bouncing_ball_2balls_16wh_20len_50000cases.npy'
-    tr_x = np.load(datapath)
-except IOError:
-    datapath = '/home/junyoung/data/bouncing_balls/bouncing_ball_2balls_16wh_20len_50000cases.npy'
-    tr_x = np.load(datapath)
+#datapath = '/data/lisatmp3/chungjun/bouncing_balls/bouncing_ball_2balls_16wh_20len_50000cases.npy'
+datapath = '/home/junyoung/data/bouncing_balls/bouncing_ball_2balls_16wh_20len_50000cases.npy'
 savepath = '/home/junyoung/repos/cle/saved/'
 
 batch_size = 128
-num_batches = tr_x.shape[0] / batch_size
 
 trdata = BouncingBalls(name='train',
-                       data=tr_x,
+                       path=datapath,
                        batch_size=batch_size)
 
 # Choose the random initialization method
@@ -61,7 +56,7 @@ cost = MSELayer(name='cost', parent=[h2])
 
 nodes = [x, y, h1, h2, h3, cost]
 model = Net(nodes=nodes)
-model.build_graph()
+model.build_recurrent_graph()
 
 cost = model.nodes['cost'].out
 cost.name = 'cost'

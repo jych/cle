@@ -60,10 +60,10 @@ class RecurrentLayer(StemCell):
     .. todo::
     """
     def __init__(self,
-                 recurrent,
+                 recurrent=[],
                  init_U=InitCell('ortho'),
                  **kwargs):
-        super(SimpleRecurrent, self).__init__(**kwargs)
+        super(RecurrentLayer, self).__init__(**kwargs)
         self.recurrent = tolist(recurrent)
         self.recurrent.append(self)
         self.init_U = init_U
@@ -73,7 +73,7 @@ class RecurrentLayer(StemCell):
         return T.zeros((batch_size, self.n_out))
 
     def initialize(self):
-        super(SimpleRecurrent, self).initialize()
+        super(RecurrentLayer, self).initialize()
         for i, recurrent in enumerate(self.recurrent):
             self.alloc(self.init_U.get('U_'+recurrent.name+self.name,
                                        (recurrent.nout, self.nout)))

@@ -173,11 +173,12 @@ class InputLayer(object):
     def __init__(self, name, nout, root=None, target=None):
         self.isroot = self.istarget = False
         self.name = name
-        root.name = self.name
         if root is not None:
+            root.name = self.name
             self.out = root
             self.isroot = True
         elif target is not None:
+            target.name = self.name
             self.out = target
             self.istarget = True
         if self.out is None:

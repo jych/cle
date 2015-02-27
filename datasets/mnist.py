@@ -41,13 +41,14 @@ class MNIST(DesignMatrix):
     def __iter__(self):
         return self
 
-    def theano_vars(self):
-        return [T.fmatrix('x'), T.lvector('y')]
-
     def next(self):
         self.index += 1
         if self.index < self.nbatch:
             return (self.batch(data, self.index) for data in self.data)
         else:
             self.index = -1
-            raise StopIteration()    
+            raise StopIteration()
+
+     def theano_vars(self):
+        return [T.fmatrix('x'), T.lvector('y')]
+           
