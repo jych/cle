@@ -17,7 +17,7 @@ from cle.datasets.bouncing_balls import BouncingBalls
 
 try:
     datapath = '/data/lisatmp3/chungjun/bouncing_balls/bouncing_ball_2balls_16wh_20len_50000cases.npy'
-    (tr_x, tr_y), (val_x, val_y), (test_x, test_y) = np.load(datapath)
+    tr_x = np.load(datapath)
 except IOError:
     datapath = '/home/junyoung/data/bouncing_balls/bouncing_ball_2balls_16wh_20len_50000cases.npy'
     tr_x = np.load(datapath)

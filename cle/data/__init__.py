@@ -29,6 +29,15 @@ class Data(object):
 
 class DesignMatrix(Data):
 
+# make path and load it inside
+# let any dataset class to define
+# its own load function and hack it
+# this is more user friendly
+# the input-output for this class is just
+# their path and batch output.
+# They can do whatever crazy hacks for loading
+# preprocessing
+
     def __init__(self, name, data, batch_size=None):
         self.name = name
         self.data = data
