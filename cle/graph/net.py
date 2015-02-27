@@ -40,7 +40,7 @@ class Net(object):
     def set_graph(self, nodes):
         self.graph = {}
         for node in nodes:
-            if not node.isroot or not node.istarget:
+            if not node.isroot and not node.istarget:
                 parent = node.parent
                 for par_node in tolist(parent):
                     self.graph[par_node.name] = node.name
