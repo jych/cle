@@ -1,6 +1,9 @@
 import ipdb
 import numpy as np
+import theano
+import theano.tensor as T
 
+from collections import OrderedDict
 from cle.cle.util import flatten, tolist, topological_sort
 
 
@@ -57,7 +60,7 @@ class Net(object):
                 inp.append(par.out)
             self.nodes[node].out = self.nodes[node].fprop(inp)
 
-    def build_recurrent_graph(self):
+    def build_recurrent_graph(self, **kwargs):
         sorted_nodes = topological_sort(self.graph)
         # call get_init_state() here, which is basically Theano variables
         # we do not explicitly set these things outside which will just
@@ -69,30 +72,77 @@ class Net(object):
         #init_node = node_which_is_rec.get_init_state()
 
         # Pre scan, set sequences, output infos, non-sequences
-        scan_seq_args = []
-        scan_output_info = []
-        scan_nonseq_args = []
+        #output_info = OrderedDict()
+        output_info = []
+        seq_args = OrderedDict()
+        nonseq_args = OrderedDict()
+        targets = OrderedDict()
+
+        # pop cost function
+        cost_obj = sorted_nodes.pop('cost')
 
         for node in self.nodes:
+            if hasattr(node, 'isroot'):
+                if node.isroot:
+                    seq_args.update(node)
+            if hasattr(node, 'istarget'):
+                if node.istarget:
+                    targets.update(node)
             if hasattr(node, 'get_init_state'):
-                scan_seq_args.append(node.get_init_state())
-        ipdb.set_trace()
+                state = node.get_init_state()
+                output_info.append(state)
+        nstate = len(output_info)
+
+        n_steps = kwargs.pop('n_steps', None)
+        reverse = kwargs.pop('reverse', False)
+        for key, value in kwargs.items():
+            output_info[key] = value        
+        nNone = len(output_info) - nstate
+        output_info = flatten(output_info + [None] * nNone)
+
+        def scan_fn(*args):
+            sorted_nodes = topological_sort(self.graph)
+            while sorted_nodes:
+                node = sorted_nodes.popleft()
+                if self.nodes[node].isroot:
+                    continue
+                parent = self.nodes[node].parent
+                inp = []
+                for par in parent:
+                    inp.append(par.out)
+                self.nodes[node].out = self.nodes[node].fprop(inp)
+
+
+
+
+            args = list(args)
+            arg_names = (list(sequences_given) + list(states_given) +
+                         list(contexts_given))
+            kwargs = dict(zip(arg_names, args))
+            kwargs.update(rest_kwargs)
+            outputs = getattr(brick, application_function.__name__)(
+                iterate=False, **kwargs)
+            # We want to save the computation graph returned by the
+            # `application_function` when it is called inside the
+            # `theano.scan`.
+            application_call.inner_inputs = args
+            application_call.inner_outputs = pack(outputs)
+            return outputs        
+
+        result, updates = theano.scan(
+            fn=scan_fn,
+            sequences=list(seq_args.values()),
+            outputs_info=outputs_info,
+            non_sequences=list(nonseq_args.values()),
+            n_steps=n_steps,
+            go_backwards=reverse)
+        result = tolist(result)
 
         # Post scan, add cost
-
-        while sorted_nodes:
-            node = sorted_nodes.popleft()
-            if self.nodes[node].isroot:
-                continue
-            parent = self.nodes[node].parent
-            inp = []
-            for par in parent:
-                inp.append(par.out)
-            self.nodes[node].out = self.nodes[node].fprop(inp)
-
-    def build_scan_graph(self, fn, seq_args, output_info, nonseq_args):
-        # fn should be the model_last_layer.out
-        return theano.scan()
+        inp = flatten(list([result, targets))
+        cost = cost_obj(inp)
+        ipdb.set_trace()
+        return cost
 
     def get_params(self):
         #return flatten([node.get_params() for node in self.nodes.values()])

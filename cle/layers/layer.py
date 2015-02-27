@@ -60,17 +60,21 @@ class RecurrentLayer(StemCell):
     .. todo::
     """
     def __init__(self,
+                 batch_size,
                  recurrent=[],
                  init_U=InitCell('ortho'),
                  **kwargs):
         super(RecurrentLayer, self).__init__(**kwargs)
         self.recurrent = tolist(recurrent)
         self.recurrent.append(self)
+        self.batch_size = batch_size
         self.init_U = init_U
         self.init_states = OrderedDict()
 
-    def get_init_state(self, batch_size):
-        return T.zeros((batch_size, self.n_out))
+    def get_init_state(self):
+        state = T.zeros((self.batch_size, self.nout))
+        state = T.unbroadcast(state, *range(self.dim))
+        return state
 
     def initialize(self):
         super(RecurrentLayer, self).initialize()

@@ -15,6 +15,10 @@ from cle.cle.train.opt import Adam
 from cle.datasets.bouncing_balls import BouncingBalls
 
 
+# Mash should be also implemented as data src and using InputLayer!
+# Will add it in ver0.2
+
+
 #datapath = '/data/lisatmp3/chungjun/bouncing_balls/bouncing_ball_2balls_16wh_20len_50000cases.npy'
 datapath = '/home/junyoung/data/bouncing_balls/bouncing_ball_2balls_16wh_20len_50000cases.npy'
 savepath = '/home/junyoung/repos/cle/saved/'
@@ -34,6 +38,7 @@ x = InputLayer(name='inp', root=inp, nout=256)
 y = InputLayer(name='tar', target=tar, nout=256)
 h1 = SimpleRecurrent(name='h1',
                      parent=[x],
+                     batch_size=batch_size,
                      nout=200,
                      unit='tanh',
                      init_W=init_W,
@@ -41,6 +46,7 @@ h1 = SimpleRecurrent(name='h1',
                      init_b=init_b)
 h2 = SimpleRecurrent(name='h2',
                      parent=[h1],
+                     batch_size=batch_size,
                      nout=200,
                      unit='tanh',
                      init_W=init_W,
