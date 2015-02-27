@@ -71,37 +71,63 @@ class Net(object):
         #>>> pseudo code
         #init_node = node_which_is_rec.get_init_state()
 
-        # Pre scan, set sequences, output infos, non-sequences
-        #output_info = OrderedDict()
-        output_info = []
+        # Pre scan, set sequences, outputs info, nonsequences
+        #outputs = OrderedDict()
+        given_nonseq_args = kwargs.pop('nonseq_args', None)
+        given_output_args = kwargs.pop('output_args', None)
+        given_args = kwargs.pop('given_args', None)
+        n_steps = None
+        reverse = None
+        seqs = []
+        outputs = []
+        nonseqs = []
         seq_args = OrderedDict()
+        output_args = OrderedDict()
         nonseq_args = OrderedDict()
         targets = OrderedDict()
+        nNone = 0
 
         # pop cost function
-        cost_obj = sorted_nodes.pop('cost')
+        try:
+            cost_obj = self.nodes.pop('cost')
+            sorted_nodes.remove('cost')
+        except KeyError:
+            cost_obj = None
 
-        for node in self.nodes:
+        for name, node in self.nodes.items():
             if hasattr(node, 'isroot'):
                 if node.isroot:
-                    seq_args.update(node)
+                    seq_args[name] = node
+                    seqs.append(node.out)
             if hasattr(node, 'istarget'):
                 if node.istarget:
-                    targets.update(node)
+                    targets[name] = node
             if hasattr(node, 'get_init_state'):
+                output_args[name] = node
                 state = node.get_init_state()
-                output_info.append(state)
-        nstate = len(output_info)
+                outputs.append(state)
+        nstate = len(outputs)
+        
+        if given_args is not None:
+            n_steps = given_args.pop('n_steps', None)
+            reverse = given_args.pop('reverse', False)
+        if cost_obj is not None:
+            output_args['cost'] = cost_obj
 
-        n_steps = kwargs.pop('n_steps', None)
-        reverse = kwargs.pop('reverse', False)
-        for key, value in kwargs.items():
-            output_info[key] = value        
-        nNone = len(output_info) - nstate
-        output_info = flatten(output_info + [None] * nNone)
+        if given_output_args is not None:
+            for name, arg in given_output_args.items():
+                output_args[name] = arg
+        nNone = len(output_args) - nstate
+        if cost_obj is not None:
+            nNone += 1
+        outputs = flatten(outputs + [None] * nNone)
+
+        if given_nonseq_args is not None:
+            for name, arg in given_nonseq_args.items():
+                nonseq_args[name] = arg
 
         def scan_fn(*args):
-            sorted_nodes = topological_sort(self.graph)
+            ipdb.set_trace()
             while sorted_nodes:
                 node = sorted_nodes.popleft()
                 if self.nodes[node].isroot:
@@ -112,22 +138,21 @@ class Net(object):
                     inp.append(par.out)
                 self.nodes[node].out = self.nodes[node].fprop(inp)
 
-
-
-
-
+        ipdb.set_trace()
         result, updates = theano.scan(
             fn=scan_fn,
-            sequences=list(seq_args.values()),
-            outputs_info=outputs_info,
-            non_sequences=list(nonseq_args.values()),
+            sequences=seqs,
+            outputs_info=outputs,
+            non_sequences=nonseqs,
             n_steps=n_steps,
             go_backwards=reverse)
         result = tolist(result)
 
         # Post scan, add cost
-        inp = flatten(list([result, targets))
-        cost = cost_obj(inp)
+        inp = flatten(list([result, targets]))
+        if cost_obj is not None:
+            cost = cost_obj(inp)
+
         ipdb.set_trace()
         return cost
 

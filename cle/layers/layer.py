@@ -73,7 +73,7 @@ class RecurrentLayer(StemCell):
 
     def get_init_state(self):
         state = T.zeros((self.batch_size, self.nout))
-        state = T.unbroadcast(state, *range(self.dim))
+        state = T.unbroadcast(state, *range(state.ndim))
         return state
 
     def initialize(self):

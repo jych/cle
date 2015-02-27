@@ -58,11 +58,12 @@ h3 = FullyConnectedLayer(name='h3',
                          unit='sigmoid',
                          init_W=init_W,
                          init_b=init_b)
-cost = MSELayer(name='cost', parent=[h2])
+cost = MSELayer(name='cost', parent=[h2, y])
 
 nodes = [x, y, h1, h2, h3, cost]
 model = Net(nodes=nodes)
 model.build_recurrent_graph()
+#model.build_recurrent_graph(nonseq_args={'a':5, 'b':6})
 
 cost = model.nodes['cost'].out
 cost.name = 'cost'
