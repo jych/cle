@@ -107,7 +107,7 @@ class Net(object):
                 state = node.get_init_state()
                 outputs.append(state)
         nstate = len(outputs)
-        
+
         if given_args is not None:
             n_steps = given_args.pop('n_steps', None)
             reverse = given_args.pop('reverse', False)
