@@ -83,7 +83,7 @@ class Net(object):
                 outputs.append(state)
 
         def scan_fn(*args):
-            results = []
+            next_recurrence = []
             sorted_nodes = topological_sort(self.graph)
             inputs = tolist(args[:len(self.seq_args)])
             recurrence = tolist(args[len(self.seq_args):
@@ -111,7 +111,7 @@ class Net(object):
                         rec_inp.append(rec.rec_out)
                     inp = [inp, rec_inp]
                     self.nodes[node].out = self.nodes[node].fprop(inp)
-                    results.append(self.nodes[node].out)
+                    next_recurrence.append(self.nodes[node].out)
                     continue
                 self.nodes[node].out = self.nodes[node].fprop(inp)
             required_outputs = []
@@ -125,7 +125,7 @@ class Net(object):
                         if node is arg:
                             required_outputs.append(node.out)
             self.nNone = len(required_outputs)
-            return results + required_outputs
+            return next_recurrence + required_outputs
 
         dummy_args = seqs + outputs + nonseqs
         dummy = scan_fn(*dummy_args)
