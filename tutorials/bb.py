@@ -37,40 +37,43 @@ init_W, init_U, init_b = InitCell('randn'), InitCell('ortho'), InitCell('zeros')
 inp, tar = trdata.theano_vars()
 x = InputLayer(name='x', root=inp, nout=256)
 y = InputLayer(name='y', root=tar, nout=256)
-"""
-h1 = SimpleRecurrent(name='h1',
-                     parent=[x],
-                     batch_size=batch_size,
-                     nout=200,
-                     unit='tanh',
-                     init_W=init_W,
-                     init_U=init_U,
-                     init_b=init_b)
-h2 = SimpleRecurrent(name='h2',
-                     parent=[h1],
-                     batch_size=batch_size,
-                     nout=200,
-                     unit='tanh',
-                     init_W=init_W,
-                     init_U=init_U,
-                     init_b=init_b)
-"""
-h1 = LSTM(name='h1',
-          parent=[x],
-          batch_size=batch_size,
-          nout=200,
-          unit='tanh',
-          init_W=init_W,
-          init_U=init_U,
-          init_b=init_b)
-h2 = LSTM(name='h2',
-          parent=[h1],
-          batch_size=batch_size,
-          nout=200,
-          unit='tanh',
-          init_W=init_W,
-          init_U=init_U,
-          init_b=init_b)
+
+# Try simple RNN (tanh)
+if 0:
+    h1 = SimpleRecurrent(name='h1',
+                         parent=[x],
+                         batch_size=batch_size,
+                         nout=200,
+                         unit='tanh',
+                         init_W=init_W,
+                         init_U=init_U,
+                         init_b=init_b)
+    h2 = SimpleRecurrent(name='h2',
+                        parent=[h1],
+                        batch_size=batch_size,
+                        nout=200,
+                        unit='tanh',
+                        init_W=init_W,
+                        init_U=init_U,
+                        init_b=init_b)
+# Try LSTM
+if 1:
+    h1 = LSTM(name='h1',
+              parent=[x],
+              batch_size=batch_size,
+              nout=200,
+              unit='tanh',
+              init_W=init_W,
+              init_U=init_U,
+              init_b=init_b)
+    h2 = LSTM(name='h2',
+              parent=[h1],
+              batch_size=batch_size,
+              nout=200,
+              unit='tanh',
+              init_W=init_W,
+              init_U=init_U,
+              init_b=init_b)
 h3 = FullyConnectedLayer(name='h3',
                          parent=[h2],
                          nout=256,
@@ -88,7 +91,7 @@ cost = model.build_recurrent_graph(output_args=[cost])[0][-1]
 cost.name = 'cost'
 
 optimizer = Adam(
-    lr=0.001
+    lr=0.01
 )
 
 extension = [
