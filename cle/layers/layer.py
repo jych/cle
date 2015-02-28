@@ -79,8 +79,8 @@ class RecurrentLayer(StemCell):
     def initialize(self):
         super(RecurrentLayer, self).initialize()
         for i, recurrent in enumerate(self.recurrent):
-            self.alloc(self.init_U.get('U_'+recurrent.name+self.name,
-                                       (recurrent.nout, self.nout)))
+            self.alloc(self.init_U.get((recurrent.nout, self.nout),
+                                      'U_'+recurrent.name+self.name)
 
 
 class SimpleRecurrent(RecurrentLayer):
@@ -119,15 +119,55 @@ class LSTM(SimpleRecurrent):
     ----------
     .. todo::
     """
+    def __init__(self,
+                 **kwargs):
+        super(LSTM, self).__init__(**kwargs)
+        self.nout *= 4
+
+    def get_init_state(self):
+        state = T.zeros((self.batch_size, 2*self.nout))
+        state = T.unbroadcast(state, *range(state.ndim))
+        return state
+  
     def fprop(self, xh):
         # xh is a list of inputs: [state_belows, state_befores]
+        # each state vector is: [state_before; cell_before]
+        # Hence, you use h[:, :self.nout] to compute recurrent term
         xs, hs = xh
+        # The index of self recurrence is 0
+        z_t = hs[0]
         z = T.zeros(self.nout)
         for x, parent in izip(xs, self.parent):
             z += T.dot(x, self.params['W_'+parent.name+self.name])
         for h, recurrent in izip(hs, self.recurrent):
-            z += T.dot(h, self.params['U_'+recurrent.name+self.name])
+            z += T.dot(h[:, :self.nout], self.params['U_'+recurrent.name+self.name][])
         z += self.params['b_'+self.name]
-        z = self.nonlin(z)
-        z.name = self.name
-        return z
+        # Compute activations of gating units
+        i_on = T.nnet.sigmoid(z[:, :self.nout])
+        f_on = T.nnet.sigmoid(z[:, self.nout:2*self.nout])
+        o_on = T.nnet.sigmoid(z[:, 2*self.nout:3*self.nout])
+        # Update hidden & cell states
+        z_t = T.set_subtensor(
+            z_t[:, self.nout:],
+            f_on * z_t[:, self.dim:] +
+            i_on * self.nonlin(z[:, 3*self.nout:])
+        )
+        z_t = T.set_subtensor(
+            z_t[:, :self.dim],
+            o_on * self.nonlin(z[:, self.nout:])
+        )
+        z_t.name = self.name
+        return z_t
+
+   def initialize(self):
+        for i, parent in enumerate(self.parent):
+            self.alloc(self.init_W.get((parent.nout, self.nout),
+                                       'W_'+parent.name+self.name)
+        for i, recurrent in enumerate(self.recurrent):
+            M =recurrent.nout
+            U = self.init_W.get(M, self.nout)
+            for j in xrange(3):
+                U = T.concatenate([U, self.init_U.get(M, self.nout)], axis=-1)
+            U.name = 'U_' + recurrent.name+self.name
+            self.alloc(U)
+        self.alloc(self.init_b.get(self.nout, 'b_'+self.name))

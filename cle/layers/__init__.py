@@ -50,7 +50,7 @@ class InitCell(object):
         x = np.random.normal(self.mean, self.stddev, x.shape)
         return scipy.linalg.orth(x)
 
-    def get(self, name, shape):
+    def get(self, shape, name=None):
         return sharedX(self.init_param(np.zeros(shape)), name)
 
 
@@ -157,9 +157,9 @@ class StemCell(NonlinCell):
 
     def initialize(self):
         for i, parent in enumerate(self.parent):
-            self.alloc(self.init_W.get('W_'+parent.name+self.name,
-                                       (parent.nout, self.nout)))
-        self.alloc(self.init_b.get('b_'+self.name, self.nout))
+            self.alloc(self.init_W.get((parent.nout, self.nout),
+                                       'W_'+parent.name+self.name)
+        self.alloc(self.init_b.get(self.nout, 'b_'+self.name))
 
 
 class InputLayer(object):
