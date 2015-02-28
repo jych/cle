@@ -20,6 +20,7 @@ from cle.datasets.bouncing_balls import BouncingBalls
 
 
 #datapath = '/data/lisatmp3/chungjun/bouncing_balls/bouncing_ball_2balls_16wh_20len_50000cases.npy'
+#savepath = '/u/chungjun/repos/cle/saved/'
 datapath = '/home/junyoung/data/bouncing_balls/bouncing_ball_2balls_16wh_20len_50000cases.npy'
 savepath = '/home/junyoung/repos/cle/saved/'
 
@@ -62,6 +63,8 @@ cost = MSELayer(name='cost', parent=[h3, y])
 
 nodes = [x, y, h1, h2, h3, cost]
 model = Net(nodes=nodes)
+
+# You can either use dict or list
 #cost = model.build_recurrent_graph(output_args={'cost': cost})[0][-1]
 cost = model.build_recurrent_graph(output_args=[cost])[0][-1]
 cost.name = 'cost'
