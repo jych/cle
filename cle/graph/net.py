@@ -63,6 +63,7 @@ class Net(object):
     def build_recurrent_graph(self, **kwargs):
         self.given_nonseq_args = kwargs.pop('nonseq_args', None)
         self.given_output_args = kwargs.pop('output_args', None)
+        self.given_context_args = kwargs.pop('context_args', None)
         self.given_args = kwargs.pop('given_args', None)
         n_steps = None
         reverse = None
@@ -81,7 +82,11 @@ class Net(object):
                 self.output_args[name] = node
                 state = node.get_init_state()
                 outputs.append(state)
-
+        if self.given_context_args is not None:
+            for i, (nname, node) in enumerate(self.output_args.items()):
+                for aname, arg in self.given_context_args.items():
+                    if nname == aname:
+                        outputs[i] = arg
         def scan_fn(*args):
             next_recurrence = []
             sorted_nodes = topological_sort(self.graph)
