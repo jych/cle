@@ -15,7 +15,7 @@ from cle.cle.train.opt import Adam
 from cle.datasets.bouncing_balls import BouncingBalls
 
 
-# Mash should be also implemented as data src and using InputLayer!
+# Mask should be also implemented as data src and using InputLayer!
 # Will add it in ver0.2
 
 
@@ -23,7 +23,7 @@ from cle.datasets.bouncing_balls import BouncingBalls
 datapath = '/home/junyoung/data/bouncing_balls/bouncing_ball_2balls_16wh_20len_50000cases.npy'
 savepath = '/home/junyoung/repos/cle/saved/'
 
-batch_size = 128
+batch_size = 100
 
 trdata = BouncingBalls(name='train',
                        path=datapath,
