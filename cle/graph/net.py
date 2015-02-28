@@ -156,7 +156,6 @@ class Net(object):
         return result[len(self.seq_args):]
 
     def get_params(self):
-        #return flatten([node.get_params() for node in self.nodes.values()])
         return flatten([node.get_params().values()
                         for node in self.nodes.values()])
 
