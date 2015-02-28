@@ -71,8 +71,6 @@ class Net(object):
         nonseqs = []
         self.seq_args = OrderedDict()
         self.output_args = OrderedDict()
-        self.nonseq_args = OrderedDict()
-        self.targets = OrderedDict()
 
         for name, node in self.nodes.items():
             if hasattr(node, 'isroot'):
