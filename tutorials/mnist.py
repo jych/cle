@@ -43,8 +43,8 @@ init_W, init_b = InitCell('randn'), InitCell('zeros')
 
 # Define nodes: objects
 inp, tar = trdata.theano_vars()
-x = InputLayer(name='inp', root=inp, nout=784)
-y = InputLayer(name='tar', root=tar, nout=1)
+x = InputLayer(name='x', root=inp, nout=784)
+y = InputLayer(name='y', root=tar, nout=1)
 onehot = OnehotLayer(name='onehot',
                      parent=[y],
                      nout=10)
