@@ -12,6 +12,7 @@ from cle.cle.train.ext import (
     Picklize
 )
 from cle.cle.train.opt import Adam
+from cle.cle.util import unpack
 from cle.datasets.bouncing_balls import BouncingBalls
 
 
@@ -25,7 +26,7 @@ datapath = '/home/junyoung/data/bouncing_balls/bouncing_ball_2balls_16wh_20len_5
 savepath = '/home/junyoung/repos/cle/saved/'
 
 batch_size = 100
-use_lstm = 0
+use_lstm = 1
 trdata = BouncingBalls(name='train',
                        path=datapath,
                        batch_size=batch_size)
@@ -38,6 +39,7 @@ inp, tar = trdata.theano_vars()
 x = InputLayer(name='x', root=inp, nout=256)
 y = InputLayer(name='y', root=tar, nout=256)
 
+# It is easy to make shortcuts
 # Try simple RNN (tanh)
 if not use_lstm:
     h1 = SimpleRecurrent(name='h1',
@@ -49,7 +51,15 @@ if not use_lstm:
                          init_U=init_U,
                          init_b=init_b)
     h2 = SimpleRecurrent(name='h2',
-                        parent=[h1],
+                        parent=[x, h1],
+                        batch_size=batch_size,
+                        nout=200,
+                        unit='tanh',
+                        init_W=init_W,
+                        init_U=init_U,
+                        init_b=init_b)
+    h3 = SimpleRecurrent(name='h3',
+                        parent=[x, h2],
                         batch_size=batch_size,
                         nout=200,
                         unit='tanh',
@@ -67,27 +77,36 @@ if use_lstm:
               init_U=init_U,
               init_b=init_b)
     h2 = LSTM(name='h2',
-              parent=[h1],
+              parent=[x, h1],
               batch_size=batch_size,
               nout=200,
               unit='tanh',
               init_W=init_W,
               init_U=init_U,
               init_b=init_b)
-h3 = FullyConnectedLayer(name='h3',
-                         parent=[h2],
+    h3 = LSTM(name='h3',
+              parent=[x, h2],
+              batch_size=batch_size,
+              nout=200,
+              unit='tanh',
+              init_W=init_W,
+              init_U=init_U,
+              init_b=init_b)
+h4 = FullyConnectedLayer(name='h4',
+                         parent=[h1, h2, h3],
                          nout=256,
                          unit='sigmoid',
                          init_W=init_W,
                          init_b=init_b)
-cost = MSELayer(name='cost', parent=[h3, y])
+cost = MSELayer(name='cost', parent=[h4, y])
 
-nodes = [x, y, h1, h2, h3, cost]
+nodes = [x, y, h1, h2, h3, h4, cost]
 model = Net(nodes=nodes)
 
 # You can either use dict or list
-#cost = model.build_recurrent_graph(output_args={'cost': cost})[0][-1]
-cost = model.build_recurrent_graph(output_args=[cost])[0][-1]
+#cost = model.build_recurrent_graph(output_args={'cost': cost})
+cost = unpack(model.build_recurrent_graph(output_args=[cost]))
+cost = cost[-1]
 cost.name = 'cost'
 
 optimizer = Adam(

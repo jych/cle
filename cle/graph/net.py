@@ -152,7 +152,7 @@ class Net(object):
             go_backwards=reverse)
         result = tolist(result)
 
-        return result[len(self.seq_args):]
+        return result[len(self.output_args):]
 
     def get_params(self):
         return flatten([node.get_params().values()
