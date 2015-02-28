@@ -99,7 +99,7 @@ extension = [
     EpochCount(40),
     Monitoring(freq=100,
                ddout=[cost]),
-    Picklize(freq=10,
+    Picklize(freq=200,
              path=savepath)
 ]
 

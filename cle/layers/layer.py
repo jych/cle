@@ -135,7 +135,7 @@ class LSTM(SimpleRecurrent):
         for x, parent in izip(xs, self.parent):
             z += T.dot(x[:, :parent.nout], self.params['W_'+parent.name+self.name])
         for h, recurrent in izip(hs, self.recurrent):
-            z += T.dot(h[:, :self.nout], self.params['U_'+recurrent.name+self.name])
+            z += T.dot(h[:, :recurrent.nout], self.params['U_'+recurrent.name+self.name])
         z += self.params['b_'+self.name]
         # Compute activations of gating units
         i_on = T.nnet.sigmoid(z[:, :self.nout])
