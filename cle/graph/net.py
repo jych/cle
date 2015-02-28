@@ -91,10 +91,10 @@ class Net(object):
                                      len(self.output_args)])
             for nname, node in self.nodes.items():
                 for i, (aname, arg) in enumerate(self.seq_args.items()):
-                    if nname == aname:
+                    if node is arg:
                         node.out = inputs[i]
                 for i, (aname, arg) in enumerate(self.output_args.items()):
-                    if nname == aname:
+                    if node is arg:
                         node.rec_out = recurrence[i]
             while sorted_nodes:
                 node = sorted_nodes.popleft()
@@ -127,7 +127,8 @@ class Net(object):
             self.nNone = len(required_outputs)
             return next_recurrence + required_outputs
 
-        dummy_args = seqs + outputs + nonseqs
+        dummy_seqs = [seq[0] for seq in seqs]
+        dummy_args = dummy_seqs + outputs + nonseqs
         dummy = scan_fn(*dummy_args)
         outputs = flatten(outputs + [None] * self.nNone)
 

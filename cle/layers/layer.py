@@ -80,7 +80,7 @@ class RecurrentLayer(StemCell):
         super(RecurrentLayer, self).initialize()
         for i, recurrent in enumerate(self.recurrent):
             self.alloc(self.init_U.get((recurrent.nout, self.nout),
-                                      'U_'+recurrent.name+self.name)
+                                      'U_'+recurrent.name+self.name))
 
 
 class SimpleRecurrent(RecurrentLayer):
@@ -119,11 +119,6 @@ class LSTM(SimpleRecurrent):
     ----------
     .. todo::
     """
-    def __init__(self,
-                 **kwargs):
-        super(LSTM, self).__init__(**kwargs)
-        self.nout *= 4
-
     def get_init_state(self):
         state = T.zeros((self.batch_size, 2*self.nout))
         state = T.unbroadcast(state, *range(state.ndim))
@@ -140,7 +135,7 @@ class LSTM(SimpleRecurrent):
         for x, parent in izip(xs, self.parent):
             z += T.dot(x, self.params['W_'+parent.name+self.name])
         for h, recurrent in izip(hs, self.recurrent):
-            z += T.dot(h[:, :self.nout], self.params['U_'+recurrent.name+self.name][])
+            z += T.dot(h[:, :self.nout], self.params['U_'+recurrent.name+self.name])
         z += self.params['b_'+self.name]
         # Compute activations of gating units
         i_on = T.nnet.sigmoid(z[:, :self.nout])
@@ -149,25 +144,26 @@ class LSTM(SimpleRecurrent):
         # Update hidden & cell states
         z_t = T.set_subtensor(
             z_t[:, self.nout:],
-            f_on * z_t[:, self.dim:] +
+            f_on * z_t[:, self.nout:] +
             i_on * self.nonlin(z[:, 3*self.nout:])
         )
         z_t = T.set_subtensor(
-            z_t[:, :self.dim],
-            o_on * self.nonlin(z[:, self.nout:])
+            z_t[:, :self.nout],
+            o_on * self.nonlin(z_t[:, self.nout:])
         )
         z_t.name = self.name
-        return z_t
+        return z_t[:, :self.nout]
 
-   def initialize(self):
+    def initialize(self):
+        N = self.nout
         for i, parent in enumerate(self.parent):
-            self.alloc(self.init_W.get((parent.nout, self.nout),
-                                       'W_'+parent.name+self.name)
+            self.alloc(self.init_W.get((parent.nout, 4*N),
+                                       'W_'+parent.name+self.name))
         for i, recurrent in enumerate(self.recurrent):
-            M =recurrent.nout
-            U = self.init_W.get(M, self.nout)
+            M = recurrent.nout
+            U = self.init_W.ortho((M, N))
             for j in xrange(3):
-                U = T.concatenate([U, self.init_U.get(M, self.nout)], axis=-1)
-            U.name = 'U_' + recurrent.name+self.name
+                U = np.concatenate([U, self.init_U.ortho((M, N))], axis=-1)
+            U = self.init_W.setX(U, 'U_'+recurrent.name+self.name)
             self.alloc(U)
         self.alloc(self.init_b.get(self.nout, 'b_'+self.name))

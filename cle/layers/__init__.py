@@ -34,24 +34,27 @@ class InitCell(object):
     def which_init(self, which):
         return getattr(self, which)
 
-    def rand(self, x):
-        return np.random.uniform(self.low, self.high, x.shape)
+    def rand(self, shape):
+        return np.random.uniform(self.low, self.high, shape)
 
-    def randn(self, x):
-        return np.random.normal(self.mean, self.stddev, x.shape)
+    def randn(self, shape):
+        return np.random.normal(self.mean, self.stddev, shape)
 
-    def zeros(self, x):
-        return np.zeros(x.shape)
+    def zeros(self, shape):
+        return np.zeros(shape)
 
-    def const(self, x):
-        return np.zeros(x.shape) + self.mean
+    def const(self, shape):
+        return np.zeros(shape) + self.mean
 
-    def ortho(self, x):
-        x = np.random.normal(self.mean, self.stddev, x.shape)
+    def ortho(self, shape):
+        x = np.random.normal(self.mean, self.stddev, shape)
         return scipy.linalg.orth(x)
 
     def get(self, shape, name=None):
-        return sharedX(self.init_param(np.zeros(shape)), name)
+        return sharedX(self.init_param(shape), name)
+
+    def setX(self, x, name=None):
+        return sharedX(x, name)
 
 
 class NonlinCell(object):
@@ -158,7 +161,7 @@ class StemCell(NonlinCell):
     def initialize(self):
         for i, parent in enumerate(self.parent):
             self.alloc(self.init_W.get((parent.nout, self.nout),
-                                       'W_'+parent.name+self.name)
+                                       'W_'+parent.name+self.name))
         self.alloc(self.init_b.get(self.nout, 'b_'+self.name))
 
 
