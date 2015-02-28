@@ -49,6 +49,6 @@ class MNIST(DesignMatrix):
             self.index = -1
             raise StopIteration()
 
-     def theano_vars(self):
+    def theano_vars(self):
         return [T.fmatrix('x'), T.lvector('y')]
            

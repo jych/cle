@@ -135,7 +135,7 @@ class StemCell(NonlinCell):
     """
     def __init__(self, parent, nout=None, init_W=InitCell('randn'),
                  init_b=InitCell('zeros'), name=None):
-        self.isroot = self.istarget = False
+        self.isroot = False
         if name is None:
             name = self.__class__.name__.lower()
         self.name = name
@@ -170,19 +170,11 @@ class InputLayer(object):
     ----------
     .. todo::
     """
-    def __init__(self, name, nout, root=None, target=None):
-        self.isroot = self.istarget = False
+    def __init__(self, name, nout, root):
+        self.isroot = True
         self.name = name
-        if root is not None:
-            root.name = self.name
-            self.out = root
-            self.isroot = True
-        elif target is not None:
-            target.name = self.name
-            self.out = target
-            self.istarget = True
-        if self.out is None:
-            raise AssertionError('You should either provide root or target')
+        root.name = self.name
+        self.out = root
         self.nout = nout
         self.params = OrderedDict()
 

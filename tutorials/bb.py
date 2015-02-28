@@ -35,7 +35,7 @@ init_W, init_U, init_b = InitCell('randn'), InitCell('ortho'), InitCell('zeros')
 # Define nodes: objects
 inp, tar = trdata.theano_vars()
 x = InputLayer(name='inp', root=inp, nout=256)
-y = InputLayer(name='tar', target=tar, nout=256)
+y = InputLayer(name='tar', root=tar, nout=256)
 h1 = SimpleRecurrent(name='h1',
                      parent=[x],
                      batch_size=batch_size,
@@ -53,19 +53,17 @@ h2 = SimpleRecurrent(name='h2',
                      init_U=init_U,
                      init_b=init_b)
 h3 = FullyConnectedLayer(name='h3',
-                         parent=[h1],
+                         parent=[h2],
                          nout=256,
                          unit='sigmoid',
                          init_W=init_W,
                          init_b=init_b)
-cost = MSELayer(name='cost', parent=[h2, y])
+cost = MSELayer(name='cost', parent=[h3, y])
 
 nodes = [x, y, h1, h2, h3, cost]
 model = Net(nodes=nodes)
-model.build_recurrent_graph()
-#model.build_recurrent_graph(nonseq_args={'a':5, 'b':6})
-
-cost = model.nodes['cost'].out
+#cost = model.build_recurrent_graph(output_args={'cost': cost})[0][-1]
+cost = model.build_recurrent_graph(output_args=[cost])[0][-1]
 cost.name = 'cost'
 
 optimizer = Adam(
