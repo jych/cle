@@ -25,7 +25,7 @@ datapath = '/home/junyoung/data/bouncing_balls/bouncing_ball_2balls_16wh_20len_5
 savepath = '/home/junyoung/repos/cle/saved/'
 
 batch_size = 100
-
+use_lstm = 0
 trdata = BouncingBalls(name='train',
                        path=datapath,
                        batch_size=batch_size)
@@ -39,7 +39,7 @@ x = InputLayer(name='x', root=inp, nout=256)
 y = InputLayer(name='y', root=tar, nout=256)
 
 # Try simple RNN (tanh)
-if 0:
+if not use_lstm:
     h1 = SimpleRecurrent(name='h1',
                          parent=[x],
                          batch_size=batch_size,
@@ -57,7 +57,7 @@ if 0:
                         init_U=init_U,
                         init_b=init_b)
 # Try LSTM
-if 1:
+if use_lstm:
     h1 = LSTM(name='h1',
               parent=[x],
               batch_size=batch_size,
@@ -91,7 +91,7 @@ cost = model.build_recurrent_graph(output_args=[cost])[0][-1]
 cost.name = 'cost'
 
 optimizer = Adam(
-    lr=0.01
+    lr=0.001
 )
 
 extension = [
