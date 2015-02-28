@@ -27,7 +27,7 @@ class FullyConnectedLayer(StemCell):
         # depending the number of parents.
         z = T.zeros(self.nout)
         for x, parent in izip(xs, self.parent):
-            z += T.dot(x, self.params['W_'+parent.name+self.name])
+            z += T.dot(x[:, :parent.nout], self.params['W_'+parent.name+self.name])
         z += self.params['b_'+self.name]
         z = self.nonlin(z)
         z.name = self.name
@@ -131,9 +131,9 @@ class LSTM(SimpleRecurrent):
         xs, hs = xh
         # The index of self recurrence is 0
         z_t = hs[0]
-        z = T.zeros(self.nout)
+        z = T.zeros(4*self.nout)
         for x, parent in izip(xs, self.parent):
-            z += T.dot(x, self.params['W_'+parent.name+self.name])
+            z += T.dot(x[:, :parent.nout], self.params['W_'+parent.name+self.name])
         for h, recurrent in izip(hs, self.recurrent):
             z += T.dot(h[:, :self.nout], self.params['U_'+recurrent.name+self.name])
         z += self.params['b_'+self.name]
@@ -152,7 +152,7 @@ class LSTM(SimpleRecurrent):
             o_on * self.nonlin(z_t[:, self.nout:])
         )
         z_t.name = self.name
-        return z_t[:, :self.nout]
+        return z_t
 
     def initialize(self):
         N = self.nout
@@ -166,4 +166,4 @@ class LSTM(SimpleRecurrent):
                 U = np.concatenate([U, self.init_U.ortho((M, N))], axis=-1)
             U = self.init_W.setX(U, 'U_'+recurrent.name+self.name)
             self.alloc(U)
-        self.alloc(self.init_b.get(self.nout, 'b_'+self.name))
+        self.alloc(self.init_b.get(4*N, 'b_'+self.name))
