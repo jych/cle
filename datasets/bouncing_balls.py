@@ -33,7 +33,8 @@ class BouncingBalls(DesignMatrix):
     def batch(self, data, i):
         size = self.batch_size
         ndata = self.ndata
-        return data[i*size:min((i+1)*size, ndata)]
+        this_batch = data[i*size:min((i+1)*size, ndata)]
+        return this_batch.swapaxes(0, 1)
 
     def __iter__(self):
         return self

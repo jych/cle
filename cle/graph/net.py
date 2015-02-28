@@ -43,7 +43,7 @@ class Net(object):
     def set_graph(self, nodes):
         self.graph = {}
         for node in nodes:
-            if not node.isroot and not node.istarget:
+            if not node.isroot:
                 parent = node.parent
                 for par_node in tolist(parent):
                     self.graph[par_node.name] = node.name
@@ -61,73 +61,46 @@ class Net(object):
             self.nodes[node].out = self.nodes[node].fprop(inp)
 
     def build_recurrent_graph(self, **kwargs):
-        sorted_nodes = topological_sort(self.graph)
-        # call get_init_state() here, which is basically Theano variables
-        # we do not explicitly set these things outside which will just
-        # increase confusion
-        # A recurrent layer should have a list of T.zeros for each
-        # recurrent object fed-in
-        #...
-        #>>> pseudo code
-        #init_node = node_which_is_rec.get_init_state()
-
-        # Pre scan, set sequences, outputs info, nonsequences
-        #outputs = OrderedDict()
-        given_nonseq_args = kwargs.pop('nonseq_args', None)
-        given_output_args = kwargs.pop('output_args', None)
-        given_args = kwargs.pop('given_args', None)
+        self.given_nonseq_args = kwargs.pop('nonseq_args', None)
+        self.given_output_args = kwargs.pop('output_args', None)
+        self.given_context_args = kwargs.pop('context_args', None)
+        self.given_args = kwargs.pop('given_args', None)
         n_steps = None
         reverse = None
         seqs = []
         outputs = []
         nonseqs = []
-        seq_args = OrderedDict()
-        output_args = OrderedDict()
-        nonseq_args = OrderedDict()
-        targets = OrderedDict()
-        nNone = 0
-
-        # pop cost function
-        try:
-            cost_obj = self.nodes.pop('cost')
-            sorted_nodes.remove('cost')
-        except KeyError:
-            cost_obj = None
+        self.seq_args = OrderedDict()
+        self.output_args = OrderedDict()
 
         for name, node in self.nodes.items():
             if hasattr(node, 'isroot'):
                 if node.isroot:
-                    seq_args[name] = node
+                    self.seq_args[name] = node
                     seqs.append(node.out)
-            if hasattr(node, 'istarget'):
-                if node.istarget:
-                    targets[name] = node
             if hasattr(node, 'get_init_state'):
-                output_args[name] = node
+                self.output_args[name] = node
                 state = node.get_init_state()
                 outputs.append(state)
-        nstate = len(outputs)
-
-        if given_args is not None:
-            n_steps = given_args.pop('n_steps', None)
-            reverse = given_args.pop('reverse', False)
-        if cost_obj is not None:
-            output_args['cost'] = cost_obj
-
-        if given_output_args is not None:
-            for name, arg in given_output_args.items():
-                output_args[name] = arg
-        nNone = len(output_args) - nstate
-        if cost_obj is not None:
-            nNone += 1
-        outputs = flatten(outputs + [None] * nNone)
-
-        if given_nonseq_args is not None:
-            for name, arg in given_nonseq_args.items():
-                nonseq_args[name] = arg
-
+        if self.given_context_args is not None:
+            for i, (nname, node) in enumerate(self.output_args.items()):
+                for aname, arg in self.given_context_args.items():
+                    if nname == aname:
+                        outputs[i] = arg
         def scan_fn(*args):
-            ipdb.set_trace()
+            next_recurrence = []
+            sorted_nodes = topological_sort(self.graph)
+            inputs = tolist(args[:len(self.seq_args)])
+            recurrence = tolist(args[len(self.seq_args):
+                                     len(self.seq_args)+
+                                     len(self.output_args)])
+            for nname, node in self.nodes.items():
+                for i, (aname, arg) in enumerate(self.seq_args.items()):
+                    if node is arg:
+                        node.out = inputs[i]
+                for i, (aname, arg) in enumerate(self.output_args.items()):
+                    if node is arg:
+                        node.rec_out = recurrence[i]
             while sorted_nodes:
                 node = sorted_nodes.popleft()
                 if self.nodes[node].isroot:
@@ -136,9 +109,45 @@ class Net(object):
                 inp = []
                 for par in parent:
                     inp.append(par.out)
+                if hasattr(self.nodes[node], 'recurrent'):
+                    recurrent = self.nodes[node].recurrent
+                    rec_inp = []
+                    for rec in recurrent:
+                        rec_inp.append(rec.rec_out)
+                    inp = [inp, rec_inp]
+                    self.nodes[node].out = self.nodes[node].fprop(inp)
+                    next_recurrence.append(self.nodes[node].out)
+                    continue
                 self.nodes[node].out = self.nodes[node].fprop(inp)
+            required_outputs = []
+            for node in self.nodes.values():
+                if isinstance(self.given_output_args, dict):
+                    for arg in self.given_output_args.values():
+                        if node is arg:
+                            required_outputs.append(node.out)
+                elif isinstance(self.given_output_args, list):
+                    for arg in self.given_output_args:
+                        if node is arg:
+                            required_outputs.append(node.out)
+            self.nNone = len(required_outputs)
+            return next_recurrence + required_outputs
 
-        ipdb.set_trace()
+        dummy_seqs = [seq[0] for seq in seqs]
+        dummy_args = dummy_seqs + outputs + nonseqs
+        dummy = scan_fn(*dummy_args)
+        outputs = flatten(outputs + [None] * self.nNone)
+
+        if self.given_args is not None:
+            n_steps = self.given_args.pop('n_steps', None)
+            reverse = self.given_args.pop('reverse', False)
+        if self.given_nonseq_args is not None:
+            if isinstance(self.given_nonseq_args, dict):
+                for arg in self.given_nonseq_args.values():
+                    nonseqs.append(arg)
+            elif isinstance(self.given_nonseq_args, list):
+                for arg in self.given_nonseq_args:
+                    nonseqs.append(arg)
+
         result, updates = theano.scan(
             fn=scan_fn,
             sequences=seqs,
@@ -148,16 +157,9 @@ class Net(object):
             go_backwards=reverse)
         result = tolist(result)
 
-        # Post scan, add cost
-        inp = flatten(list([result, targets]))
-        if cost_obj is not None:
-            cost = cost_obj(inp)
-
-        ipdb.set_trace()
-        return cost
+        return result[len(self.output_args):]
 
     def get_params(self):
-        #return flatten([node.get_params() for node in self.nodes.values()])
         return flatten([node.get_params().values()
                         for node in self.nodes.values()])
 

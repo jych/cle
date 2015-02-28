@@ -34,24 +34,27 @@ class InitCell(object):
     def which_init(self, which):
         return getattr(self, which)
 
-    def rand(self, x):
-        return np.random.uniform(self.low, self.high, x.shape)
+    def rand(self, shape):
+        return np.random.uniform(self.low, self.high, shape)
 
-    def randn(self, x):
-        return np.random.normal(self.mean, self.stddev, x.shape)
+    def randn(self, shape):
+        return np.random.normal(self.mean, self.stddev, shape)
 
-    def zeros(self, x):
-        return np.zeros(x.shape)
+    def zeros(self, shape):
+        return np.zeros(shape)
 
-    def const(self, x):
-        return np.zeros(x.shape) + self.mean
+    def const(self, shape):
+        return np.zeros(shape) + self.mean
 
-    def ortho(self, x):
-        x = np.random.normal(self.mean, self.stddev, x.shape)
+    def ortho(self, shape):
+        x = np.random.normal(self.mean, self.stddev, shape)
         return scipy.linalg.orth(x)
 
-    def get(self, name, shape):
-        return sharedX(self.init_param(np.zeros(shape)), name)
+    def get(self, shape, name=None):
+        return sharedX(self.init_param(shape), name)
+
+    def setX(self, x, name=None):
+        return sharedX(x, name)
 
 
 class NonlinCell(object):
@@ -135,7 +138,7 @@ class StemCell(NonlinCell):
     """
     def __init__(self, parent, nout=None, init_W=InitCell('randn'),
                  init_b=InitCell('zeros'), name=None):
-        self.isroot = self.istarget = False
+        self.isroot = False
         if name is None:
             name = self.__class__.name__.lower()
         self.name = name
@@ -157,9 +160,9 @@ class StemCell(NonlinCell):
 
     def initialize(self):
         for i, parent in enumerate(self.parent):
-            self.alloc(self.init_W.get('W_'+parent.name+self.name,
-                                       (parent.nout, self.nout)))
-        self.alloc(self.init_b.get('b_'+self.name, self.nout))
+            self.alloc(self.init_W.get((parent.nout, self.nout),
+                                       'W_'+parent.name+self.name))
+        self.alloc(self.init_b.get(self.nout, 'b_'+self.name))
 
 
 class InputLayer(object):
@@ -170,19 +173,11 @@ class InputLayer(object):
     ----------
     .. todo::
     """
-    def __init__(self, name, nout, root=None, target=None):
-        self.isroot = self.istarget = False
+    def __init__(self, name, nout, root):
+        self.isroot = True
         self.name = name
-        if root is not None:
-            root.name = self.name
-            self.out = root
-            self.isroot = True
-        elif target is not None:
-            target.name = self.name
-            self.out = target
-            self.istarget = True
-        if self.out is None:
-            raise AssertionError('You should either provide root or target')
+        root.name = self.name
+        self.out = root
         self.nout = nout
         self.params = OrderedDict()
 

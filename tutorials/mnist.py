@@ -43,8 +43,8 @@ init_W, init_b = InitCell('randn'), InitCell('zeros')
 
 # Define nodes: objects
 inp, tar = trdata.theano_vars()
-x = InputLayer(name='inp', root=inp, nout=784)
-y = InputLayer(name='tar', root=tar, nout=1)
+x = InputLayer(name='x', root=inp, nout=784)
+y = InputLayer(name='y', root=tar, nout=1)
 onehot = OnehotLayer(name='onehot',
                      parent=[y],
                      nout=10)
@@ -107,7 +107,7 @@ mainloop.run()
 #                                    working on early stopping
 # 3. Dropout: use Theano.clone
 # 4. Other Regularization
-# 5. RNN                             jych is doing
+# 5. RNN                             done!
 # 6. CNN                             donghyunlee is doing
 # 7. VAE                             laurent-dinh????????? :)
 # 8. Predefined nets: larger building block such as MLP, ConvNet and Stacked RNN
