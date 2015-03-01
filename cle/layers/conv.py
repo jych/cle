@@ -84,10 +84,10 @@ class Conv2DLayer(StemCell):
         self.alloc(self.init_W.get(W_shape, W_name))
         b_name = 'b_'+self.name
         if self.tiedbias:
-            b_shape = nchannels
+            b_shape = nfilters
             self.alloc(self.init_b.get(b_shape, b_name))
         else:
-            b_shape = (nchannels, x, y)
+            b_shape = (nfilters, x, y)
             self.alloc(self.init_b.get(b_shape, b_name))
 
 
