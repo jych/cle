@@ -10,12 +10,6 @@ from theano.tensor.nnet import conv2d, ConvOp
 from theano.tensor.signal.downsample import max_pool_2d
     
 
-# We need to write FF->Conv converter layer, and vice versa.
-# We only need 2D->4D and 4D->2D since 3D
-# (bs, ch, x) could be represented as (bs, ch, x, 1)
-# and there is no case like 3D representation (timestep, batch, x)
-# since rnn is handled by a giant scan configuration.
-# Say giant scan because it could contain an MLP inside.
 # Pooling layers exist separately in layers.py
 # Batch normalization should also locate in layers.py
 class Conv2DLayer(StemCell):
