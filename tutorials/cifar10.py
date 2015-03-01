@@ -9,6 +9,7 @@ from cle.cle.layers import (
     InitCell
 )
 from cle.cle.layers.feedforward import FullyConnectedLayer
+from cle.cle.layers.conv import ConvertLayer, Conv2DLayer
 from cle.cle.train import Training
 from cle.cle.train.ext import (
     EpochCount,
@@ -17,7 +18,7 @@ from cle.cle.train.ext import (
     Picklize
 )
 from cle.cle.train.opt import RMSProp
-from cle.cle.util import error, predict
+from cle.cle.utils import error, predict
 from cle.datasets.cifar10 import CIFAR10
 
 
@@ -41,28 +42,36 @@ init_W, init_b = InitCell('randn'), InitCell('zeros')
 
 # Define nodes: objects
 inp, tar = trdata.theano_vars()
-x = InputLayer(name='x', root=inp, nout=784)
-y = InputLayer(name='y', root=tar, nout=1)
-onehot = OnehotLayer(name='onehot',
-                     parent=[y],
-                     nout=10)
-h1 = FullyConnectedLayer(name='h1',
-                         parent=[x],
-                         nout=1000,
-                         unit='relu',
-                         init_W=init_W,
-                         init_b=init_b)
-h2 = FullyConnectedLayer(name='h2',
-                         parent=[h1],
+x = InputLayer(name='x', root=inp, nout=3072)
+y = InputLayer(name='y', root=tar, nout=10)
+c1 = ConvertLayer(name='c1',
+                  parent=[x],
+                  outshape=(batch_size, 3, 32, 32))
+h1 = Conv2DLayer(name='h1',
+                 parent=[c1],
+                 outshape=(batch_size, 32, 16, 16),
+                 unit='relu',
+                 init_W=init_W,
+                 init_b=init_b)
+h2 = Conv2DLayer(name='h2',
+                 parent=[h1],
+                 outshape=(batch_size, 32, 3, 3),
+                 unit='relu',
+                 init_W=init_W,
+                 init_b=init_b)
+c2 = ConvertLayer(name='c2',
+                  parent=[h2],
+                  outshape=(batch_size, 100))
+h3 = FullyConnectedLayer(name='h3',
+                         parent=[c2],
                          nout=10,
                          unit='softmax',
                          init_W=init_W,
                          init_b=init_b)
-cost = MulCrossEntropyLayer(name='cost', parent=[onehot, h2])
-ipdb.set_trace()
+cost = MulCrossEntropyLayer(name='cost', parent=[y, h3])
 
 # You will fill in a list of nodes and fed them to the model constructor
-nodes = [x, y, onehot, h1, h2, cost]
+nodes = [x, y, c1, h1, h2, c2, h3, cost]
 
 # Your model will build the Theano computational graph
 model = Net(nodes=nodes)
@@ -70,7 +79,7 @@ model.build_graph()
 
 # You can access any output of a node by simply doing model.nodes[$node_name].out
 cost = model.nodes['cost'].out
-err = error(predict(model.nodes['h2'].out), predict(model.nodes['onehot'].out))
+err = error(predict(model.nodes['h3'].out), predict(model.nodes['y'].out))
 cost.name = 'cost'
 err.name = 'error_rate'
 
@@ -83,8 +92,7 @@ extension = [
     GradientClipping(batch_size),
     EpochCount(40),
     Monitoring(freq=100,
-               ddout=[cost, err],
-               data=[valdata]),
+               ddout=[cost, err]),
     Picklize(freq=10,
              path=savepath)
 ]

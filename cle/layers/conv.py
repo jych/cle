@@ -4,10 +4,10 @@ import theano.tensor as T
 
 from itertools import izip
 from cle.cle.layers import StemCell, RandomCell, InitCell
-from cle.cle.utils import tolist, totuple
+from cle.cle.utils import tolist, totuple, unpack
 from theano.compat.python2x import OrderedDict
 from theano.tensor.nnet import conv2d, ConvOp
-from theano.tensor.sensor.downsample import max_pool_2d
+from theano.tensor.signal.downsample import max_pool_2d
     
 
 # We need to write FF->Conv converter layer, and vice versa.
@@ -28,7 +28,6 @@ class Conv2DLayer(StemCell):
     """
     def __init__(self,
                  unit,
-                 filters,
                  outshape,
                  tiedbias=True,
                  stepsize=(1, 1),
@@ -36,9 +35,6 @@ class Conv2DLayer(StemCell):
                  **kwargs):
         super(Conv2DLayer, self).__init__(**kwargs)
         self.nonlin = self.which_nonlin(unit)
-        # filters are parent-wise-filterbank
-        # type(filters) should be dict
-        self.filters = filters
         # Shape should be (batch_size, num_channels, x, y)
         self.outshape = outshape
         self.tiedbias = tiedbias
@@ -51,16 +47,16 @@ class Conv2DLayer(StemCell):
         # For now, we satisfy with fullyconnected layer
         # that can embed multiple conv layer parents
         # into same hidden space.
+        x = unpack(x)
+        parent = unpack(self.parent)
         z = T.zeros(self.outshape)
-        for x, parent in izip(xs, self.parent):
-            w = self.params['W_'+parent.name+self.name]
-            z += conv2d(
-                inputs=x,
-                filters=w,
-                subsample=self.stepsize,
-                image_shape=parent.outshape,
-                border_mode=self.bordermode
-            )
+        W = self.params['W_'+parent.name+self.name]
+        z += conv2d(x, W,
+            image_shape=parent.outshape,
+            subsample=self.stepsize,
+            border_mode=self.bordermode,
+            filter_shape=self.filtershape
+        )
         if self.tiedbias:
             z += self.params['b_'+self.name].dimshuffle('x', 0, 'x', 'x')
         else:
@@ -70,21 +66,24 @@ class Conv2DLayer(StemCell):
         return z
 
     def initialize(self):
+        parent = unpack(self.parent)
         outshape = self.outshape
         parshape = parent.outshape
         batchsize = outshape[0]
-        nchannels = outshape[1]
+        nfilters = outshape[1]
+        nchannels = parshape[1]
         if self.bordermode == 'valid':
             x = parshape[2] - outshape[2] + 1
             y = parshape[3] - outshape[3] + 1
         elif self.bordermode == 'full':
             x = outshape[2] - parshape[2] + 1
             y = outshape[3] - parshape[3] + 1
-        W_shape = (batchsize, nchannels, x, y)
+        W_shape = (nfilters, nchannels, x, y)
+        self.filtershape = W_shape
         W_name = 'W_'+parent.name+self.name
-            self.alloc(self.init_W.get(W_shape, W_name)
+        self.alloc(self.init_W.get(W_shape, W_name))
         b_name = 'b_'+self.name
-        if self.tied_bias:
+        if self.tiedbias:
             b_shape = nchannels
             self.alloc(self.init_b.get(b_shape, b_name))
         else:
@@ -92,7 +91,7 @@ class Conv2DLayer(StemCell):
             self.alloc(self.init_b.get(b_shape, b_name))
 
 
-class ConverterLayer(StemCell):
+class ConvertLayer(StemCell):
     """
     Convert 2D matrix to 4D tensor
     or vice versa
@@ -105,30 +104,33 @@ class ConverterLayer(StemCell):
                  outshape=None,
                  axes=('b', 'c', 'x', 'y'),
                  **kwargs):
-        super(ConverterLayer, self).__init__(**kwargs)
+        super(ConvertLayer, self).__init__(**kwargs)
         self.outshape = outshape
-        if len(outshape) == 2 or outshape=None:
+        if len(outshape) == 2 or outshape == None:
             convert_type = 'convert2matrix'
             self.nout = outshape[1]
         elif len(outshape) == 4:
             convert_type = 'convert2tensor4'
         self.fprop = self.which_convert(convert_type)
+        self.axes = axes
 
-    def which_init(self, which):
+    def which_convert(self, which):
         return getattr(self, which)
 
     def convert2matrix(self, x):
+        x = unpack(x)
         # Assume that axes of x is always ('b', 'c', 'x', 'y')
         refaxes = ('b', 'c', 'x', 'y')
         newaxes = ()
         for axis in self.axes:
-            newaxes += (refaxes.index(axis))
+            newaxes += (refaxes.index(axis),)
         x = x.dimshuffle(newaxes)
         z = x.reshape((x.shape[0], -1))
         z.name = self.name
         return z
 
     def convert2tensor4(self, x):
+        x = unpack(x)
         z = x.reshape(self.outshape)
         z.name = self.name
         return z
