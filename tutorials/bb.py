@@ -3,7 +3,8 @@ import numpy as np
 
 from cle.cle.graph.net import Net
 from cle.cle.layers import InputLayer, InitCell, MSELayer
-from cle.cle.layers.layer import FullyConnectedLayer, SimpleRecurrent
+from cle.cle.layers.feedforward import FullyConnectedLayer
+from cle.cle.layers.recurrent import SimpleRecurrent
 from cle.cle.train import Training
 from cle.cle.train.ext import (
     EpochCount,
