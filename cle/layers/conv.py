@@ -45,9 +45,12 @@ class Conv2DLayer(StemCell):
         self.stepsize = totuple(stepsize)
         self.bordermode = bordermode
 
-    def fprop(self, xs):
-        # xs could be a list of inputs.
-        # depending the number of parents.
+    def fprop(self, x):
+        # Conv layer can have only one parent.
+        # Later, we will extend to generalize this.
+        # For now, we satisfy with fullyconnected layer
+        # that can embed multiple conv layer parents
+        # into same hidden space.
         z = T.zeros(self.outshape)
         for x, parent in izip(xs, self.parent):
             w = self.params['W_'+parent.name+self.name]
@@ -68,13 +71,27 @@ class Conv2DLayer(StemCell):
 
     def initialize(self):
         outshape = self.outshape
-        for i, parent in enumerate(self.parent):
-            pshape = parent.outshape
-            self.alloc(self.init_W.get((parent.nout, self.nout),
-                                       'W_'+parent.name+self.name))
-        self.alloc(self.init_b.get(self.nout, 'b_'+self.name))
+        parshape = parent.outshape
+        batchsize = outshape[0]
+        nchannels = outshape[1]
+        if self.bordermode == 'valid':
+            x = parshape[2] - outshape[2] + 1
+            y = parshape[3] - outshape[3] + 1
+        elif self.bordermode == 'full':
+            x = outshape[2] - parshape[2] + 1
+            y = outshape[3] - parshape[3] + 1
+        W_shape = (batchsize, nchannels, x, y)
+        W_name = 'W_'+parent.name+self.name
+            self.alloc(self.init_W.get(W_shape, W_name)
+        b_name = 'b_'+self.name
+        if self.tied_bias:
+            b_shape = nchannels
+            self.alloc(self.init_b.get(b_shape, b_name))
+        else:
+            b_shape = (nchannels, x, y)
+            self.alloc(self.init_b.get(b_shape, b_name))
 
-        
+
 class ConverterLayer(StemCell):
     """
     Convert 2D matrix to 4D tensor
@@ -85,14 +102,15 @@ class ConverterLayer(StemCell):
     .. todo::
     """
     def __init__(self,
-                 targetshape=None,
+                 outshape=None,
                  axes=('b', 'c', 'x', 'y'),
                  **kwargs):
         super(ConverterLayer, self).__init__(**kwargs)
-        self.targetshape = targetshape
-        if len(targetshape) == 2 or targetshape=None:
+        self.outshape = outshape
+        if len(outshape) == 2 or outshape=None:
             convert_type = 'convert2matrix'
-        elif len(targetshape) == 4:
+            self.nout = outshape[1]
+        elif len(outshape) == 4:
             convert_type = 'convert2tensor4'
         self.fprop = self.which_convert(convert_type)
 
@@ -105,14 +123,13 @@ class ConverterLayer(StemCell):
         newaxes = ()
         for axis in self.axes:
             newaxes += (refaxes.index(axis))
-        batch_size = x.shape[0]
         x = x.dimshuffle(newaxes)
-        z = x.reshape((batch_size, -1))
+        z = x.reshape((x.shape[0], -1))
         z.name = self.name
         return z
 
     def convert2tensor4(self, x):
-        z = x.reshape(self.targetshape)
+        z = x.reshape(self.outshape)
         z.name = self.name
         return z
 
