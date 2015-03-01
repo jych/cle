@@ -99,7 +99,9 @@ class ConvertLayer(StemCell):
                  **kwargs):
         super(ConvertLayer, self).__init__(**kwargs)
         self.outshape = outshape
-        if len(outshape) == 2 or outshape == None:
+        if outshape == None:
+            convert_type = 'convert2matrix'
+        elif len(outshape) == 2:
             convert_type = 'convert2matrix'
             self.nout = outshape[1]
         elif len(outshape) == 4:
