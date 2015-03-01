@@ -8,7 +8,7 @@ from cle.cle.layers import (
     MulCrossEntropyLayer,
     InitCell
 )
-from cle.cle.layers.layer import FullyConnectedLayer
+from cle.cle.layers.feedforward import FullyConnectedLayer
 from cle.cle.train import Training
 from cle.cle.train.ext import (
     EpochCount,
