@@ -129,6 +129,14 @@ def tolist(arg):
     return arg
 
 
+def totuple(arg):
+    if isinstance(arg, (list, tuple)):
+        return tuple(arg)
+    elif type(arg) is not tuple:
+        arg = (arg)
+    return arg
+
+
 class PickleMixin(object):
     """
     This code is brought from Kyle Kastner
