@@ -43,16 +43,19 @@ class Conv2DLayer(StemCell):
         self.bordermode = bordermode
 
     def fprop(self, xs):
+        # xs could be a list of inputs.
+        # depending the number of parents.
         z = T.zeros(self.outshape)
         for x, parent in izip(xs, self.parent):
             w = self.params['W_'+parent.name+self.name]
-            z = conv2d(
+            z += conv2d(
                 inputs=x,
                 filters=w,
                 subsample=self.stepsize,
                 image_shape=parent.outshape,
                 border_mode=self.bordermode
             )
-
-
-
+        z += self.params['b_'+self.name].dimshuffle('x', 0, 1, 2)
+        z = self.nonlin(z)
+        z.name = self.name
+        return z
