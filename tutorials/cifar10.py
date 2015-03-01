@@ -17,7 +17,7 @@ from cle.cle.train.ext import (
     Monitoring,
     Picklize
 )
-from cle.cle.train.opt import RMSProp
+from cle.cle.train.opt import Adam
 from cle.cle.utils import error, predict
 from cle.datasets.cifar10 import CIFAR10
 
