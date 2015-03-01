@@ -160,8 +160,9 @@ class StemCell(NonlinCell):
 
     def initialize(self):
         for i, parent in enumerate(self.parent):
-            self.alloc(self.init_W.get((parent.nout, self.nout),
-                                       'W_'+parent.name+self.name))
+            W_shape = (parent.nout, self.nout)
+            W_name = 'W_'+parent.name+self.name
+            self.alloc(self.init_W.get(W_shape, W_name))
         self.alloc(self.init_b.get(self.nout, 'b_'+self.name))
 
 

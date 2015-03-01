@@ -116,14 +116,16 @@ class LSTM(SimpleRecurrent):
     def initialize(self):
         N = self.nout
         for i, parent in enumerate(self.parent):
-            self.alloc(self.init_W.get((parent.nout, 4*N),
-                                       'W_'+parent.name+self.name))
+            W_shape = (parent.nout, 4*N)
+            W_name = 'W_'+parent.name+self.name
+            self.alloc(self.init_W.get(W_shape, W_name)
         for i, recurrent in enumerate(self.recurrent):
             M = recurrent.nout
             U = self.init_U.ortho((M, N))
             for j in xrange(3):
                 U = np.concatenate([U, self.init_U.ortho((M, N))], axis=-1)
-            U = self.init_U.setX(U, 'U_'+recurrent.name+self.name)
+            U_name = 'U_'+recurrent.name+self.name
+            U = self.init_U.setX(U, U_name)
             self.alloc(U)
         self.alloc(self.init_b.get(4*N, 'b_'+self.name))
 
@@ -182,14 +184,16 @@ class GFLSTM(LSTM):
         N = self.nout
         Nm = len(self.recurrent)
         for i, parent in enumerate(self.parent):
-            self.alloc(self.init_W.get((parent.nout, 4*N+Nm),
-                                       'W_'+parent.name+self.name))
+            W_shape = (parent.nout, 4*N+Nm)
+            W_name = 'W_'+parent.name+self.name
+            self.alloc(self.init_W.get(W_shape, W_name)
         for i, recurrent in enumerate(self.recurrent):
             M = recurrent.nout
             U = self.init_U.ortho((M, N))
             for j in xrange(3):
                 U = np.concatenate([U, self.init_U.ortho((M, N))], axis=-1)
             U = np.concatenate([U, self.init_U.rand((M, Nm))], axis=-1)
-            U = self.init_U.setX(U, 'U_'+recurrent.name+self.name)
+            U_name = 'U_'+recurrent.name+self.name
+            U = self.init_U.setX(U, U_name)
             self.alloc(U)
         self.alloc(self.init_b.get(4*N+Nm, 'b_'+self.name))
