@@ -4,7 +4,7 @@ import theano.tensor as T
 
 from itertools import izip
 from cle.cle.layers import StemCell, RandomCell, InitCell
-from cle.cle.util import tolist
+from cle.cle.utils import tolist
 from theano.compat.python2x import OrderedDict
 
 

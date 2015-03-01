@@ -17,7 +17,7 @@ from cle.cle.train.ext import (
     Picklize
 )
 from cle.cle.train.opt import RMSProp
-from cle.cle.util import error, predict
+from cle.cle.utils import error, predict
 from cle.datasets.mnist import MNIST
 
 

@@ -6,7 +6,7 @@ import time
 
 from itertools import izip
 from cle.cle.graph import TheanoMixin
-from cle.cle.util import PickleMixin, OrderedDict, tolist
+from cle.cle.utils import PickleMixin, OrderedDict, tolist
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

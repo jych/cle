@@ -6,7 +6,7 @@ import theano.tensor as T
 from theano.compat.python2x import OrderedDict
 from theano.sandbox.rng_mrg import MRG_RandomStreams
 from cle.cle.cost import NllBin, NllMul, MSE
-from cle.cle.util import sharedX, tolist, unpack
+from cle.cle.utils import sharedX, tolist, unpack
 
 
 class InitCell(object):

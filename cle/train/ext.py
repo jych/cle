@@ -6,7 +6,7 @@ import theano
 import theano.tensor as T
 
 from cle.cle.graph import TheanoMixin
-from cle.cle.util import secure_pickle_dump
+from cle.cle.utils import secure_pickle_dump
 from itertools import izip
 
 

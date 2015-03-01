@@ -1,7 +1,7 @@
 import theano
 import theano.tensor as T
 
-from cle.cle.util import PickleMixin, OrderedDict, tolist
+from cle.cle.utils import PickleMixin, OrderedDict, tolist
 
 
 class TheanoMixin(object):

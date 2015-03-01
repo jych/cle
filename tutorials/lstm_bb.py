@@ -13,7 +13,7 @@ from cle.cle.train.ext import (
     Picklize
 )
 from cle.cle.train.opt import Adam
-from cle.cle.util import unpack
+from cle.cle.utils import unpack
 from cle.datasets.bouncing_balls import BouncingBalls
 
 
