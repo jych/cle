@@ -91,10 +91,10 @@ class LSTM(SimpleRecurrent):
         z = T.zeros((self.batch_size, 4*self.nout))
         for x, parent in izip(xs, self.parent):
             W = self.params['W_'+parent.name+self.name]
-            z += T.dot(x[:, :parent.nout], W])
+            z += T.dot(x[:, :parent.nout], W)
         for h, recurrent in izip(hs, self.recurrent):
             U = self.params['U_'+recurrent.name+self.name]
-            z += T.dot(h[:, :recurrent.nout], U])
+            z += T.dot(h[:, :recurrent.nout], U)
         z += self.params['b_'+self.name]
         # Compute activations of gating units
         i_on = T.nnet.sigmoid(z[:, :self.nout])
@@ -128,7 +128,7 @@ class LSTM(SimpleRecurrent):
         self.alloc(self.init_b.get(4*N, 'b_'+self.name))
 
 
-class GFLSTM(SimpleRecurrent):
+class GFLSTM(LSTM):
     """
     Gated Feedback Long short-term memory
 
@@ -136,11 +136,6 @@ class GFLSTM(SimpleRecurrent):
     ----------
     .. todo::
     """
-    def get_init_state(self):
-        state = T.zeros((self.batch_size, 2*self.nout))
-        state = T.unbroadcast(state, *range(state.ndim))
-        return state
-  
     def fprop(self, xh):
         # xh is a list of inputs: [state_belows, state_befores]
         # each state vector is: [state_before; cell_before]
@@ -152,11 +147,11 @@ class GFLSTM(SimpleRecurrent):
         z = T.zeros((self.batch_size, 4*self.nout+Nm))
         for x, parent in izip(xs, self.parent):
             W = self.params['W_'+parent.name+self.name]
-            z += T.dot(x[:, :parent.nout], W])
+            z += T.dot(x[:, :parent.nout], W)
         for h, recurrent in izip(hs, self.recurrent):
             U = self.params['U_'+recurrent.name+self.name]
             z = T.inc_subtensor(
-                z[:, :-self.nout]
+                z[:, :-self.nout],
                 T.dot(h[:, :recurrent.nout], U[:, :-self.nout])
             )
         z += self.params['b_'+self.name]
@@ -174,7 +169,7 @@ class GFLSTM(SimpleRecurrent):
         z_t = T.set_subtensor(
             z_t[:, self.nout:],
             f_on * z_t[:, self.nout:] +
-            i_on * self.nonlin(c_t])
+            i_on * self.nonlin(c_t)
         )
         z_t = T.set_subtensor(
             z_t[:, :self.nout],
@@ -194,7 +189,7 @@ class GFLSTM(SimpleRecurrent):
             U = self.init_U.ortho((M, N))
             for j in xrange(3):
                 U = np.concatenate([U, self.init_U.ortho((M, N))], axis=-1)
-            U = np.concatenate([U, self.init_U.rand((M, Nm))], axis-1)
+            U = np.concatenate([U, self.init_U.rand((M, Nm))], axis=-1)
             U = self.init_U.setX(U, 'U_'+recurrent.name+self.name)
             self.alloc(U)
         self.alloc(self.init_b.get(4*N+Nm, 'b_'+self.name))
