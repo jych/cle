@@ -92,7 +92,7 @@ optimizer = Adam(
 
 extension = [
     GradientClipping(batch_size),
-    EpochCount(40),
+    EpochCount(100),
     Monitoring(freq=100,
                ddout=[cost]),
     Picklize(freq=200,
