@@ -60,7 +60,8 @@ h2 = Conv2DLayer(name='h2',
                  init_W=init_W,
                  init_b=init_b)
 c2 = ConvertLayer(name='c2',
-                  parent=[h2])
+                  parent=[h2],
+                  outshape=(batch_size, 288))
 h3 = FullyConnectedLayer(name='h3',
                          parent=[c2],
                          nout=10,
