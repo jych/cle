@@ -136,10 +136,6 @@ class GFLSTM(SimpleRecurrent):
     ----------
     .. todo::
     """
-    def __init__(self,
-                 **kwargs):
-        super(GFLSTM, self).__init__(**kwargs)
-   
     def get_init_state(self):
         state = T.zeros((self.batch_size, 2*self.nout))
         state = T.unbroadcast(state, *range(state.ndim))
