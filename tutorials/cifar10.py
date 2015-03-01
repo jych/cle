@@ -31,7 +31,7 @@ datapath = ['/home/junyoung/data/cifar10/pylearn2_gcn_whitened/train.npy',
             '/home/junyoung/data/cifar10/pylearn2_gcn_whitened/trainy.npy']
 savepath = '/home/junyoung/repos/cle/saved/'
 
-batch_size = 128
+batch_size = 100
 
 trdata = CIFAR10(name='train',
                  path=datapath,
