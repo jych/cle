@@ -97,14 +97,14 @@ class LSTM(SimpleRecurrent):
             z += T.dot(h[:, :recurrent.nout], U)
         z += self.params['b_'+self.name]
         # Compute activations of gating units
-        i_on = T.nnet.sigmoid(z[:, :self.nout])
-        f_on = T.nnet.sigmoid(z[:, self.nout:2*self.nout])
-        o_on = T.nnet.sigmoid(z[:, 2*self.nout:3*self.nout])
+        i_on = T.nnet.sigmoid(z[:, self.nout:2*self.nout])
+        f_on = T.nnet.sigmoid(z[:, 2*self.nout:3*self.nout])
+        o_on = T.nnet.sigmoid(z[:, 3*self.nout:])
         # Update hidden & cell states
         z_t = T.set_subtensor(
             z_t[:, self.nout:],
             f_on * z_t[:, self.nout:] +
-            i_on * self.nonlin(z[:, 3*self.nout:])
+            i_on * self.nonlin(z[:, :self.nout])
         )
         z_t = T.set_subtensor(
             z_t[:, :self.nout],
@@ -151,20 +151,20 @@ class GFLSTM(LSTM):
         for h, recurrent in izip(hs, self.recurrent):
             U = self.params['U_'+recurrent.name+self.name]
             z = T.inc_subtensor(
-                z[:, :-self.nout],
-                T.dot(h[:, :recurrent.nout], U[:, :-self.nout])
+                z[:, self.nout:],
+                T.dot(h[:, :recurrent.nout], U[:, self.nout:])
             )
         z += self.params['b_'+self.name]
         # Compute activations of gating units
-        i_on = T.nnet.sigmoid(z[:, :self.nout])
-        f_on = T.nnet.sigmoid(z[:, self.nout:2*self.nout])
-        o_on = T.nnet.sigmoid(z[:, 2*self.nout:3*self.nout])
-        gron = T.nnet.sigmoid(z[:, 3*self.nout:3*self.nout+Nm])
-        c_t = z[:, -self.nout:]
+        i_on = T.nnet.sigmoid(z[:, self.nout:2*self.nout])
+        f_on = T.nnet.sigmoid(z[:, 2*self.nout:3*self.nout])
+        o_on = T.nnet.sigmoid(z[:, 3*self.nout:4*self.nout])
+        gron = T.nnet.sigmoid(z[:, 4*self.nout:])
+        c_t = z[:, :self.nout]
         for i, (h, recurrent) in enumerate(izip(hs, self.recurrent)):
-            gated_h = h[:, :self.nout] * gron[i]
+            gated_h = h[:, :recurrent.nout] * gron[:, i]
             U = self.params['U_'+recurrent.name+self.name]
-            c_t += T.dot(gated_h, U[:, -self.nout:])
+            c_t += T.dot(gated_h, U[:, :self.nout])
         # Update hidden & cell states
         z_t = T.set_subtensor(
             z_t[:, self.nout:],
