@@ -84,7 +84,7 @@ cost.name = 'cost'
 err.name = 'error_rate'
 
 # Define your optimizer: Momentum (Nesterov), RMSProp, Adam
-optimizer = RMSProp(
+optimizer = Adam(
     lr=0.001
 )
 
