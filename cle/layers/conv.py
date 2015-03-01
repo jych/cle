@@ -7,11 +7,10 @@ from cle.cle.layers import StemCell, RandomCell, InitCell
 from cle.cle.utils import tolist, totuple, unpack
 from theano.compat.python2x import OrderedDict
 from theano.tensor.nnet import conv2d, ConvOp
-from theano.tensor.signal.downsample import max_pool_2d
     
 
-# Pooling layers exist separately in layers.py
-# Batch normalization should also locate in layers.py
+# Pooling layers exist separately in layer.py
+# Batch normalization should also locate in layer.py
 class Conv2DLayer(StemCell):
     """
     2D Convolutional layer

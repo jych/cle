@@ -98,7 +98,7 @@ extension = [
 ]
 
 mainloop = Training(
-    name='toy_mnist',
+    name='toy_cifar',
     data=trdata,
     model=model,
     optimizer=optimizer,
