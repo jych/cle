@@ -162,7 +162,7 @@ class GFLSTM(LSTM):
         gron = T.nnet.sigmoid(z[:, 4*self.nout:])
         c_t = z[:, :self.nout]
         for i, (h, recurrent) in enumerate(izip(hs, self.recurrent)):
-            gated_h = h[:, :recurrent.nout] * gron[:, i]
+            gated_h = h[:, :recurrent.nout] * gron[:, i].dimshuffle(0, 'x')
             U = self.params['U_'+recurrent.name+self.name]
             c_t += T.dot(gated_h, U[:, :self.nout])
         # Update hidden & cell states
