@@ -32,21 +32,3 @@ class FullyConnectedLayer(StemCell):
         z = self.nonlin(z)
         z.name = self.name
         return z
-
-
-class ConvLayer(StemCell):
-    """
-    Convolutional layer
-
-    Parameters
-    ----------
-    .. todo::
-    """
-    def __init__(self):
-        raise NotImplementedError(
-            str(type(self)) + " does not implement Layer.init.")
-
-    def fprop(self, x=None):
-        raise NotImplementedError(
-            str(type(self)) + " does not implement Layer.fprop.")
-
