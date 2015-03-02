@@ -5,7 +5,7 @@ import theano.tensor as T
 
 from theano.compat.python2x import OrderedDict
 from theano.sandbox.rng_mrg import MRG_RandomStreams
-from cle.cle.cost import Gaussian, NllBin, NllMul, MOG, MSE
+from cle.cle.cost import Gaussian, GMM, NllBin, NllMul, MSE
 from cle.cle.utils import sharedX, tolist, unpack
 
 
@@ -276,9 +276,9 @@ class GaussianLayer(CostLayer):
         return Gaussian(xs[0], xs[1], xs[2])
 
 
-class MOGLayer(CostLayer):
+class GMMLayer(CostLayer):
     """
-    Mixture of Gaussians layer
+    Gaussian mixture model layer
 
     Parameters
     ----------
@@ -296,6 +296,6 @@ class MOGLayer(CostLayer):
         self.ncoeff = ncoeff
 
     def fprop(self, xs):
-        if len(xs) != 3:
+        if len(xs) != 4:
             raise ValueError("The number of inputs does not match.")
-        return MOG(xs[0], xs[1], xs[2])
+        return GMM(xs[0], xs[1], xs[2], xs[3])
