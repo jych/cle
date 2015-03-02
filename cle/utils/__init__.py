@@ -92,15 +92,6 @@ def shared_int(value, dtype='int32', name=None, borrow=False):
     return theano.shared(theano_args)
 
 
-def dropout(x, p, rng):
-    theano_rng = MRG_RandomStreams(max(rng.randint(2**15), 1))
-    assert 0 <= p and p < 1
-    return T.switch(
-        theano_rng.binomial(p=1-p, size=x.shape, dtype=x.dtype),
-        x/(1-p), 0.*x
-    )
-
-
 def predict(probs):
     return T.argmax(probs, axis=-1)
 

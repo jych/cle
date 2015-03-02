@@ -33,3 +33,7 @@ class FullyConnectedLayer(StemCell):
         z = self.nonlin(z)
         z.name = self.name
         return z
+
+
+
+
