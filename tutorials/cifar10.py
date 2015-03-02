@@ -100,6 +100,7 @@ h6 = Conv2DLayer(name='h6',
 c2 = ConvertLayer(name='c2',
                   parent=[h6],
                   outshape=(batch_size, 192))
+# Global average pooling missing
 h7 = FullyConnectedLayer(name='h7',
                          parent=[c2],
                          nout=10,
