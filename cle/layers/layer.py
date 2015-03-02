@@ -20,8 +20,8 @@ class MaxPool2D(StemCell):
                  poolstride=(2, 2),
                  **kwargs):
         super(MaxPool2D, self).__init__(**kwargs)
-        # Shape should be (batch_size, num_channels, x, y)
         parent = unpack(self.parent)
+        # Shape should be (batch_size, num_channels, x, y)
         parshape = parent.outshape
         poolsize = totuple(poolsize)
         poolstride = totuple(poolstride)
