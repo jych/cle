@@ -21,7 +21,8 @@ class Conv2DLayer(StemCell):
     """
     def __init__(self,
                  unit,
-                 outshape,
+                 outshape=None,
+                 filtershape=None,
                  tiedbias=True,
                  stepsize=(1, 1),
                  bordermode='valid',
@@ -29,7 +30,12 @@ class Conv2DLayer(StemCell):
         super(Conv2DLayer, self).__init__(**kwargs)
         self.nonlin = self.which_nonlin(unit)
         # Shape should be (batch_size, num_channels, x, y)
+        if (outshape is None and filtershape is None) or\
+            (outshape is not None and filtershape is not None):
+            raise ValueError("Either outshape or filtershape should be given,\
+                              but don't provide both of them.")
         self.outshape = outshape
+        self.filtershape = filtershape
         self.tiedbias = tiedbias
         self.stepsize = totuple(stepsize)
         self.bordermode = bordermode
@@ -61,20 +67,32 @@ class Conv2DLayer(StemCell):
     def initialize(self):
         parent = unpack(self.parent)
         outshape = self.outshape
+        filtershape = self.filtershape
         parshape = parent.outshape
-        batchsize = outshape[0]
-        nfilters = outshape[1]
+        #batchsize = outshape[0]
+        batchsize = parshape[0]
         nchannels = parshape[1]
-        if self.bordermode == 'valid':
-            x = parshape[2] - outshape[2] + 1
-            y = parshape[3] - outshape[3] + 1
-        elif self.bordermode == 'full':
-            x = outshape[2] - parshape[2] + 1
-            y = outshape[3] - parshape[3] + 1
-        W_shape = (nfilters, nchannels, x, y)
-        self.filtershape = W_shape
+        if filtershape is not None:
+            nfilters = filtershape[1]
+            if self.bordermode == 'valid':
+                x = parshape[2] - filtershape[2] + 1
+                y = parshape[3] - filtershape[3] + 1
+            else:
+                x = parshape[2] + filtershape[2] - 1
+                y = parshape[3] + filtershape[3] - 1
+            self.outshape = (batchsize, nfilters, x, y)
+        else:
+            nfilters = outshape[1]
+            if self.bordermode == 'valid':
+                x = parshape[2] - outshape[2] + 1
+                y = parshape[3] - outshape[3] + 1
+            elif self.bordermode == 'full':
+                x = outshape[2] - parshape[2] + 1
+                y = outshape[3] - parshape[3] + 1
+            W_shape = (nfilters, nchannels, x, y)
+            self.filtershape = W_shape
         W_name = 'W_'+parent.name+self.name
-        self.alloc(self.init_W.get(W_shape, W_name))
+        self.alloc(self.init_W.get(self.filtershape, W_name))
         b_name = 'b_'+self.name
         if self.tiedbias:
             b_shape = nfilters
