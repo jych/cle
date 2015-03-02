@@ -26,13 +26,9 @@ class MaxPool2D(StemCell):
         parshape = parent.outshape
         poolsize = totuple(poolsize)
         poolstride = totuple(poolstride)
-        if ((parshape[0] - poolsize[0]) % poolstride[0]) != 0 or\
-            ((parshape[1] - poolsize[1]) % poolstride[1]) != 0:
-            raise ValueError("Detector layer shape should be\
-                              divisible, but remainder has detected")
-        newx = (parshape[2] - poolsize[0]) / poolstride[0] + 1
-        newy = (parshape[3] - poolsize[1]) / poolstride[1] + 1
-        outshape = (parent.outshape[0], parent.outshape[1], newx, newy)
+        newx = (parshape[2] - poolsize[0]) // poolstride[0] + 1
+        newy = (parshape[3] - poolsize[1]) // poolstride[1] + 1
+        outshape = (parshape[0], parshape[1], newx, newy)
         self.outshape = outshape
         self.poolsize = poolsize
         self.poolstride = poolstride
