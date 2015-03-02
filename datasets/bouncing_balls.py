@@ -45,7 +45,7 @@ class BouncingBalls(DesignMatrix):
             return (self.batch(data, self.index) for data in self.data)
         else:
             self.index = -1
-            raise StopIteration()    
-  
+            raise StopIteration()
+
     def theano_vars(self):
         return [T.ftensor3('x'), T.ftensor3('y')]
