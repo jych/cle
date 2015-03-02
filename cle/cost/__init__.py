@@ -1,5 +1,6 @@
 import ipdb
 import theano.tensor as T
+pi = sharedX(np.pi)
 
 
 def NllBin(y, y_hat):
@@ -36,3 +37,21 @@ def MSE(y, y_hat):
     """
     mse =  T.sum(T.sqr(y - y_hat), axis=-1)
     return mse.mean()
+
+
+def Gaussian(y, mu, logvar):
+    """
+    Gaussian negative log-likelihood
+
+    Parameters
+    ----------
+    todo..
+    """
+    z = (y - mu)
+    ll = T.sum(T.sqr(z) * T.exp(-logvar) +
+                 logvar + T.log(2 * pi), axis=1)
+    ll *= 0.5
+    nll = -ll
+    return nll.mean()
+
+
