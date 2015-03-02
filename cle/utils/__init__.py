@@ -3,6 +3,7 @@ import cPickle
 import numpy as np
 import os
 import shutil
+import sys
 import tempfile
 import theano
 import theano.tensor as T
@@ -92,15 +93,6 @@ def shared_int(value, dtype='int32', name=None, borrow=False):
     return theano.shared(theano_args)
 
 
-def dropout(x, p, rng):
-    theano_rng = MRG_RandomStreams(max(rng.randint(2**15), 1))
-    assert 0 <= p and p < 1
-    return T.switch(
-        theano_rng.binomial(p=1-p, size=x.shape, dtype=x.dtype),
-        x/(1-p), 0.*x
-    )
-
-
 def predict(probs):
     return T.argmax(probs, axis=-1)
 
@@ -129,6 +121,14 @@ def tolist(arg):
     return arg
 
 
+def totuple(arg):
+    if isinstance(arg, (list, tuple)):
+        return tuple(arg)
+    elif type(arg) is not tuple:
+        arg = (arg)
+    return arg
+
+
 class PickleMixin(object):
     """
     This code is brought from Kyle Kastner
@@ -145,6 +145,7 @@ class PickleMixin(object):
                     cPickle.dump(v, f)
                 except:
                     self._pickle_skip_list.append(k)
+            self._pickle_skip_list.append('data')
         state = OrderedDict()
         for k, v in self.__dict__.items():
             if k not in self._pickle_skip_list:

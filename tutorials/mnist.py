@@ -8,16 +8,17 @@ from cle.cle.layers import (
     MulCrossEntropyLayer,
     InitCell
 )
-from cle.cle.layers.layer import FullyConnectedLayer
+from cle.cle.layers.feedforward import FullyConnectedLayer
 from cle.cle.train import Training
 from cle.cle.train.ext import (
     EpochCount,
     GradientClipping,
     Monitoring,
-    Picklize
+    Picklize,
+    EarlyStopping
 )
 from cle.cle.train.opt import RMSProp
-from cle.cle.util import error, predict
+from cle.cle.utils import error, predict
 from cle.datasets.mnist import MNIST
 
 
@@ -29,14 +30,14 @@ from cle.datasets.mnist import MNIST
 datapath = '/home/junyoung/data/mnist/mnist.pkl'
 savepath = '/home/junyoung/repos/cle/saved/'
 
-batch_size = 128
+batchsize = 128
 
 trdata = MNIST(name='train',
                path=datapath,
-               batch_size=batch_size)
+               batchsize=batchsize)
 valdata = MNIST(name='valid',
                 path=datapath,
-                batch_size=batch_size)
+                batchsize=batchsize)
 
 # Choose the random initialization method
 init_W, init_b = InitCell('randn'), InitCell('zeros')
@@ -81,13 +82,14 @@ optimizer = RMSProp(
 )
 
 extension = [
-    GradientClipping(batch_size),
+    GradientClipping(batchsize),
     EpochCount(40),
     Monitoring(freq=100,
                ddout=[cost, err],
                data=[valdata]),
     Picklize(freq=10,
-             path=savepath)
+             path=savepath),
+    EarlyStopping(path=savepath)
 ]
 
 mainloop = Training(

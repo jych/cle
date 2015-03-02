@@ -1,6 +1,8 @@
 import ipdb
 import theano.tensor as T
 
+from cle.cle.utils.op import logsumexp
+
 
 def NllBin(y, y_hat):
     """
@@ -8,7 +10,7 @@ def NllBin(y, y_hat):
 
     Parameters
     ----------
-    todo..
+    .. todo::
     """
     nll = -T.sum(y * T.log(y_hat) + (1-y) * T.log(1-y_hat), axis=-1)
     return nll.mean()
@@ -20,7 +22,7 @@ def NllMul(y, y_hat):
 
     Parameters
     ----------
-    todo..
+    .. todo::
     """
     nll =  -T.sum(y * T.log(y_hat), axis=-1)
     return nll.mean()
@@ -32,7 +34,40 @@ def MSE(y, y_hat):
 
     Parameters
     ----------
-    todo..
+    .. todo::
     """
     mse =  T.sum(T.sqr(y - y_hat), axis=-1)
     return mse.mean()
+
+
+def Gaussian(y, mu, logvar):
+    """
+    Gaussian negative log-likelihood
+
+    Parameters
+    ----------
+    mu     : FullyConnected (Linear)
+    logvar : FullyConnected (Linear)
+    """
+    nll = 0.5 * T.sum(T.sqr(y - mu) * T.exp(-logvar) + logvar, axis=1)
+    return nll.mean()
+
+
+def GMM(y, mu, logvar, coeff):
+    """
+    Gaussian mixture model negative log-likelihood
+
+    Parameters
+    ----------
+    mu     : FullyConnected (Linear)
+    logvar : FullyConnected (Linear)
+    coeff  : FullyConnected (Softmax)
+    """
+    ncoeff = self.ncoeff
+    batchsize = mu.shape[0]
+    y = y.dimshuffle(0, 1, 'x')
+    mu = mu.reshape((mu.shape[0], mu.shape[1]/ncoeff, ncoeff))
+    logvar = logvar.reshape((logvar.shape[0], logvar.shape[1]/ncoeff, ncoeff))
+    nll = 0.5 * T.sum(T.sqr(y - mu) * T.exp(-logvar) + logvar, axis=1)
+    nll = logsumexp(T.log(coeff) + nll, axis=-1)
+    return nll.mean()

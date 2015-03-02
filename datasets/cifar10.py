@@ -4,16 +4,16 @@ import theano.tensor as T
 from cle.cle.data import DesignMatrix
 
 
-class MNIST(DesignMatrix):
+class CIFAR10(DesignMatrix):
     """
-    MNIST batch provider
+    CIFAR10 batch provider
 
     Parameters
     ----------
     .. todo::
     """
     def __init__(self, **kwargs):
-        super(MNIST, self).__init__(**kwargs)
+        super(CIFAR10, self).__init__(**kwargs)
         self.data = self.load_data()
         self.ndata = self.num_examples()
         if self.batchsize is None:
@@ -22,13 +22,9 @@ class MNIST(DesignMatrix):
         self.index = -1
 
     def load_data(self):
-        data = np.load(self.path)
-        if self.name == 'train':
-            return data[0]
-        elif self.name == 'valid':
-            return data[1]
-        elif self.name == 'test':
-            return data[2]
+        X = np.load(self.path[0])
+        y = np.load(self.path[1])
+        return (X, y)
 
     def num_examples(self):
         return self.data[0].shape[0]
@@ -50,5 +46,4 @@ class MNIST(DesignMatrix):
             raise StopIteration()
 
     def theano_vars(self):
-        return [T.fmatrix('x'), T.lvector('y')]
-           
+        return [T.fmatrix('x'), T.fmatrix('y')]

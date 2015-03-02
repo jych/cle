@@ -4,7 +4,7 @@ import numpy as np
 from cle.cle.graph.net import Net
 from cle.cle.layers import InputLayer, InitCell, MSELayer
 from cle.cle.layers.feedforward import FullyConnectedLayer
-from cle.cle.layers.recurrent import LSTM
+from cle.cle.layers.recurrent import GFLSTM
 from cle.cle.train import Training
 from cle.cle.train.ext import (
     EpochCount,
@@ -40,30 +40,35 @@ x = InputLayer(name='x', root=inp, nout=256)
 y = InputLayer(name='y', root=tar, nout=256)
 
 # Using skip connections is easy
-h1 = LSTM(name='h1',
-          parent=[x],
-          batchsize=batchsize,
-          nout=200,
-          unit='tanh',
-          init_W=init_W,
-          init_U=init_U,
-          init_b=init_b)
-h2 = LSTM(name='h2',
-          parent=[x, h1],
-          batchsize=batchsize,
-          nout=200,
-          unit='tanh',
-          init_W=init_W,
-          init_U=init_U,
-          init_b=init_b)
-h3 = LSTM(name='h3',
-          parent=[x, h2],
-          batchsize=batchsize,
-          nout=200,
-          unit='tanh',
-          init_W=init_W,
-          init_U=init_U,
-          init_b=init_b)
+h1 = GFLSTM(name='h1',
+            parent=[x],
+            batchsize=batchsize,
+            nout=200,
+            unit='tanh',
+            init_W=init_W,
+            init_U=init_U,
+            init_b=init_b)
+h2 = GFLSTM(name='h2',
+            parent=[x, h1],
+            recurrent=[h1],
+            batchsize=batchsize,
+            nout=200,
+            unit='tanh',
+            init_W=init_W,
+            init_U=init_U,
+            init_b=init_b)
+h3 = GFLSTM(name='h3',
+            parent=[x, h2],
+            recurrent=[h1, h2],
+            batchsize=batchsize,
+            nout=200,
+            unit='tanh',
+            init_W=init_W,
+            init_U=init_U,
+            init_b=init_b)
+h2.recurrent.append(h3)
+h1.recurrent.append(h2)
+h1.recurrent.append(h3)
 h4 = FullyConnectedLayer(name='h4',
                          parent=[h1, h2, h3],
                          nout=256,
@@ -90,7 +95,7 @@ extension = [
     EpochCount(100),
     Monitoring(freq=100,
                ddout=[cost]),
-    Picklize(freq=1,
+    Picklize(freq=200,
              path=savepath)
 ]
 

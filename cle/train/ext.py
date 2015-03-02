@@ -1,12 +1,14 @@
 import ipdb
+import copy
 import logging
 import numpy as np
 import os
+import sys
 import theano
 import theano.tensor as T
 
 from cle.cle.graph import TheanoMixin
-from cle.cle.util import secure_pickle_dump
+from cle.cle.utils import secure_pickle_dump
 from itertools import izip
 
 
@@ -168,8 +170,7 @@ class Picklize(Extension):
         if np.mod(mainloop.trainlog._epoch_seen, self.freq)==0:
             pklpath = mainloop.name + '.pkl'
             path = os.path.join(self.path, pklpath)
-            logger.info("")
-            logger.info("Saving model to: %s" % path)
+            logger.info("\tSaving model to: %s" % path)
             try:
                 secure_pickle_dump(mainloop, path)
             except Exception:
@@ -182,22 +183,22 @@ class EarlyStopping(Extension):
 
         WRITEME
     """
-    def __init__(self, freq, path):
+    def __init__(self, path):
         self.name = 'ext_save'
-        self.freq = freq
         if not os.path.exists(path):
             os.makedirs(path)
         self.path = path
+        self.best = sys.float_info.max
 
     def exe(self, mainloop):
         """
         Pickle the mainloop
         """
-        if np.mod(mainloop.trainlog._epoch_seen, self.freq)==0:
+        if mainloop.trainlog._ddmonitors[-1][0] < self.best:
+            self.best = mainloop.trainlog._ddmonitors[-1][0]
             pklpath = mainloop.name + '_best.pkl'
             path = os.path.join(self.path, pklpath)
-            logger.info("")
-            logger.info("Saving model to: %s" % path)
+            logger.info("\tSaving best model to: %s" % path)
             try:
                 secure_pickle_dump(mainloop, path)
             except Exception:
