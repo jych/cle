@@ -5,7 +5,7 @@ import theano.tensor as T
 
 from theano.compat.python2x import OrderedDict
 from theano.sandbox.rng_mrg import MRG_RandomStreams
-from cle.cle.cost import NllBin, NllMul, MSE
+from cle.cle.cost import Gaussian, NllBin, NllMul, MOG, MSE
 from cle.cle.utils import sharedX, tolist, unpack
 
 
@@ -234,8 +234,8 @@ class BinCrossEntropyLayer(CostLayer):
     ----------
     todo..
     """
-    def fprop(self, xx):
-        return NllBin(xx[0], xx[1])
+    def fprop(self, xs):
+        return NllBin(xs[0], xs[1])
 
 
 class MulCrossEntropyLayer(CostLayer):
@@ -246,8 +246,8 @@ class MulCrossEntropyLayer(CostLayer):
     ----------
     todo..
     """
-    def fprop(self, xx):
-        return NllMul(xx[0], xx[1])
+    def fprop(self, xs):
+        return NllMul(xs[0], xs[1])
 
 
 class MSELayer(CostLayer):
@@ -258,5 +258,44 @@ class MSELayer(CostLayer):
     ----------
     todo..
     """
-    def fprop(self, xx):
-        return MSE(xx[0], xx[1])
+    def fprop(self, xs):
+        return MSE(xs[0], xs[1])
+
+
+class GaussianLayer(CostLayer):
+    """
+    Linear Gaussian layer
+
+    Parameters
+    ----------
+    todo..
+    """
+    def fprop(self, xs):
+        if len(xs) != 3:
+            raise ValueError("The number of inputs does not match.")
+        return Gaussian(xs[0], xs[1], xs[2])
+
+
+class MOGLayer(CostLayer):
+    """
+    Mixture of Gaussians layer
+
+    Parameters
+    ----------
+    todo..
+    """
+    def __init__(self,
+                 ncoeff,
+                 **kwargs):
+        super(MOGLayer, self).__init__(**kwargs)
+        if not isinstance(ncoeff, int):
+            raise ValueError("Provide int number for this attribute.")
+        else:
+            if ncoeff < 2:
+                raise ValueError("You want to have more than 2 Gaussians.")
+        self.ncoeff = ncoeff
+
+    def fprop(self, xs):
+        if len(xs) != 3:
+            raise ValueError("The number of inputs does not match.")
+        return MOG(xs[0], xs[1], xs[2])

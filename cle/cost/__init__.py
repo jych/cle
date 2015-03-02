@@ -47,11 +47,24 @@ def Gaussian(y, mu, logvar):
     ----------
     todo..
     """
-    z = (y - mu)
-    ll = T.sum(T.sqr(z) * T.exp(-logvar) +
+    ll = T.sum(T.sqr(y - mu) * T.exp(-logvar) +
                  logvar + T.log(2 * pi), axis=1)
     ll *= 0.5
     nll = -ll
     return nll.mean()
 
 
+def MOG(y, mu, logvar):
+    """
+    Mixture of Gaussian negative log-likelihood
+
+    Parameters
+    ----------
+    todo..
+    """
+    z = (y - mu)
+    ll = T.sum(T.sqr(z) * T.exp(-logvar) +
+                 logvar + T.log(2 * pi), axis=1)
+    ll *= 0.5
+    nll = -ll
+    return nll.mean()
