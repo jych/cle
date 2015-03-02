@@ -4,10 +4,15 @@ import theano
 import theano.tensor as T
 
 from collections import OrderedDict
-from cle.cle.utils import flatten, tolist, topological_sort
+from cle.cle.utils import (
+    flatten,
+    tolist,
+    topological_sort,
+    PickleMixin
+)
 
 
-class Net(object):
+class Net(PickleMixin):
     """
     Abstract class for networks
 
