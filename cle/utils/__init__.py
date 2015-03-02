@@ -144,6 +144,7 @@ class PickleMixin(object):
                     cPickle.dump(v, f)
                 except:
                     self._pickle_skip_list.append(k)
+            self._pickle_skip_list.append('data')
         state = OrderedDict()
         for k, v in self.__dict__.items():
             if k not in self._pickle_skip_list:

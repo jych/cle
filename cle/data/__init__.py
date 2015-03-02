@@ -35,10 +35,10 @@ class DesignMatrix(Data):
     ----------
     .. todo::
     """
-    def __init__(self, name, path, batch_size=None):
+    def __init__(self, name, path, batchsize=None):
         self.name = name
         self.path = path
-        self.batch_size = batch_size
+        self.batchsize = batchsize
 
     def load_data(self):
         raise NotImplementedError(

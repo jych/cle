@@ -17,19 +17,19 @@ class RecurrentLayer(StemCell):
     .. todo::
     """
     def __init__(self,
-                 batch_size,
+                 batchsize,
                  recurrent=[],
                  init_U=InitCell('ortho'),
                  **kwargs):
         super(RecurrentLayer, self).__init__(**kwargs)
         self.recurrent = tolist(recurrent)
         self.recurrent.append(self)
-        self.batch_size = batch_size
+        self.batchsize = batchsize
         self.init_U = init_U
         self.init_states = OrderedDict()
 
     def get_init_state(self):
-        state = T.zeros((self.batch_size, self.nout))
+        state = T.zeros((self.batchsize, self.nout))
         state = T.unbroadcast(state, *range(state.ndim))
         return state
 
@@ -77,7 +77,7 @@ class LSTM(SimpleRecurrent):
     .. todo::
     """
     def get_init_state(self):
-        state = T.zeros((self.batch_size, 2*self.nout))
+        state = T.zeros((self.batchsize, 2*self.nout))
         state = T.unbroadcast(state, *range(state.ndim))
         return state
   
@@ -88,7 +88,7 @@ class LSTM(SimpleRecurrent):
         xs, hs = xh
         # The index of self recurrence is 0
         z_t = hs[0]
-        z = T.zeros((self.batch_size, 4*self.nout))
+        z = T.zeros((self.batchsize, 4*self.nout))
         for x, parent in izip(xs, self.parent):
             W = self.params['W_'+parent.name+self.name]
             z += T.dot(x[:, :parent.nout], W)
@@ -118,7 +118,7 @@ class LSTM(SimpleRecurrent):
         for i, parent in enumerate(self.parent):
             W_shape = (parent.nout, 4*N)
             W_name = 'W_'+parent.name+self.name
-            self.alloc(self.init_W.get(W_shape, W_name)
+            self.alloc(self.init_W.get(W_shape, W_name))
         for i, recurrent in enumerate(self.recurrent):
             M = recurrent.nout
             U = self.init_U.ortho((M, N))
@@ -146,7 +146,7 @@ class GFLSTM(LSTM):
         # The index of self recurrence is 0
         z_t = hs[0]
         Nm = len(self.recurrent)
-        z = T.zeros((self.batch_size, 4*self.nout+Nm))
+        z = T.zeros((self.batchsize, 4*self.nout+Nm))
         for x, parent in izip(xs, self.parent):
             W = self.params['W_'+parent.name+self.name]
             z += T.dot(x[:, :parent.nout], W)
@@ -186,7 +186,7 @@ class GFLSTM(LSTM):
         for i, parent in enumerate(self.parent):
             W_shape = (parent.nout, 4*N+Nm)
             W_name = 'W_'+parent.name+self.name
-            self.alloc(self.init_W.get(W_shape, W_name)
+            self.alloc(self.init_W.get(W_shape, W_name))
         for i, recurrent in enumerate(self.recurrent):
             M = recurrent.nout
             U = self.init_U.ortho((M, N))

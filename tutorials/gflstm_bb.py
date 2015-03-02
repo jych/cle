@@ -26,10 +26,10 @@ from cle.datasets.bouncing_balls import BouncingBalls
 datapath = '/home/junyoung/data/bouncing_balls/bouncing_ball_2balls_16wh_20len_50000cases.npy'
 savepath = '/home/junyoung/repos/cle/saved/'
 
-batch_size = 100
+batchsize = 100
 trdata = BouncingBalls(name='train',
                        path=datapath,
-                       batch_size=batch_size)
+                       batchsize=batchsize)
 
 # Choose the random initialization method
 init_W, init_U, init_b = InitCell('randn'), InitCell('ortho'), InitCell('zeros')
@@ -42,7 +42,7 @@ y = InputLayer(name='y', root=tar, nout=256)
 # Using skip connections is easy
 h1 = GFLSTM(name='h1',
             parent=[x],
-            batch_size=batch_size,
+            batchsize=batchsize,
             nout=200,
             unit='tanh',
             init_W=init_W,
@@ -51,7 +51,7 @@ h1 = GFLSTM(name='h1',
 h2 = GFLSTM(name='h2',
             parent=[x, h1],
             recurrent=[h1],
-            batch_size=batch_size,
+            batchsize=batchsize,
             nout=200,
             unit='tanh',
             init_W=init_W,
@@ -60,7 +60,7 @@ h2 = GFLSTM(name='h2',
 h3 = GFLSTM(name='h3',
             parent=[x, h2],
             recurrent=[h1, h2],
-            batch_size=batch_size,
+            batchsize=batchsize,
             nout=200,
             unit='tanh',
             init_W=init_W,
@@ -91,7 +91,7 @@ optimizer = Adam(
 )
 
 extension = [
-    GradientClipping(batch_size),
+    GradientClipping(batchsize),
     EpochCount(100),
     Monitoring(freq=100,
                ddout=[cost]),

@@ -34,14 +34,14 @@ testdatapath = ['/home/junyoung/data/cifar10/pylearn2_gcn_whitened/test.npy',
                 '/home/junyoung/data/cifar10/pylearn2_gcn_whitened/testy.npy']
 savepath = '/home/junyoung/repos/cle/saved/'
 
-batch_size = 100
+batchsize = 100
 
 trdata = CIFAR10(name='train',
                  path=datapath,
-                 batch_size=batch_size)
+                 batchsize=batchsize)
 testdata = CIFAR10(name='test',
                    path=testdatapath,
-                   batch_size=batch_size)
+                   batchsize=batchsize)
 
 # Choose the random initialization method
 init_W, init_b = InitCell('randn'), InitCell('zeros')
@@ -52,16 +52,16 @@ x = InputLayer(name='x', root=inp, nout=3072)
 y = InputLayer(name='y', root=tar, nout=10)
 c1 = ConvertLayer(name='c1',
                   parent=[x],
-                  outshape=(batch_size, 3, 32, 32))
+                  outshape=(batchsize, 3, 32, 32))
 h1 = Conv2DLayer(name='h1',
                  parent=[c1],
-                 outshape=(batch_size, 96, 30, 30),
+                 outshape=(batchsize, 96, 30, 30),
                  unit='relu',
                  init_W=init_W,
                  init_b=init_b)
 h2 = Conv2DLayer(name='h2',
                  parent=[h1],
-                 outshape=(batch_size, 96, 28, 28),
+                 outshape=(batchsize, 96, 28, 28),
                  unit='relu',
                  init_W=init_W,
                  init_b=init_b)
@@ -71,19 +71,19 @@ p1 = MaxPool2D(name='p1',
                poolstride=(2, 2))
 h3 = Conv2DLayer(name='h3',
                  parent=[p1],
-                 outshape=(batch_size, 192, 11, 11),
+                 outshape=(batchsize, 192, 11, 11),
                  unit='relu',
                  init_W=init_W,
                  init_b=init_b)
 h4 = Conv2DLayer(name='h4',
                  parent=[h3],
-                 outshape=(batch_size, 192, 9, 9),
+                 outshape=(batchsize, 192, 9, 9),
                  unit='relu',
                  init_W=init_W,
                  init_b=init_b)
 h5 = Conv2DLayer(name='h5',
                  parent=[h4],
-                 outshape=(batch_size, 192, 7, 7),
+                 outshape=(batchsize, 192, 7, 7),
                  unit='relu',
                  init_W=init_W,
                  init_b=init_b)
@@ -93,13 +93,13 @@ p2 = MaxPool2D(name='p2',
                poolstride=(2, 2))
 h6 = Conv2DLayer(name='h6',
                  parent=[p2],
-                 outshape=(batch_size, 192, 1, 1),
+                 outshape=(batchsize, 192, 1, 1),
                  unit='relu',
                  init_W=init_W,
                  init_b=init_b)
 c2 = ConvertLayer(name='c2',
                   parent=[h6],
-                  outshape=(batch_size, 192))
+                  outshape=(batchsize, 192))
 # Global average pooling missing
 h7 = FullyConnectedLayer(name='h7',
                          parent=[c2],
@@ -128,7 +128,7 @@ optimizer = Adam(
 )
 
 extension = [
-    GradientClipping(batch_size),
+    GradientClipping(batchsize),
     EpochCount(100),
     Monitoring(freq=100,
                ddout=[cost, err],

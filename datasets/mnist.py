@@ -16,9 +16,9 @@ class MNIST(DesignMatrix):
         super(MNIST, self).__init__(**kwargs)
         self.data = self.load_data()
         self.ndata = self.num_examples()
-        if self.batch_size is None:
-            self.batch_size = self.ndata
-        self.nbatch = int(np.ceil(self.ndata / float(self.batch_size)))
+        if self.batchsize is None:
+            self.batchsize = self.ndata
+        self.nbatch = int(np.ceil(self.ndata / float(self.batchsize)))
         self.index = -1
 
     def load_data(self):
@@ -34,7 +34,7 @@ class MNIST(DesignMatrix):
         return self.data[0].shape[0]
 
     def batch(self, data, i):
-        size = self.batch_size
+        size = self.batchsize
         ndata = self.ndata
         return data[i*size:min((i+1)*size, ndata)]
 
