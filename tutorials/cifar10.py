@@ -25,10 +25,12 @@ from cle.datasets.cifar10 import CIFAR10
 # Toy example to use cle!
 
 # Set your dataset
-#datapath = '/data/lisa/data/mnist/mnist.pkl'
+#datapath = '/data/lisa/data/cifar10/pylearn2_gcn_whitend/train.npy'
 #savepath = '/u/chungjun/repos/cle/saved/'
 datapath = ['/home/junyoung/data/cifar10/pylearn2_gcn_whitened/train.npy',
             '/home/junyoung/data/cifar10/pylearn2_gcn_whitened/trainy.npy']
+testdatapath = ['/home/junyoung/data/cifar10/pylearn2_gcn_whitened/test.npy',
+                '/home/junyoung/data/cifar10/pylearn2_gcn_whitened/testy.npy']
 savepath = '/home/junyoung/repos/cle/saved/'
 
 batch_size = 100
@@ -36,6 +38,9 @@ batch_size = 100
 trdata = CIFAR10(name='train',
                  path=datapath,
                  batch_size=batch_size)
+testdata = CIFAR10(name='test',
+                   path=testdatapath,
+                   batch_size=batch_size)
 
 # Choose the random initialization method
 init_W, init_b = InitCell('randn'), InitCell('zeros')
@@ -92,9 +97,10 @@ extension = [
     GradientClipping(batch_size),
     EpochCount(100),
     Monitoring(freq=100,
-               ddout=[cost, err]),
-    Picklize(freq=10,
-             path=savepath)
+               ddout=[cost, err],
+               data=[testdata]),
+    #Picklize(freq=10,
+    #         path=savepath)
 ]
 
 mainloop = Training(
