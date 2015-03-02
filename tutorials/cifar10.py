@@ -93,13 +93,13 @@ p2 = MaxPool2D(name='p2',
                poolstride=(2, 2))
 h6 = Conv2DLayer(name='h6',
                  parent=[p2],
-                 outshape=(batch_size, 192, 2, 2),
+                 outshape=(batch_size, 192, 1, 1),
                  unit='relu',
                  init_W=init_W,
                  init_b=init_b)
 c2 = ConvertLayer(name='c2',
                   parent=[h6],
-                  outshape=(batch_size, 768))
+                  outshape=(batch_size, 192))
 h7 = FullyConnectedLayer(name='h7',
                          parent=[c2],
                          nout=10,
