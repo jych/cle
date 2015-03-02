@@ -10,6 +10,7 @@ from cle.cle.layers import (
 )
 from cle.cle.layers.feedforward import FullyConnectedLayer
 from cle.cle.layers.conv import ConvertLayer, Conv2DLayer
+from cle.cle.layers.layer import MaxPool2D
 from cle.cle.train import Training
 from cle.cle.train.ext import (
     EpochCount,
@@ -54,18 +55,22 @@ c1 = ConvertLayer(name='c1',
                   outshape=(batch_size, 3, 32, 32))
 h1 = Conv2DLayer(name='h1',
                  parent=[c1],
-                 outshape=(batch_size, 32, 16, 16),
+                 outshape=(batch_size, 32, 26, 26),
                  unit='relu',
                  init_W=init_W,
                  init_b=init_b)
+p1 = MaxPool2D(name='p1',
+               parent=[h1])
 h2 = Conv2DLayer(name='h2',
-                 parent=[h1],
-                 outshape=(batch_size, 32, 3, 3),
+                 parent=[p1],
+                 outshape=(batch_size, 32, 6, 6),
                  unit='relu',
                  init_W=init_W,
                  init_b=init_b)
+p2 = MaxPool2D(name='p2',
+               parent=[h2])
 c2 = ConvertLayer(name='c2',
-                  parent=[h2],
+                  parent=[p2],
                   outshape=(batch_size, 288))
 h3 = FullyConnectedLayer(name='h3',
                          parent=[c2],
@@ -76,7 +81,7 @@ h3 = FullyConnectedLayer(name='h3',
 cost = MulCrossEntropyLayer(name='cost', parent=[y, h3])
 
 # You will fill in a list of nodes and fed them to the model constructor
-nodes = [x, y, c1, h1, h2, c2, h3, cost]
+nodes = [x, y, c1, h1, p1, h2, p2, c2, h3, cost]
 
 # Your model will build the Theano computational graph
 model = Net(nodes=nodes)

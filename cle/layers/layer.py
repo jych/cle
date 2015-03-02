@@ -19,18 +19,19 @@ class MaxPool2D(StemCell):
                  poolsize=(2, 2),
                  poolstride=(2, 2),
                  **kwargs):
-        super(Conv2DLayer, self).__init__(**kwargs)
+        super(MaxPool2D, self).__init__(**kwargs)
         # Shape should be (batch_size, num_channels, x, y)
-        parent = unpack(parent)
+        parent = unpack(self.parent)
         parshape = parent.outshape
         poolsize = totuple(poolsize)
         poolstride = totuple(poolstride)
-        if (parshape[0] - poolsize[0]) % poolstride[0] != 0 or\
-            (parshape[1] - poolsize[1]) % poolstride[1] != 0:
-            raise ValueError("Detector layer shape should be
+        if ((parshape[0] - poolsize[0]) % poolstride[0]) != 0 or\
+            ((parshape[1] - poolsize[1]) % poolstride[1]) != 0:
+            raise ValueError("Detector layer shape should be\
                               divisible, but remainder has detected")
-        outshape[0] = (parshape[0] - poolsize[0]) / poolstride[0] + 1
-        outshape[1] = (parshape[1] - poolsize[1]) / poolstride[1] + 1
+        newx = (parshape[2] - poolsize[0]) / poolstride[0] + 1
+        newy = (parshape[3] - poolsize[1]) / poolstride[1] + 1
+        outshape = (parent.outshape[0], parent.outshape[1], newx, newy)
         self.outshape = outshape
         self.poolsize = poolsize
         self.poolstride = poolstride
