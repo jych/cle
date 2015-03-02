@@ -16,12 +16,13 @@ class FullyConnectedLayer(StemCell):
     ----------
     .. todo::
     """
+    """
     def __init__(self,
                  unit,
                  **kwargs):
         super(FullyConnectedLayer, self).__init__(**kwargs)
         self.nonlin = self.which_nonlin(unit)
-
+    """
     def fprop(self, xs):
         # xs could be a list of inputs.
         # depending the number of parents.

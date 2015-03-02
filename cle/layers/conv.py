@@ -123,6 +123,7 @@ class ConvertLayer(StemCell):
         elif len(outshape) == 4:
             convert_type = 'convert2tensor4'
         self.fprop = self.which_convert(convert_type)
+        self.convert_type = convert_type
         self.axes = axes
 
     def which_convert(self, which):
@@ -148,3 +149,15 @@ class ConvertLayer(StemCell):
 
     def initialize(self):
         pass
+
+    def __getstate__(self):
+        dic = self.__dict__.copy()
+        dic.pop('fprop')
+        return dic
+    
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self.fprop = self.which_convert(self.convert_type)
+
+
+

@@ -1,4 +1,6 @@
 import ipdb
+import copy
+import functools
 import numpy as np
 import scipy
 import theano.tensor as T
@@ -25,7 +27,9 @@ class InitCell(object):
                  high=0.08,
                  **kwargs):
         super(InitCell, self).__init__(**kwargs)
-        self.init_param = self.which_init(init_type)
+        self.init_type = init_type
+        if init_type is not None:
+            self.init_param = self.which_init(init_type)
         self.mean = mean
         self.stddev = stddev
         self.low = low
@@ -56,6 +60,17 @@ class InitCell(object):
     def setX(self, x, name=None):
         return sharedX(x, name)
 
+    def __getstate__(self):
+        dic = self.__dict__.copy()
+        if self.init_type is not None:
+            dic.pop('init_param')
+        return dic
+    
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        if self.init_type is not None:
+            self.init_param = self.which_init(self.init_type)
+
 
 class NonlinCell(object):
     """
@@ -65,6 +80,11 @@ class NonlinCell(object):
     ----------
     .. todo::
     """
+    def __init__(self, unit=None):
+        self.unit = unit
+        if unit is not None:
+            self.nonlin = self.which_nonlin(unit)
+ 
     def which_nonlin(self, which):
         return getattr(self, which)
 
@@ -91,6 +111,17 @@ class NonlinCell(object):
 
     def hard_sigmoid(self, z):
         return T.clip(z + 0.5, 0., 1.)
+
+    def __getstate__(self):
+        dic = self.__dict__.copy()
+        if self.unit is not None:
+            dic.pop('nonlin')
+        return dic
+    
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        if self.unit is not None:        
+            self.nonlin = self.which_nonlin(self.unit)
 
 
 class RandomCell(object):
@@ -137,7 +168,8 @@ class StemCell(NonlinCell):
     .. todo::
     """
     def __init__(self, parent, nout=None, init_W=InitCell('randn'),
-                 init_b=InitCell('zeros'), name=None):
+                 init_b=InitCell('zeros'), name=None, **kwargs):
+        super(StemCell, self).__init__(**kwargs)
         self.isroot = False
         if name is None:
             name = self.__class__.name__.lower()

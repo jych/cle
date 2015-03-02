@@ -3,6 +3,7 @@ import cPickle
 import numpy as np
 import os
 import shutil
+import sys
 import tempfile
 import theano
 import theano.tensor as T
@@ -142,7 +143,7 @@ class PickleMixin(object):
                 try:
                     f = tempfile.TemporaryFile()
                     cPickle.dump(v, f)
-                except:
+                except RuntimeError as e:
                     self._pickle_skip_list.append(k)
             self._pickle_skip_list.append('data')
         state = OrderedDict()
