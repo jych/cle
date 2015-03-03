@@ -259,7 +259,8 @@ class MaskLayer(StemCell):
         if t.ndim != 1:
             raise ValueError("Dimension of mask should be 1,\
                               but got %d instead." % t.ndim)
-        return x[t.nonzero()]
+        #return x[t.nonzero()]
+        return x * t[:, None]
 
     def initialize(self):
         pass

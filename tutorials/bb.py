@@ -76,9 +76,8 @@ nodes = [x, y, h1, h2, h3, h4, cost]
 model = Net(nodes=nodes)
 
 # You can either use dict or list
-#cost = model.build_recurrent_graph(output_args={'cost': cost})
 cost = unpack(model.build_recurrent_graph(output_args=[cost]))
-cost = cost[-1]
+cost = cost.mean()
 cost.name = 'cost'
 
 optimizer = Adam(
