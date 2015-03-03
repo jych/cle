@@ -242,6 +242,22 @@ class OnehotLayer(StemCell):
         pass
 
 
+class MaskLayer(StemCell):
+    """
+    Masking layer
+
+    Parameters
+    ----------
+    todo..
+    """
+    def fprop(self, xs):
+        raise NotImplementedError(
+            str(type(self)) + " does not implement Layer.fprop.")
+
+    def initialize(self):
+        pass
+
+
 class CostLayer(StemCell):
     """
     Base cost layer
@@ -250,9 +266,8 @@ class CostLayer(StemCell):
     ----------
     todo..
     """
-    def fprop(self, x=None):
-        raise NotImplementedError(
-            str(type(self)) + " does not implement Layer.fprop.")
+    def fprop(self, xs):
+        return xs[0][xs[1].flatten().nonzero()]
 
     def initialize(self):
         pass
