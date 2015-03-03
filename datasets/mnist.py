@@ -50,4 +50,3 @@ class MNIST(DesignMatrix):
 
     def theano_vars(self):
         return [T.fmatrix('x'), T.lvector('y')]
-           

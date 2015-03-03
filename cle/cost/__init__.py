@@ -12,7 +12,8 @@ def NllBin(y, y_hat):
     ----------
     .. todo::
     """
-    nll = -T.sum(y * T.log(y_hat) + (1-y) * T.log(1-y_hat), axis=-1)
+    nll = -T.sum(y * T.log(y_hat) + (1 - y) * T.log(1 - y_hat),
+                 axis=-1)
     return nll
 
 

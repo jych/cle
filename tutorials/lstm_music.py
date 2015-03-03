@@ -1,6 +1,7 @@
 import ipdb
 import numpy as np
 
+from cle.cle.cost import NllBin
 from cle.cle.graph.net import Net
 from cle.cle.layers import (
     InputLayer,
@@ -30,6 +31,10 @@ savepath = '/home/junyoung/repos/cle/saved/'
 batchsize = 10
 nlabel = 105
 trdata = Music(name='train',
+               path=datapath,
+               nlabel=nlabel,
+               batchsize=batchsize)
+valdata = Music(name='valid',
                path=datapath,
                nlabel=nlabel,
                batchsize=batchsize)
@@ -75,14 +80,18 @@ h4 = FullyConnectedLayer(name='h4',
                          init_b=init_b)
 masked_y = MaskLayer(name='masked_y', parent=[y, mask])
 masked_y_hat = MaskLayer(name='masked_y_hat', parent=[h4, mask])
-cost = BinCrossEntropyLayer(name='cost', parent=[masked_y_hat, masked_y], use_sum=1)
+cost = BinCrossEntropyLayer(name='cost', parent=[masked_y, masked_y_hat], use_sum=1)
 nodes = [x, y, h1, h2, h3, h4, cost, mask, masked_y, masked_y_hat]
 model = Net(nodes=nodes)
 
 # You can either use dict or list
-cost = unpack(model.build_recurrent_graph(output_args=[cost]))
+#cost = unpack(model.build_recurrent_graph(output_args=[cost]))
+cost, masked_y, masked_y_hat =\
+    model.build_recurrent_graph(output_args=[cost, masked_y, masked_y_hat])
+nll = NllBin(masked_y, masked_y_hat).mean()
 cost = cost[-1]
 cost.name = 'cost'
+nll.name = 'nll'
 
 optimizer = Adam(
     lr=0.001
@@ -92,7 +101,8 @@ extension = [
     GradientClipping(batchsize),
     EpochCount(100),
     Monitoring(freq=10,
-               ddout=[cost]),
+               ddout=[cost, nll],
+               data=[valdata]),
     Picklize(freq=10,
              path=savepath)
 ]
