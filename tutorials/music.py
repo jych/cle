@@ -28,7 +28,7 @@ from cle.datasets.music import Music
 datapath = '/home/junyoung/data/music/MuseData.pickle'
 savepath = '/home/junyoung/repos/cle/saved/'
 
-batchsize = 10
+batchsize = 20
 nlabel = 105
 debug = 0
 
@@ -95,7 +95,7 @@ nll.name = 'nll'
 model.inputs += [y, mask]
 
 optimizer = RMSProp(
-    lr=0.001,
+    lr=0.0001,
     mom=0.95
 )
 

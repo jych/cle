@@ -45,7 +45,8 @@ testdata = CIFAR10(name='test',
                    batchsize=batchsize)
 
 # Choose the random initialization method
-init_W, init_b = InitCell('randn'), InitCell('zeros')
+init_W = InitCell('randn')
+init_b = InitCell('zeros')
 
 # Define nodes: objects
 inp, tar = trdata.theano_vars()
