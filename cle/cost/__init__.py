@@ -64,7 +64,7 @@ def GMM(y, mu, logvar, coeff):
     logvar : FullyConnected (Linear)
     coeff  : FullyConnected (Softmax)
     """
-    ncoeff = self.ncoeff
+    ncoeff = coeff.shape[-1]
     batchsize = mu.shape[0]
     y = y.dimshuffle(0, 1, 'x')
     mu = mu.reshape((mu.shape[0], mu.shape[1]/ncoeff, ncoeff))
