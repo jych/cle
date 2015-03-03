@@ -34,7 +34,9 @@ trdata = BouncingBalls(name='train',
                        batchsize=batchsize)
 
 # Choose the random initialization method
-init_W, init_U, init_b = InitCell('randn'), InitCell('ortho'), InitCell('zeros')
+init_W = InitCell('randn')
+init_U = InitCell('ortho')
+init_b = InitCell('zeros')
 
 # Define nodes: objects
 inp, tar = trdata.theano_vars()
