@@ -42,8 +42,8 @@ init_b = InitCell('zeros')
 inp, tar = trdata.theano_vars()
 # You must use THEANO_FLAGS="compute_test_value=raise"
 if debug:
-    inp.tag.test_value = np.random.randn((batchsize, 256))
-    tar.tag.test_value = np.random.randn((batchsize, 256))
+    inp.tag.test_value = np.random.randn((batchsize, 10, 256))
+    tar.tag.test_value = np.random.randn((batchsize, 10, 256))
 x = InputLayer(name='x', root=inp, nout=256)
 y = InputLayer(name='y', root=tar, nout=256)
 # Using skip connections is easy

@@ -42,13 +42,15 @@ valdata = Music(name='valid',
                batchsize=batchsize)
 
 # Choose the random initialization method
-init_W, init_U, init_b = InitCell('randn'), InitCell('ortho'), InitCell('zeros')
+init_W = InitCell('randn')
+init_U = InitCell('ortho')
+init_b = InitCell('zeros')
 
 # Define nodes: objects
 inp, y, mask = trdata.theano_vars()
 # You must use THEANO_FLAGS="compute_test_value=raise"
 if debug:
-    inp.tag.test_value = np.random.randn((batchsize, 105))
+    inp.tag.test_value = np.random.randn((batchsize, 10, nlabel))
 x = InputLayer(name='x', root=inp, nout=nlabel)
 # Using skip connections is easy
 h1 = LSTM(name='h1',
