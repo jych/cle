@@ -18,7 +18,7 @@ from cle.cle.train.ext import (
     Monitoring,
     Picklize
 )
-from cle.cle.train.opt import Adam
+from cle.cle.train.opt import Adam, RMSProp
 from cle.cle.utils import unpack
 from cle.datasets.music import Music
 
@@ -30,6 +30,8 @@ savepath = '/home/junyoung/repos/cle/saved/'
 
 batchsize = 10
 nlabel = 105
+debug = 0
+
 trdata = Music(name='train',
                path=datapath,
                nlabel=nlabel,
@@ -44,6 +46,8 @@ init_W, init_U, init_b = InitCell('randn'), InitCell('ortho'), InitCell('zeros')
 
 # Define nodes: objects
 inp, y, mask = trdata.theano_vars()
+if debug:
+    inp.tag.test_value = np.random.randn((batchsize, 105))
 x = InputLayer(name='x', root=inp, nout=nlabel)
 # Using skip connections is easy
 h1 = LSTM(name='h1',
@@ -89,8 +93,9 @@ cost.name = 'cost'
 nll.name = 'nll'
 model.inputs += [y, mask]
 
-optimizer = Adam(
-    lr=0.001
+optimizer = RMSProp(
+    lr=0.001,
+    mom=0.95
 )
 
 extension = [

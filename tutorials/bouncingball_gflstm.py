@@ -27,6 +27,8 @@ datapath = '/home/junyoung/data/bouncing_balls/bouncing_ball_2balls_16wh_20len_5
 savepath = '/home/junyoung/repos/cle/saved/'
 
 batchsize = 100
+debug = 0
+
 trdata = BouncingBalls(name='train',
                        path=datapath,
                        batchsize=batchsize)
@@ -36,9 +38,12 @@ init_W, init_U, init_b = InitCell('randn'), InitCell('ortho'), InitCell('zeros')
 
 # Define nodes: objects
 inp, tar = trdata.theano_vars()
+# You must use THEANO_FLAGS="compute_test_value=raise"
+if debug:
+    inp.tag.test_value = np.random.randn((batchsize, 256))
+    tar.tag.test_value = np.random.randn((batchsize, 256))
 x = InputLayer(name='x', root=inp, nout=256)
 y = InputLayer(name='y', root=tar, nout=256)
-
 # Using skip connections is easy
 h1 = GFLSTM(name='h1',
             parent=[x],

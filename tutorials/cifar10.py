@@ -35,6 +35,7 @@ testdatapath = ['/home/junyoung/data/cifar10/pylearn2_gcn_whitened/test.npy',
 savepath = '/home/junyoung/repos/cle/saved/'
 
 batchsize = 100
+debug = 0
 
 trdata = CIFAR10(name='train',
                  path=datapath,
@@ -48,6 +49,10 @@ init_W, init_b = InitCell('randn'), InitCell('zeros')
 
 # Define nodes: objects
 inp, tar = trdata.theano_vars()
+# You must use THEANO_FLAGS="compute_test_value=raise"
+if debug:
+    inp.tag.test_value = np.random.randn((batchsize, 3072))
+    tar.tag.test_value = np.random.randn((batchsize, 10))
 x = InputLayer(name='x', root=inp, nout=3072)
 y = InputLayer(name='y', root=tar, nout=10)
 c1 = ConvertLayer(name='c1',

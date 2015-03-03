@@ -31,6 +31,7 @@ datapath = '/home/junyoung/data/mnist/mnist.pkl'
 savepath = '/home/junyoung/repos/cle/saved/'
 
 batchsize = 128
+debug = 0
 
 trdata = MNIST(name='train',
                path=datapath,
@@ -44,6 +45,10 @@ init_W, init_b = InitCell('randn'), InitCell('zeros')
 
 # Define nodes: objects
 inp, tar = trdata.theano_vars()
+# You must use THEANO_FLAGS="compute_test_value=raise"
+if debug:
+    inp.tag.test_value = np.random.randn((batchsize, 784))
+    tar.tag.test_value = np.random.randn((batchsize, 1))
 x = InputLayer(name='x', root=inp, nout=784)
 y = InputLayer(name='y', root=tar, nout=1)
 onehot = OnehotLayer(name='onehot',
