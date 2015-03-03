@@ -43,7 +43,7 @@ valdata = Music(name='valid',
 init_W, init_U, init_b = InitCell('randn'), InitCell('ortho'), InitCell('zeros')
 
 # Define nodes: objects
-inp, tar, mask = trdata.theano_vars()
+inp, y, mask = trdata.theano_vars()
 x = InputLayer(name='x', root=inp, nout=nlabel)
 # Using skip connections is easy
 h1 = LSTM(name='h1',
@@ -81,16 +81,16 @@ model = Net(nodes=nodes)
 
 # You can either use dict or list
 y_hat = model.build_recurrent_graph(output_args=[h4])[0]
-masked_y = tar[mask.nonzero()]
+masked_y = y[mask.nonzero()]
 masked_y_hat = y_hat[mask.nonzero()]
-model.inputs += [tar, mask]
 cost = NllBin(masked_y, masked_y_hat).sum()
 nll = NllBin(masked_y, masked_y_hat).mean()
 cost.name = 'cost'
 nll.name = 'nll'
+model.inputs += [y, mask]
 
 optimizer = Adam(
-    lr=0.00001
+    lr=0.001
 )
 
 extension = [
