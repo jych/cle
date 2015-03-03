@@ -51,7 +51,7 @@ m = InputLayer(name='mask', root=mask)
 h1 = LSTM(name='h1',
           parent=[x],
           batchsize=batchsize,
-          nout=200,
+          nout=50,
           unit='tanh',
           init_W=init_W,
           init_U=init_U,
@@ -59,7 +59,7 @@ h1 = LSTM(name='h1',
 h2 = LSTM(name='h2',
           parent=[x, h1],
           batchsize=batchsize,
-          nout=200,
+          nout=50,
           unit='tanh',
           init_W=init_W,
           init_U=init_U,
@@ -67,7 +67,7 @@ h2 = LSTM(name='h2',
 h3 = LSTM(name='h3',
           parent=[x, h2],
           batchsize=batchsize,
-          nout=200,
+          nout=50,
           unit='tanh',
           init_W=init_W,
           init_U=init_U,
@@ -80,7 +80,6 @@ h4 = FullyConnectedLayer(name='h4',
                          init_b=init_b)
 masked_y = MaskLayer(name='masked_y', parent=[y, m])
 masked_y_hat = MaskLayer(name='masked_y_hat', parent=[h4, m])
-#cost = BinCrossEntropyLayer(name='cost', parent=[masked_y, masked_y_hat], use_sum=1)
 nodes = [x, y, h1, h2, h3, h4, m, masked_y, masked_y_hat]
 model = Net(nodes=nodes)
 
@@ -95,10 +94,9 @@ cost = cost_layer.fprop([masked_y[mask.nonzero()], masked_y_hat[mask.nonzero()]]
 nll = NllBin(masked_y[mask.nonzero()], masked_y_hat[mask.nonzero()]).mean()
 cost.name = 'cost'
 nll.name = 'nll'
-ipdb.set_trace()
 
 optimizer = Adam(
-    lr=0.001
+    lr=0.0001
 )
 
 extension = [
