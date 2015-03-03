@@ -46,6 +46,7 @@ init_W, init_U, init_b = InitCell('randn'), InitCell('ortho'), InitCell('zeros')
 
 # Define nodes: objects
 inp, y, mask = trdata.theano_vars()
+# You must use THEANO_FLAGS="compute_test_value=raise"
 if debug:
     inp.tag.test_value = np.random.randn((batchsize, 105))
 x = InputLayer(name='x', root=inp, nout=nlabel)
