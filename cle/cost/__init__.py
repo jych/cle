@@ -60,6 +60,7 @@ def GMM(y, mu, logvar, coeff):
 
     Parameters
     ----------
+    y      : TensorVariable
     mu     : FullyConnected (Linear)
     logvar : FullyConnected (Linear)
     coeff  : FullyConnected (Softmax)
