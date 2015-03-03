@@ -4,7 +4,7 @@ import numpy as np
 from cle.cle.graph.net import Net
 from cle.cle.layers import InputLayer, InitCell, MSELayer
 from cle.cle.layers.feedforward import FullyConnectedLayer
-from cle.cle.layers.recurrent import GFLSTM
+from cle.cle.layers.recurrent import SimpleRecurrent
 from cle.cle.train import Training
 from cle.cle.train.ext import (
     EpochCount,
@@ -27,6 +27,8 @@ datapath = '/home/junyoung/data/bouncing_balls/bouncing_ball_2balls_16wh_20len_5
 savepath = '/home/junyoung/repos/cle/saved/'
 
 batchsize = 100
+debug = 0
+
 trdata = BouncingBalls(name='train',
                        path=datapath,
                        batchsize=batchsize)
@@ -36,39 +38,37 @@ init_W, init_U, init_b = InitCell('randn'), InitCell('ortho'), InitCell('zeros')
 
 # Define nodes: objects
 inp, tar = trdata.theano_vars()
+# You must use THEANO_FLAGS="compute_test_value=raise"
+if debug:
+    inp.tag.test_value = np.random.randn((batchsize, 256))
+    tar.tag.test_value = np.random.randn((batchsize, 256))
 x = InputLayer(name='x', root=inp, nout=256)
 y = InputLayer(name='y', root=tar, nout=256)
-
 # Using skip connections is easy
-h1 = GFLSTM(name='h1',
-            parent=[x],
-            batchsize=batchsize,
-            nout=200,
-            unit='tanh',
-            init_W=init_W,
-            init_U=init_U,
-            init_b=init_b)
-h2 = GFLSTM(name='h2',
-            parent=[x, h1],
-            recurrent=[h1],
-            batchsize=batchsize,
-            nout=200,
-            unit='tanh',
-            init_W=init_W,
-            init_U=init_U,
-            init_b=init_b)
-h3 = GFLSTM(name='h3',
-            parent=[x, h2],
-            recurrent=[h1, h2],
-            batchsize=batchsize,
-            nout=200,
-            unit='tanh',
-            init_W=init_W,
-            init_U=init_U,
-            init_b=init_b)
-h2.recurrent.append(h3)
-h1.recurrent.append(h2)
-h1.recurrent.append(h3)
+h1 = SimpleRecurrent(name='h1',
+                     parent=[x],
+                     batchsize=batchsize,
+                     nout=200,
+                     unit='tanh',
+                     init_W=init_W,
+                     init_U=init_U,
+                     init_b=init_b)
+h2 = SimpleRecurrent(name='h2',
+                     parent=[x, h1],
+                     batchsize=batchsize,
+                     nout=200,
+                     unit='tanh',
+                     init_W=init_W,
+                     init_U=init_U,
+                     init_b=init_b)
+h3 = SimpleRecurrent(name='h3',
+                     parent=[x, h2],
+                     batchsize=batchsize,
+                     nout=200,
+                     unit='tanh',
+                     init_W=init_W,
+                     init_U=init_U,
+                     init_b=init_b)
 h4 = FullyConnectedLayer(name='h4',
                          parent=[h1, h2, h3],
                          nout=256,
@@ -81,9 +81,8 @@ nodes = [x, y, h1, h2, h3, h4, cost]
 model = Net(nodes=nodes)
 
 # You can either use dict or list
-#cost = model.build_recurrent_graph(output_args={'cost': cost})
 cost = unpack(model.build_recurrent_graph(output_args=[cost]))
-cost = cost[-1]
+cost = cost.mean()
 cost.name = 'cost'
 
 optimizer = Adam(

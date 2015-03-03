@@ -206,7 +206,7 @@ class InputLayer(object):
     ----------
     .. todo::
     """
-    def __init__(self, name, nout, root):
+    def __init__(self, name, root, nout=None):
         self.isroot = True
         self.name = name
         root.name = self.name
@@ -242,6 +242,29 @@ class OnehotLayer(StemCell):
         pass
 
 
+class MaskLayer(StemCell):
+    """
+    Masking layer
+
+    Parameters
+    ----------
+    todo..
+    """
+    def fprop(self, xs):
+        x = xs[0]
+        t = xs[1]
+        if x.ndim != 2:
+            raise ValueError("Dimension of X should be 2,\
+                              but got %d instead." % t.ndim)
+        if t.ndim != 1:
+            raise ValueError("Dimension of mask should be 1,\
+                              but got %d instead." % t.ndim)
+        return x * t[:, None]
+
+    def initialize(self):
+        pass
+
+
 class CostLayer(StemCell):
     """
     Base cost layer
@@ -250,7 +273,11 @@ class CostLayer(StemCell):
     ----------
     todo..
     """
-    def fprop(self, x=None):
+    def __init__(self, use_sum=False, **kwargs):
+        super(CostLayer, self).__init__(**kwargs)
+        self.use_sum = use_sum
+    
+    def fprop(self, xs):
         raise NotImplementedError(
             str(type(self)) + " does not implement Layer.fprop.")
 
@@ -267,7 +294,11 @@ class BinCrossEntropyLayer(CostLayer):
     todo..
     """
     def fprop(self, xs):
-        return NllBin(xs[0], xs[1])
+        cost = NllBin(xs[0], xs[1])
+        if self.use_sum:
+            return cost.sum()
+        else:
+            return cost.mean()
 
 
 class MulCrossEntropyLayer(CostLayer):
@@ -279,7 +310,11 @@ class MulCrossEntropyLayer(CostLayer):
     todo..
     """
     def fprop(self, xs):
-        return NllMul(xs[0], xs[1])
+        cost = NllMul(xs[0], xs[1])
+        if self.use_sum:
+            return cost.sum()
+        else:
+            return cost.mean()
 
 
 class MSELayer(CostLayer):
@@ -291,7 +326,11 @@ class MSELayer(CostLayer):
     todo..
     """
     def fprop(self, xs):
-        return MSE(xs[0], xs[1])
+        cost = MSE(xs[0], xs[1])
+        if self.use_sum:
+            return cost.sum()
+        else:
+            return cost.mean()
 
 
 class GaussianLayer(CostLayer):
@@ -305,7 +344,11 @@ class GaussianLayer(CostLayer):
     def fprop(self, xs):
         if len(xs) != 3:
             raise ValueError("The number of inputs does not match.")
-        return Gaussian(xs[0], xs[1], xs[2])
+        cost = Gaussian(xs[0], xs[1], xs[2])
+        if self.use_sum:
+            return cost.sum()
+        else:
+            return cost.mean()
 
 
 class GMMLayer(CostLayer):
@@ -319,7 +362,7 @@ class GMMLayer(CostLayer):
     def __init__(self,
                  ncoeff,
                  **kwargs):
-        super(MOGLayer, self).__init__(**kwargs)
+        super(GMMLayer, self).__init__(**kwargs)
         if not isinstance(ncoeff, int):
             raise ValueError("Provide int number for this attribute.")
         else:
@@ -330,4 +373,8 @@ class GMMLayer(CostLayer):
     def fprop(self, xs):
         if len(xs) != 4:
             raise ValueError("The number of inputs does not match.")
-        return GMM(xs[0], xs[1], xs[2], xs[3])
+        cost = GMM(xs[0], xs[1], xs[2], xs[3])
+        if self.use_sum:
+            return cost.sum()
+        else:
+            return cost.mean()

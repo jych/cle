@@ -18,7 +18,7 @@ class CIFAR10(DesignMatrix):
         self.ndata = self.num_examples()
         if self.batchsize is None:
             self.batchsize = self.ndata
-        self.nbatch = int(np.ceil(self.ndata / float(self.batchsize)))
+        self.nbatch = int(np.float(self.ndata / float(self.batchsize)))
         self.index = -1
 
     def load_data(self):
@@ -30,9 +30,8 @@ class CIFAR10(DesignMatrix):
         return self.data[0].shape[0]
 
     def batch(self, data, i):
-        size = self.batchsize
-        ndata = self.ndata
-        return data[i*size:min((i+1)*size, ndata)]
+        batch = data[i*self.batchsize:(i+1)*self.batchsize]
+        return batch
 
     def __iter__(self):
         return self

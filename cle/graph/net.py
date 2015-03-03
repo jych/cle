@@ -12,7 +12,7 @@ from cle.cle.utils import (
 )
 
 
-class Net(PickleMixin):
+class Net(object):
     """
     Abstract class for networks
 
@@ -51,7 +51,12 @@ class Net(PickleMixin):
             if not node.isroot:
                 parent = node.parent
                 for par_node in tolist(parent):
-                    self.graph[par_node.name] = node.name
+                    if par_node.name in self.graph.keys():
+                        self.graph[par_node.name] =\
+                            tolist(self.graph[par_node.name]) +\
+                            [node.name]
+                    else:
+                        self.graph[par_node.name] = node.name
 
     def build_graph(self):
         sorted_nodes = topological_sort(self.graph)
@@ -77,7 +82,6 @@ class Net(PickleMixin):
         nonseqs = []
         self.seq_args = OrderedDict()
         self.output_args = OrderedDict()
-
         for name, node in self.nodes.items():
             if hasattr(node, 'isroot'):
                 if node.isroot:
@@ -99,6 +103,8 @@ class Net(PickleMixin):
             recurrence = tolist(args[len(self.seq_args):
                                      len(self.seq_args)+
                                      len(self.output_args)])
+            nonseqs = tolist(args[len(self.seq_args)+
+                                  len(self.output_args):])
             for nname, node in self.nodes.items():
                 for i, (aname, arg) in enumerate(self.seq_args.items()):
                     if node is arg:
@@ -122,26 +128,26 @@ class Net(PickleMixin):
                     inp = [inp, rec_inp]
                     self.nodes[node].out = self.nodes[node].fprop(inp)
                     next_recurrence.append(self.nodes[node].out)
-                    continue
-                self.nodes[node].out = self.nodes[node].fprop(inp)
+                else:
+                    self.nodes[node].out = self.nodes[node].fprop(inp)
             required_outputs = []
-            for node in self.nodes.values():
-                if isinstance(self.given_output_args, dict):
-                    for arg in self.given_output_args.values():
+            if isinstance(self.given_output_args, dict):
+                for arg in self.given_output_args.values():
+                    for node in self.nodes.values():
                         if node is arg:
                             required_outputs.append(node.out)
-                elif isinstance(self.given_output_args, list):
-                    for arg in self.given_output_args:
+            elif isinstance(self.given_output_args, list):
+                for arg in self.given_output_args:
+                    for node in self.nodes.values():
                         if node is arg:
                             required_outputs.append(node.out)
-            self.nNone = len(required_outputs)
+            #self.nNone = len(required_outputs)
             return next_recurrence + required_outputs
-
-        dummy_seqs = [seq[0] for seq in seqs]
-        dummy_args = dummy_seqs + outputs + nonseqs
-        dummy = scan_fn(*dummy_args)
+        #dummy_seqs = [seq[0] for seq in seqs]
+        #dummy_args = dummy_seqs + outputs + nonseqs
+        #dummy = scan_fn(*dummy_args)
+        self.nNone = len(self.given_output_args)
         outputs = flatten(outputs + [None] * self.nNone)
-
         if self.given_args is not None:
             n_steps = self.given_args.pop('n_steps', None)
             reverse = self.given_args.pop('reverse', False)
@@ -152,7 +158,6 @@ class Net(PickleMixin):
             elif isinstance(self.given_nonseq_args, list):
                 for arg in self.given_nonseq_args:
                     nonseqs.append(arg)
-
         result, updates = theano.scan(
             fn=scan_fn,
             sequences=seqs,
@@ -161,7 +166,6 @@ class Net(PickleMixin):
             n_steps=n_steps,
             go_backwards=reverse)
         result = tolist(result)
-
         return result[len(self.output_args):]
 
     def get_params(self):

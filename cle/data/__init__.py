@@ -29,7 +29,7 @@ class Data(object):
 
 class DesignMatrix(Data):
     """
-    Abstract class for data
+    Abstract class for static data.
 
     Parameters
     ----------
@@ -43,3 +43,31 @@ class DesignMatrix(Data):
     def load_data(self):
         raise NotImplementedError(
             str(type(self)) + " does not implement DesignMatrix.load_data.")
+
+
+class TemporalSeries(DesignMatrix):
+    """
+    Abstract class for temporal data.
+    We use TemporalSeries when the data contains variable length
+    seuences, otherwise, we use DesignMatrix.
+
+    Parameters
+    ----------
+    .. todo::
+    """
+    def create_mask(self, batch):
+        samples_len = [len(sample) for sample in batch]
+        max_sample_len = max(samples_len)
+        mask = np.zeros((max_sample_len, len(batch)),
+                        dtype=batch.dtype)
+        for i, sample_len in enumerate(samples_len):
+            mask[:sample_len, i] = 1
+        return mask
+
+    def zero_pad(self, batch):
+        max_sample_len = max(len(sample) for sample in batch)
+        rval = np.zeros((len(batch), max_sample_len,
+                         batch[0].shape[-1]), batch.dtype)
+        for i, sample in enumerate(batch):
+            rval[i, :len(sample)] = sample
+        return rval.swapaxes(0, 1)
