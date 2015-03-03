@@ -70,7 +70,7 @@ h4 = FullyConnectedLayer(name='h4',
                          init_b=init_b)
 masked_y = MaskLayer(name='masked_y', parent=[y, mask])
 masked_y_hat = MaskLayer(name='masked_y_hat', parent=[h4, mask])
-cost = MSELayer(name='cost', parent=[masked_y_hat, masked_y])
+cost = MSELayer(name='cost', parent=[masked_y_hat, masked_y], use_sum=1)
 nodes = [x, y, h1, h2, h3, h4, cost, mask, masked_y, masked_y_hat]
 model = Net(nodes=nodes)
 

@@ -273,6 +273,9 @@ class CostLayer(StemCell):
     ----------
     todo..
     """
+    def __init__(self, use_sum=False):
+        self.use_sum = use_sum
+    
     def fprop(self, xs):
         raise NotImplementedError(
             str(type(self)) + " does not implement Layer.fprop.")
@@ -290,7 +293,10 @@ class BinCrossEntropyLayer(CostLayer):
     todo..
     """
     def fprop(self, xs):
-        return NllBin(xs[0], xs[1])
+        if self.use_sum:
+            return NllBin(xs[0], xs[1]).sum()
+        else:
+            return NllBin(xs[0], xs[1]).mean()
 
 
 class MulCrossEntropyLayer(CostLayer):
@@ -302,7 +308,10 @@ class MulCrossEntropyLayer(CostLayer):
     todo..
     """
     def fprop(self, xs):
-        return NllMul(xs[0], xs[1])
+        if self.use_sum:
+            return NllMul(xs[0], xs[1]).sum()
+        else:
+            return NllMul(xs[0], xs[1]).mean()
 
 
 class MSELayer(CostLayer):
@@ -314,7 +323,10 @@ class MSELayer(CostLayer):
     todo..
     """
     def fprop(self, xs):
-        return MSE(xs[0], xs[1])
+        if self.use_sum:
+            return MSE(xs[0], xs[1]).sum()
+        else:
+            return MSE(xs[0], xs[1]).mean()
 
 
 class GaussianLayer(CostLayer):
@@ -328,7 +340,10 @@ class GaussianLayer(CostLayer):
     def fprop(self, xs):
         if len(xs) != 3:
             raise ValueError("The number of inputs does not match.")
-        return Gaussian(xs[0], xs[1], xs[2])
+        if self.use_sum:
+            return Gaussian(xs[0], xs[1], xs[2]).sum()
+        else:
+            return Gaussian(xs[0], xs[1], xs[2]).mean()
 
 
 class GMMLayer(CostLayer):
@@ -342,7 +357,7 @@ class GMMLayer(CostLayer):
     def __init__(self,
                  ncoeff,
                  **kwargs):
-        super(MOGLayer, self).__init__(**kwargs)
+        super(GMMLayer, self).__init__(**kwargs)
         if not isinstance(ncoeff, int):
             raise ValueError("Provide int number for this attribute.")
         else:
@@ -353,4 +368,7 @@ class GMMLayer(CostLayer):
     def fprop(self, xs):
         if len(xs) != 4:
             raise ValueError("The number of inputs does not match.")
-        return GMM(xs[0], xs[1], xs[2], xs[3])
+        if self.use_sum:
+            return GMM(xs[0], xs[1], xs[2], xs[3]).sum()
+        else:
+            return GMM(xs[0], xs[1], xs[2], xs[3]).mean()
