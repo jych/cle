@@ -62,7 +62,7 @@ class TemporalSeries(DesignMatrix):
                         dtype=batch.dtype)
         for i, sample_len in enumerate(samples_len):
             mask[:sample_len, i] = 1
-        return mask.T
+        return mask
 
     def zero_pad(self, batch):
         max_sample_len = max(len(sample) for sample in batch)
@@ -71,5 +71,3 @@ class TemporalSeries(DesignMatrix):
         for i, sample in enumerate(batch):
             rval[i, :len(sample)] = sample
         return rval.swapaxes(0, 1)
-
-       
