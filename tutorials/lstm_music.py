@@ -17,7 +17,7 @@ from cle.cle.utils import unpack
 from cle.datasets.music import Music
 
 
-#datapath = '/data/lisatmp3/chungjun/bouncing_balls/bouncing_ball_2balls_16wh_20len_50000cases.npy'
+#datapath = '/data/lisa/data/music/MuseData.pickle'
 #savepath = '/u/chungjun/repos/cle/saved/'
 datapath = '/home/junyoung/data/music/MuseData.pickle'
 savepath = '/home/junyoung/repos/cle/saved/'
@@ -86,7 +86,7 @@ optimizer = Adam(
 extension = [
     GradientClipping(batchsize),
     EpochCount(100),
-    Monitoring(freq=1,
+    Monitoring(freq=10,
                ddout=[cost]),
     Picklize(freq=10,
              path=savepath)
