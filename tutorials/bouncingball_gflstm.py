@@ -67,8 +67,7 @@ h3 = GFLSTM(name='h3',
             init_U=init_U,
             init_b=init_b)
 h2.recurrent.append(h3)
-h1.recurrent.append(h2)
-h1.recurrent.append(h3)
+h1.recurrent += [h2, h3]
 h4 = FullyConnectedLayer(name='h4',
                          parent=[h1, h2, h3],
                          nout=256,
