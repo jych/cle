@@ -206,7 +206,7 @@ class InputLayer(object):
     ----------
     .. todo::
     """
-    def __init__(self, name, nout, root):
+    def __init__(self, name, root, nout=None):
         self.isroot = True
         self.name = name
         root.name = self.name
@@ -251,8 +251,8 @@ class MaskLayer(StemCell):
     todo..
     """
     def fprop(self, xs):
-        raise NotImplementedError(
-            str(type(self)) + " does not implement Layer.fprop.")
+        return xs[0][xs[1].flatten().nonzero()]
+
 
     def initialize(self):
         pass
@@ -267,7 +267,8 @@ class CostLayer(StemCell):
     todo..
     """
     def fprop(self, xs):
-        return xs[0][xs[1].flatten().nonzero()]
+        raise NotImplementedError(
+            str(type(self)) + " does not implement Layer.fprop.")
 
     def initialize(self):
         pass

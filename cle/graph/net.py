@@ -51,7 +51,12 @@ class Net(PickleMixin):
             if not node.isroot:
                 parent = node.parent
                 for par_node in tolist(parent):
-                    self.graph[par_node.name] = node.name
+                    if par_node.name in self.graph.keys():
+                        self.graph[par_node.name] =\
+                            tolist(self.graph[par_node.name]) +\
+                            [node.name]
+                    else:
+                        self.graph[par_node.name] = node.name
 
     def build_graph(self):
         sorted_nodes = topological_sort(self.graph)
@@ -77,7 +82,6 @@ class Net(PickleMixin):
         nonseqs = []
         self.seq_args = OrderedDict()
         self.output_args = OrderedDict()
-
         for name, node in self.nodes.items():
             if hasattr(node, 'isroot'):
                 if node.isroot:
