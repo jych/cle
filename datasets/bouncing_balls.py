@@ -18,7 +18,7 @@ class BouncingBalls(DesignMatrix):
         self.ndata = self.num_examples()
         if self.batchsize is None:
             self.batchsize = self.ndata
-        self.nbatch = int(np.ceil(self.ndata / float(self.batchsize)))
+        self.nbatch = int(np.float(self.ndata / float(self.batchsize)))
         self.index = -1
 
     def load_data(self):
@@ -31,10 +31,8 @@ class BouncingBalls(DesignMatrix):
         return self.data[0].shape[0]
 
     def batch(self, data, i):
-        size = self.batchsize
-        ndata = self.ndata
-        this_batch = data[i*size:min((i+1)*size, ndata)]
-        return this_batch.swapaxes(0, 1)
+        batch = data[i*self.batchsize:(i+1)*self.batchsize]
+        return batch.swapaxes(0, 1)
 
     def __iter__(self):
         return self

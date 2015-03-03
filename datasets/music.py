@@ -1,7 +1,9 @@
 import ipdb
 import numpy as np
 import theano.tensor as T
+
 from cle.cle.data import TemporalSeries
+from cle.cle.utils import tolist, totuple
 
 
 class Music(TemporalSeries):
@@ -19,7 +21,7 @@ class Music(TemporalSeries):
         self.ndata = self.num_examples()
         if self.batchsize is None:
             self.batchsize = self.ndata
-        self.nbatch = int(np.ceil(self.ndata / float(self.batchsize)))
+        self.nbatch = int(np.float(self.ndata / float(self.batchsize)))
         self.index = -1
 
     def load_data(self):
@@ -31,10 +33,10 @@ class Music(TemporalSeries):
         elif self.name == 'test':
             data = data['test']
         X = np.asarray(
-            [np.asarray([self.map2array(ts, self.nlabel)
+            [np.asarray([self.list2nparray(ts, self.nlabel)
              for ts in np.asarray(d[:-1])]) for d in data])
         y = np.asarray(
-            [np.asarray([self.map2array(ts, self.nlabel)
+            [np.asarray([self.list2nparray(ts, self.nlabel)
              for ts in np.asarray(d[1:])]) for d in data])
         return (X, y)
 
@@ -42,13 +44,8 @@ class Music(TemporalSeries):
         return self.data[0].shape[0]
 
     def batch(self, data, i):
-        size = self.batchsize
-        ndata = self.ndata
-        this_batch = data[i*size:min((i+1)*size, ndata)]
-        if self.batch_size > 1:
-            this_mask = self.create_mask(this_batch)
-            return (this_batch.swapaxes(0, 1), this_mask.swapaxes(0, 1))
-        return this_batch.swapaxes(0, 1)
+        batch = data[i*self.batchsize:(i+1)*self.batchsize]
+        return batch.swapaxes(0, 1)
 
     def __iter__(self):
         return self
@@ -56,19 +53,18 @@ class Music(TemporalSeries):
     def next(self):
         self.index += 1
         if self.index < self.nbatch:
-            batch = (self.batch(data, self.index) for data in self.data)
-            if self.batch_size > 1:
-                this_mask = self.create_mask(batch[0].swapaxes(0, 1))
-                return batch + (this_mask.swapaxes(0, 1)) 
-            return batch
+            batch = [self.batch(data, self.index) for data in self.data]
+            mask = tolist(self.create_mask(batch[0].swapaxes(0, 1)))
+            batch = [self.zero_pad(data) for data in batch]
+            return totuple(batch + mask)
         else:
             self.index = -1
             raise StopIteration()
 
     def theano_vars(self):
-        return [T.ftensor3('x'), T.ftensor3('y'), T.ftensor3('mask')]
+        return [T.ftensor3('x'), T.ftensor3('y'), T.fmatrix('mask')]
 
-    def map2array(self, x, dim):
+    def list2nparray(self, x, dim):
         z = np.zeros((dim,), dtype=np.float32)
         for i in x:
             z[i-1] = 1

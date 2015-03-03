@@ -251,8 +251,15 @@ class MaskLayer(StemCell):
     todo..
     """
     def fprop(self, xs):
-        return xs[0][xs[1].flatten().nonzero()]
-
+        x = xs[0]
+        t = xs[1]
+        if x.ndim != 2:
+            raise ValueError("Dimension of X should be 2,\
+                              but got %d instead." % t.ndim)
+        if t.ndim != 1:
+            raise ValueError("Dimension of mask should be 1,\
+                              but got %d instead." % t.ndim)
+        return x[t.nonzero(), :]
 
     def initialize(self):
         pass

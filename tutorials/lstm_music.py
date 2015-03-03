@@ -23,9 +23,10 @@ datapath = '/home/junyoung/data/music/MuseData.pickle'
 savepath = '/home/junyoung/repos/cle/saved/'
 
 batchsize = 10
+nlabel = 105
 trdata = Music(name='train',
                path=datapath,
-               nlabel=105,
+               nlabel=nlabel,
                batchsize=batchsize)
 
 # Choose the random initialization method
@@ -33,8 +34,8 @@ init_W, init_U, init_b = InitCell('randn'), InitCell('ortho'), InitCell('zeros')
 
 # Define nodes: objects
 inp, tar, mask = trdata.theano_vars()
-x = InputLayer(name='x', root=inp, nout=256)
-y = InputLayer(name='y', root=tar, nout=256)
+x = InputLayer(name='x', root=inp, nout=nlabel)
+y = InputLayer(name='y', root=tar, nout=nlabel)
 mask = InputLayer(name='mask', root=mask)
 # Using skip connections is easy
 h1 = LSTM(name='h1',
@@ -63,7 +64,7 @@ h3 = LSTM(name='h3',
           init_b=init_b)
 h4 = FullyConnectedLayer(name='h4',
                          parent=[h1, h2, h3],
-                         nout=256,
+                         nout=nlabel,
                          unit='sigmoid',
                          init_W=init_W,
                          init_b=init_b)
@@ -85,9 +86,9 @@ optimizer = Adam(
 extension = [
     GradientClipping(batchsize),
     EpochCount(100),
-    Monitoring(freq=100,
+    Monitoring(freq=1,
                ddout=[cost]),
-    Picklize(freq=1,
+    Picklize(freq=10,
              path=savepath)
 ]
 

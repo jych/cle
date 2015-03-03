@@ -56,10 +56,20 @@ class TemporalSeries(DesignMatrix):
     .. todo::
     """
     def create_mask(self, batch):
-        samples_length =\
-            [len(sample.flatten().nonzero()[0]) if sample[0] != 0
-             else len(sample.flatten().nonzero()[0]) + 1 for sample in batch]
-        mask = np.zeros((max(samples_length), len(batch)), dtype=config.floatX)
-        for i, sample_length in enumerate(samples_length):
-            mask[:sample_length, i] = 1
-        return mask
+        samples_len = [len(sample) for sample in batch]
+        max_sample_len = max(samples_len)
+        mask = np.zeros((max_sample_len, len(batch)),
+                        dtype=batch.dtype)
+        for i, sample_len in enumerate(samples_len):
+            mask[:sample_len, i] = 1
+        return mask.T
+
+    def zero_pad(self, batch):
+        max_sample_len = max(len(sample) for sample in batch)
+        rval = np.zeros((len(batch), max_sample_len,
+                         batch[0].shape[-1]), batch.dtype)
+        for i, sample in enumerate(batch):
+            rval[i, :len(sample)] = sample
+        return rval.swapaxes(0, 1)
+
+       

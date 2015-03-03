@@ -26,7 +26,7 @@ from cle.datasets.bouncing_balls import BouncingBalls
 datapath = '/home/junyoung/data/bouncing_balls/bouncing_ball_2balls_16wh_20len_50000cases.npy'
 savepath = '/home/junyoung/repos/cle/saved/'
 
-batchsize = 100
+batchsize = 128
 trdata = BouncingBalls(name='train',
                        path=datapath,
                        batchsize=batchsize)
