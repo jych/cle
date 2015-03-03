@@ -2,7 +2,12 @@ import ipdb
 import numpy as np
 
 from cle.cle.graph.net import Net
-from cle.cle.layers import InputLayer, InitCell, MSELayer, MaskLayer
+from cle.cle.layers import (
+    InputLayer,
+    InitCell,
+    MaskLayer,
+    BinCrossEntropyLayer
+)
 from cle.cle.layers.feedforward import FullyConnectedLayer
 from cle.cle.layers.recurrent import LSTM
 from cle.cle.train import Training
@@ -70,7 +75,7 @@ h4 = FullyConnectedLayer(name='h4',
                          init_b=init_b)
 masked_y = MaskLayer(name='masked_y', parent=[y, mask])
 masked_y_hat = MaskLayer(name='masked_y_hat', parent=[h4, mask])
-cost = MSELayer(name='cost', parent=[masked_y_hat, masked_y], use_sum=1)
+cost = BinCrossEntropyLayer(name='cost', parent=[masked_y_hat, masked_y], use_sum=1)
 nodes = [x, y, h1, h2, h3, h4, cost, mask, masked_y, masked_y_hat]
 model = Net(nodes=nodes)
 
