@@ -273,7 +273,8 @@ class CostLayer(StemCell):
     ----------
     todo..
     """
-    def __init__(self, use_sum=False):
+    def __init__(self, use_sum=False, **kwargs):
+        super(CostLayer, self).__init__(**kwargs)
         self.use_sum = use_sum
     
     def fprop(self, xs):
