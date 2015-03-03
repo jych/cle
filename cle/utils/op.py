@@ -29,6 +29,3 @@ def add_noise(x, stddev, theano_rg):
                                std=stddev,
                                dtype=x.dtype)
     return x
-
-
-

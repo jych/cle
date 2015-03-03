@@ -132,7 +132,7 @@ class LSTM(SimpleRecurrent):
 
 class GFLSTM(LSTM):
     """
-    Gated Feedback Long short-term memory
+    Gated feedback long short-term memory
 
     Parameters
     ----------

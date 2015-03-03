@@ -13,7 +13,7 @@ from theano.tensor.nnet import conv2d, ConvOp
 # Batch normalization should also locate in layer.py
 class Conv2DLayer(StemCell):
     """
-    2D Convolutional layer
+    2D convolutional layer
 
     Parameters
     ----------
