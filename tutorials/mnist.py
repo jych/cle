@@ -104,12 +104,7 @@ mainloop = Training(
 mainloop.run()
 
 # What are not done yet
-# 1. Monitoring                      done!
-# 2. Serialization / Checkpoint      done! Thanks to kastnerkyle and Blocks
-#                                    working on early stopping
-# 3. Dropout: use Theano.clone
-# 4. Other Regularization
-# 5. RNN                             done!
-# 6. CNN                             donghyunlee is doing
-# 7. VAE                             laurent-dinh????????? :)
-# 8. Predefined nets: larger building block such as MLP, ConvNet and Stacked RNN
+# 1. Dropout: use Theano.clone
+# 2. Other Regularization
+# 3. VAE                             laurent-dinh????????? :)
+# 4. Predefined nets: larger building block such as MLP, ConvNet and Stacked RNN
