@@ -45,8 +45,6 @@ init_W, init_U, init_b = InitCell('randn'), InitCell('ortho'), InitCell('zeros')
 # Define nodes: objects
 inp, tar, mask = trdata.theano_vars()
 x = InputLayer(name='x', root=inp, nout=nlabel)
-y = InputLayer(name='y', root=tar, nout=nlabel)
-m = InputLayer(name='mask', root=mask)
 # Using skip connections is easy
 h1 = LSTM(name='h1',
           parent=[x],
@@ -78,25 +76,21 @@ h4 = FullyConnectedLayer(name='h4',
                          unit='sigmoid',
                          init_W=init_W,
                          init_b=init_b)
-masked_y = MaskLayer(name='masked_y', parent=[y, m])
-masked_y_hat = MaskLayer(name='masked_y_hat', parent=[h4, m])
-nodes = [x, y, h1, h2, h3, h4, m, masked_y, masked_y_hat]
+nodes = [x, h1, h2, h3, h4]
 model = Net(nodes=nodes)
 
 # You can either use dict or list
-masked_y, masked_y_hat =\
-    model.build_recurrent_graph(output_args=[masked_y, masked_y_hat])
-cost_layer = BinCrossEntropyLayer(name='cost',
-                            parent=[masked_y[mask.nonzero()],
-                                    masked_y_hat[mask.nonzero()]],
-                            use_sum=1)
-cost = cost_layer.fprop([masked_y[mask.nonzero()], masked_y_hat[mask.nonzero()]])
-nll = NllBin(masked_y[mask.nonzero()], masked_y_hat[mask.nonzero()]).mean()
+y_hat = model.build_recurrent_graph(output_args=[h4])[0]
+masked_y = tar[mask.nonzero()]
+masked_y_hat = y_hat[mask.nonzero()]
+model.inputs += [tar, mask]
+cost = NllBin(masked_y, masked_y_hat).sum()
+nll = NllBin(masked_y, masked_y_hat).mean()
 cost.name = 'cost'
 nll.name = 'nll'
 
 optimizer = Adam(
-    lr=0.0001
+    lr=0.00001
 )
 
 extension = [
