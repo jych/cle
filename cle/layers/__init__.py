@@ -259,7 +259,7 @@ class MaskLayer(StemCell):
         if t.ndim != 1:
             raise ValueError("Dimension of mask should be 1,\
                               but got %d instead." % t.ndim)
-        return x[t.nonzero(), :]
+        return x[t.nonzero()]
 
     def initialize(self):
         pass
@@ -294,10 +294,11 @@ class BinCrossEntropyLayer(CostLayer):
     todo..
     """
     def fprop(self, xs):
+        cost = NllBin(xs[0], xs[1])
         if self.use_sum:
-            return NllBin(xs[0], xs[1]).sum()
+            return cost.sum()
         else:
-            return NllBin(xs[0], xs[1]).mean()
+            return cost.mean()
 
 
 class MulCrossEntropyLayer(CostLayer):
@@ -309,10 +310,11 @@ class MulCrossEntropyLayer(CostLayer):
     todo..
     """
     def fprop(self, xs):
+        cost = NllMul(xs[0], xs[1])
         if self.use_sum:
-            return NllMul(xs[0], xs[1]).sum()
+            return cost.sum()
         else:
-            return NllMul(xs[0], xs[1]).mean()
+            return cost.mean()
 
 
 class MSELayer(CostLayer):
@@ -324,10 +326,11 @@ class MSELayer(CostLayer):
     todo..
     """
     def fprop(self, xs):
+        cost = MSE(xs[0], xs[1])
         if self.use_sum:
-            return MSE(xs[0], xs[1]).sum()
+            return cost.sum()
         else:
-            return MSE(xs[0], xs[1]).mean()
+            return cost.mean()
 
 
 class GaussianLayer(CostLayer):
@@ -341,10 +344,11 @@ class GaussianLayer(CostLayer):
     def fprop(self, xs):
         if len(xs) != 3:
             raise ValueError("The number of inputs does not match.")
+        cost = Gaussian(xs[0], xs[1], xs[2])
         if self.use_sum:
-            return Gaussian(xs[0], xs[1], xs[2]).sum()
+            return cost.sum()
         else:
-            return Gaussian(xs[0], xs[1], xs[2]).mean()
+            return cost.mean()
 
 
 class GMMLayer(CostLayer):
@@ -369,7 +373,8 @@ class GMMLayer(CostLayer):
     def fprop(self, xs):
         if len(xs) != 4:
             raise ValueError("The number of inputs does not match.")
+        cost = GMM(xs[0], xs[1], xs[2], xs[3])
         if self.use_sum:
-            return GMM(xs[0], xs[1], xs[2], xs[3]).sum()
+            return cost.sum()
         else:
-            return GMM(xs[0], xs[1], xs[2], xs[3]).mean()
+            return cost.mean()
