@@ -109,7 +109,7 @@ extension = [
     Monitoring(freq=10,
                ddout=[cost, nll],
                data=[valdata]),
-    Picklize(freq=10,
+    Picklize(freq=1,
              path=savepath)
 ]
 

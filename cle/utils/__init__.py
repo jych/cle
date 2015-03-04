@@ -144,7 +144,7 @@ class PickleMixin(object):
                 try:
                     f = tempfile.TemporaryFile()
                     cPickle.dump(v, f)
-                except:
+                except RuntimeError as e:
                     self._pickle_skip_list.append(k)
             self._pickle_skip_list.append('data')
         state = OrderedDict()
