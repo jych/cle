@@ -35,7 +35,7 @@ class DesignMatrix(Data):
     ----------
     .. todo::
     """
-    def __init__(self, name, path, batchsize=None):
+    def __init__(self, name, path, start=0, end=0, batchsize=None):
         self.name = name
         self.path = path
         self.batchsize = batchsize
