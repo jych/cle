@@ -166,6 +166,8 @@ class Net(object):
             n_steps=n_steps,
             go_backwards=reverse)
         result = tolist(result)
+        for k, v in updates.iteritems():
+            k.default_update = v
         return result[len(self.output_args):]
 
     def get_params(self):

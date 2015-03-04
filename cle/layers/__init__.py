@@ -8,7 +8,7 @@ import theano.tensor as T
 from theano.compat.python2x import OrderedDict
 from theano.sandbox.rng_mrg import MRG_RandomStreams
 from cle.cle.cost import Gaussian, GMM, NllBin, NllMul, MSE
-from cle.cle.utils import sharedX, tolist, unpack
+from cle.cle.utils import sharedX, tolist, unpack, predict
 
 
 class InitCell(object):
@@ -266,7 +266,7 @@ class MaskLayer(StemCell):
         pass
 
 
-class CostLayer(StemCell):
+class CostLayer(StemCell, RandomCell):
     """
     Base cost layer
 
@@ -361,17 +361,16 @@ class GMMLayer(CostLayer):
     todo..
     """
     def __init__(self,
-                 ncoeff,
+                 sample=False,
                  **kwargs):
         super(GMMLayer, self).__init__(**kwargs)
-        if not isinstance(ncoeff, int):
-            raise ValueError("Provide int number for this attribute.")
+        self.sample
+        if sample:
+            self.fprop = self.getattr(self, 'cost')
         else:
-            if ncoeff < 2:
-                raise ValueError("You want to have more than 2 Gaussians.")
-        self.ncoeff = ncoeff
+            self.fprop = self.getattr(self, 'sample')
 
-    def fprop(self, xs):
+    def cost(self, xs):
         if len(xs) != 4:
             raise ValueError("The number of inputs does not match.")
         cost = GMM(xs[0], xs[1], xs[2], xs[3])
@@ -379,3 +378,27 @@ class GMMLayer(CostLayer):
             return cost.sum()
         else:
             return cost.mean()
+
+    def sample(self, xs):
+        mu = xs[0]
+        logvar = xs[1]
+        coeff = xs[2]
+        mu = mu.reshape((mu.shape[0],
+                         mu.shape[1]/coeff.shape[-1],
+                         coeff.shape[-1]))
+        logvar = logvar.reshape((logvar.shape[0],
+                                 logvar.shape[1]/coeff.shape[-1],
+                                 coeff.shape[-1]))
+        idx = predict(self.theano_rng.multinomial(
+            pvals=coeff,
+            dtype=coeff.dtype
+        )
+        mu = mu[T.arange(mu.shape[0]), :, idx]
+        sig = T.exp(T.sqrt(logvar[T.arange(mu.shape[0]), :, idx]))
+        sample = sel.ftheano_rng.normal(size=mu.shape,
+                                        avg=mu, std=sig,
+                                        dtype=mu.dtype)
+        ipdb.set_trace()
+        return sample
+
+

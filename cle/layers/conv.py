@@ -158,6 +158,3 @@ class ConvertLayer(StemCell):
     def __setstate__(self, state):
         self.__dict__.update(state)
         self.fprop = self.which_convert(self.convert_type)
-
-
-
