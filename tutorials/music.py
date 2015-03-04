@@ -28,7 +28,7 @@ from cle.datasets.music import Music
 datapath = '/home/junyoung/data/music/MuseData.pickle'
 savepath = '/home/junyoung/repos/cle/saved/'
 
-batchsize = 20
+batchsize = 100
 nlabel = 105
 debug = 0
 
