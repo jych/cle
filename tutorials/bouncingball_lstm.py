@@ -40,10 +40,10 @@ init_b = InitCell('zeros')
 
 # Define nodes: objects
 inp, tar = trdata.theano_vars()
-# You must use THEANO_FLAGS="compute_test_value=raise"
+# You must use THEANO_FLAGS="compute_test_value=raise" python -m ipdb
 if debug:
-    inp.tag.test_value = np.random.randn((batchsize, 10, 256))
-    tar.tag.test_value = np.random.randn((batchsize, 10, 256))
+    inp.tag.test_value = np.zeros((batchsize, 10, 256), dtype=np.float32)
+    tar.tag.test_value = np.zeros((batchsize, 10, 256), dtype=np.float32)
 x = InputLayer(name='x', root=inp, nout=256)
 y = InputLayer(name='y', root=tar, nout=256)
 # Using skip connections is easy

@@ -46,10 +46,10 @@ init_b = InitCell('zeros')
 
 # Define nodes: objects
 inp, tar = trdata.theano_vars()
-# You must use THEANO_FLAGS="compute_test_value=raise"
+# You must use THEANO_FLAGS="compute_test_value=raise" python -m ipdb
 if debug:
-    inp.tag.test_value = np.random.randn((batchsize, 784))
-    tar.tag.test_value = np.random.randn((batchsize, 1))
+    inp.tag.test_value = np.zeros((batchsize, 784), dtype=np.float32)
+    tar.tag.test_value = np.zeros((batchsize, 1), dtype=np.float32)
 x = InputLayer(name='x', root=inp, nout=784)
 y = InputLayer(name='y', root=tar, nout=1)
 onehot = OnehotLayer(name='onehot',

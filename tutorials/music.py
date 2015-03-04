@@ -48,9 +48,11 @@ init_b = InitCell('zeros')
 
 # Define nodes: objects
 inp, y, mask = trdata.theano_vars()
-# You must use THEANO_FLAGS="compute_test_value=raise"
+# You must use THEANO_FLAGS="compute_test_value=raise" python -m ipdb
 if debug:
-    inp.tag.test_value = np.random.randn((batchsize, 10, nlabel))
+    inp.tag.test_value = np.zeros((batchsize, 10, nlabel), dtype=np.float32)
+    y.tag.test_value = np.zeros((batchsize, 10, nlabel), dtype=np.float32)
+    mask.tag.test_value = np.ones((batchsize, 10), dtype=np.float32)
 x = InputLayer(name='x', root=inp, nout=nlabel)
 # Using skip connections is easy
 h1 = LSTM(name='h1',
