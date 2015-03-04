@@ -21,9 +21,9 @@ class CIFAR10(DesignMatrix):
         #self.nbatch = int(np.float(self.ndata / float(self.batchsize)))
         self.index = -1
 
-    def load_data(self):
-        X = np.load(self.path[0])
-        y = np.load(self.path[1])
+    def load_data(self, path):
+        X = np.load(path[0])
+        y = np.load(path[1])
         return (X, y)
 
     def num_examples(self):
