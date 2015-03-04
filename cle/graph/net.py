@@ -178,6 +178,13 @@ class Net(object):
     def get_inputs(self):
         return self.inputs
 
-    def add_node(self, new_node):
-        self.nodes[new_node.name] = new_node
-        ipdb.set_trace()
+    def add_node(self, node):
+        self.nodes[node.name] = node
+        self.set_graph()
+
+    def remove_node(self, node):
+        try:
+            del self.nodes[node.name]
+        except KeyError as e:
+            print("There is no such node %s.", node.name)
+        self.set_graph()
