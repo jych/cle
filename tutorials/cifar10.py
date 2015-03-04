@@ -41,7 +41,7 @@ trdata = CIFAR10(name='train',
                  path=datapath,
                  batchsize=batchsize)
 testdata = CIFAR10(name='test',
-                   path=testdatapath,
+                   path=testdatapath, start=0, end=1000,
                    batchsize=batchsize)
 
 # Choose the random initialization method
