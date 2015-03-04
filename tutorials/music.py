@@ -28,7 +28,7 @@ from cle.datasets.music import Music
 datapath = '/home/junyoung/data/music/MuseData.pickle'
 savepath = '/home/junyoung/repos/cle/saved/'
 
-batchsize = 100
+batchsize = 10
 nlabel = 105
 debug = 0
 
@@ -109,7 +109,7 @@ extension = [
     Monitoring(freq=10,
                ddout=[cost, nll],
                data=[valdata]),
-    Picklize(freq=1,
+    Picklize(freq=5,
              path=savepath)
 ]
 

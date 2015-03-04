@@ -39,17 +39,14 @@ class DesignMatrix(Data):
         self.name = name
         self.path = path
         self.batchsize = batchsize
-
         data = self.load_data(path)
         end = min( mat.shape[0] for mat in data ) if end is None else end
         # TODO : verify start and end
         self.data = [ mat[start:end] for mat in data ]
         self.ndata = end - start
-
         self.batchsize = self.ndata if batchsize is None else batchsize
         self.nbatch = int(np.float(self.ndata / float(self.batchsize)))
         
-
     def load_data(self, path):
         raise NotImplementedError(
             str(type(self)) + " does not implement DesignMatrix.load_data.")

@@ -15,13 +15,8 @@ class Music(TemporalSeries):
     .. todo::
     """
     def __init__(self, nlabel, **kwargs):
-        super(Music, self).__init__(**kwargs)
         self.nlabel = nlabel
-        #self.data = self.load_data()
-        #self.ndata = self.num_examples()
-        #if self.batchsize is None:
-        #    self.batchsize = self.ndata
-        #self.nbatch = int(np.float(self.ndata / float(self.batchsize)))
+        super(Music, self).__init__(**kwargs)
         self.index = -1
 
     def load_data(self, path):
