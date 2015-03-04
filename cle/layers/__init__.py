@@ -361,14 +361,17 @@ class GMMLayer(CostLayer):
     todo..
     """
     def __init__(self,
-                 sample=False,
+                 use_sample=False,
                  **kwargs):
         super(GMMLayer, self).__init__(**kwargs)
-        self.sample
-        if sample:
-            self.fprop = getattr(self, 'cost')
+        self.use_sample = use_sample
+        if use_sample:
+            self.fprop = self.which_method('sample')
         else:
-            self.fprop = getattr(self, 'sample')
+            self.fprop = self.which_method('cost')
+
+    def which_method(self, which):
+        return getattr(self, which)
 
     def cost(self, xs):
         if len(xs) != 4:
@@ -389,13 +392,15 @@ class GMMLayer(CostLayer):
         logvar = logvar.reshape((logvar.shape[0],
                                  logvar.shape[1]/coeff.shape[-1],
                                  coeff.shape[-1]))
+        trng = self.theano_rng()
+        ipdb.set_trace()
         idx = predict(self.theano_rng.multinomial(
             pvals=coeff,
             dtype=coeff.dtype
         ))
         mu = mu[T.arange(mu.shape[0]), :, idx]
         sig = T.exp(T.sqrt(logvar[T.arange(mu.shape[0]), :, idx]))
-        sample = sel.ftheano_rng.normal(size=mu.shape,
+        sample = self.theano_rng.normal(size=mu.shape,
                                         avg=mu, std=sig,
                                         dtype=mu.dtype)
         ipdb.set_trace()
@@ -408,7 +413,7 @@ class GMMLayer(CostLayer):
     
     def __setstate__(self, state):
         self.__dict__.update(state)
-        if self.sample:
-            self.fprop = getattr(self, 'cost')
+        if self.use_sample:
+            self.fprop = which_method('sample')
         else:
-            self.fprop = getattr(self, 'sample')
+            self.fprop = which_method('cost')
