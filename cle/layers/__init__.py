@@ -242,6 +242,7 @@ class OnehotLayer(StemCell):
         pass
 
 
+# This class will be deprecated
 class MaskLayer(StemCell):
     """
     Masking layer
