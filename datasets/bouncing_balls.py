@@ -14,15 +14,15 @@ class BouncingBalls(DesignMatrix):
     """
     def __init__(self, **kwargs):
         super(BouncingBalls, self).__init__(**kwargs)
-        self.data = self.load_data()
-        self.ndata = self.num_examples()
-        if self.batchsize is None:
-            self.batchsize = self.ndata
-        self.nbatch = int(np.float(self.ndata / float(self.batchsize)))
+        #self.data = self.load_data()
+        #self.ndata = self.num_examples()
+        #if self.batchsize is None:
+        #    self.batchsize = self.ndata
+        #self.nbatch = int(np.float(self.ndata / float(self.batchsize)))
         self.index = -1
 
-    def load_data(self):
-        data = np.load(self.path)
+    def load_data(self, path):
+        data = np.load(path)
         X = data[:, :-1, :]
         y = data[:, 1:, :]
         return (X, y)

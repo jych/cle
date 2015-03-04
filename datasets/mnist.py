@@ -14,15 +14,15 @@ class MNIST(DesignMatrix):
     """
     def __init__(self, **kwargs):
         super(MNIST, self).__init__(**kwargs)
-        self.data = self.load_data()
-        self.ndata = self.num_examples()
-        if self.batchsize is None:
-            self.batchsize = self.ndata
-        self.nbatch = int(np.float(self.ndata / float(self.batchsize)))
+        #self.data = self.load_data()
+        #self.ndata = self.num_examples()
+        #if self.batchsize is None:
+        #    self.batchsize = self.ndata
+        #self.nbatch = int(np.float(self.ndata / float(self.batchsize)))
         self.index = -1
 
-    def load_data(self):
-        data = np.load(self.path)
+    def load_data(self, path):
+        data = np.load(path)
         if self.name == 'train':
             return data[0]
         elif self.name == 'valid':
