@@ -1,18 +1,16 @@
 import ipdb
-import copy
 import logging
 import numpy as np
 import os
 import sys
-import theano
 import theano.tensor as T
 
 from cle.cle.graph import TheanoMixin
 from cle.cle.utils import secure_pickle_dump
-from itertools import izip
 
 
 logger = logging.getLogger(__name__)
+
 
 class Extension(object):
     def exe(self, mainloop):
@@ -100,7 +98,7 @@ class Monitoring(Extension, TheanoMixin):
                 for batch in data:
                     this_cost = self.monitor_fn(*batch)
                     batch_record.append(this_cost)
-                data_record.append(np.asarray(batch_record)) 
+                data_record.append(np.asarray(batch_record))
             this_ch = []
             for record, data in zip(data_record, self.data):
                 for i, ch in enumerate(self.ddout):
@@ -108,7 +106,8 @@ class Monitoring(Extension, TheanoMixin):
                     if this_mean is np.nan:
                         raise ValueError("NaN occured in output.")
                     this_ch.append(this_mean)
-                    logger.info("\t%s_%s: %f" % (data.name, ch.name, this_mean))
+                    logger.info("\t%s_%s: %f" %
+                                (data.name, ch.name, this_mean))
             mainloop.trainlog._ddmonitors.append(this_ch)
         else:
             pass

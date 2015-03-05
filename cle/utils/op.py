@@ -1,11 +1,5 @@
 import ipdb
-import numpy as np
-import theano
 import theano.tensor as T
-
-from theano.tensor.shared_randomstreams import RandomStreams
-from theano.sandbox.rng_mrg import MRG_RandomStreams
-from theano.compat.python2x import OrderedDict
 
 
 def dropout(x, p, theano_rng):
@@ -23,9 +17,9 @@ def logsumexp(x, axis=None):
     return z.sum(axis=axis)
 
 
-def add_noise(x, stddev, theano_rg):
+def add_noise(x, stddev, theano_rng):
     x += theano_rng.normal(size=x.shape,
-                               avg=0.,
-                               std=stddev,
-                               dtype=x.dtype)
+                           avg=0.,
+                           std=stddev,
+                           dtype=x.dtype)
     return x

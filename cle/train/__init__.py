@@ -1,6 +1,5 @@
 import ipdb
 import logging
-import theano
 import theano.tensor as T
 import time
 

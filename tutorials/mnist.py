@@ -74,7 +74,7 @@ nodes = [x, y, onehot, h1, h2, cost]
 model = Net(nodes=nodes)
 model.build_graph()
 
-# You can access any output of a node by simply doing model.nodes[$node_name].out
+# You can access any output of a node by doing model.nodes[$node_name].out
 cost = model.nodes['cost'].out
 err = error(predict(model.nodes['h2'].out), predict(model.nodes['onehot'].out))
 cost.name = 'cost'

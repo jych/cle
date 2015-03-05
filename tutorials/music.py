@@ -15,7 +15,6 @@ from cle.cle.train.ext import (
     Picklize
 )
 from cle.cle.train.opt import Adam, RMSProp
-from cle.cle.utils import unpack
 from cle.datasets.music import Music
 
 
@@ -33,16 +32,15 @@ trdata = Music(name='train',
                nlabel=nlabel,
                batchsize=batchsize)
 valdata = Music(name='valid',
-               path=datapath,
-               nlabel=nlabel,
-               batchsize=batchsize)
+                path=datapath,
+                nlabel=nlabel,
+                batchsize=batchsize)
 
 # Choose the random initialization method
 init_W = InitCell('randn')
 init_U = InitCell('ortho')
 init_b = InitCell('zeros')
 
-# Define nodes: objects
 inp, y, mask = trdata.theano_vars()
 # You must use THEANO_FLAGS="compute_test_value=raise" python -m ipdb
 if debug:
@@ -50,7 +48,6 @@ if debug:
     y.tag.test_value = np.zeros((batchsize, 10, nlabel), dtype=np.float32)
     mask.tag.test_value = np.ones((batchsize, 10), dtype=np.float32)
 x = InputLayer(name='x', root=inp, nout=nlabel)
-# Using skip connections is easy
 h1 = LSTM(name='h1',
           parent=[x],
           batchsize=batchsize,
@@ -84,7 +81,6 @@ h4 = FullyConnectedLayer(name='h4',
 nodes = [x, h1, h2, h3, h4]
 model = Net(nodes=nodes)
 
-# You can either use dict or list
 y_hat = model.build_recurrent_graph(output_args=[h4])[0]
 masked_y = y[mask.nonzero()]
 masked_y_hat = y_hat[mask.nonzero()]

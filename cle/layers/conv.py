@@ -1,13 +1,10 @@
 import ipdb
-import numpy as np
 import theano.tensor as T
 
-from itertools import izip
-from cle.cle.layers import StemCell, RandomCell, InitCell
+from cle.cle.layers import StemCell
 from cle.cle.utils import tolist, totuple, unpack
-from theano.compat.python2x import OrderedDict
-from theano.tensor.nnet import conv2d, ConvOp
-    
+from theano.tensor.nnet import conv2d
+
 
 # Pooling layers exist separately in layer.py
 # Batch normalization should also locate in layer.py
@@ -31,9 +28,9 @@ class Conv2DLayer(StemCell):
         self.nonlin = self.which_nonlin(unit)
         # Shape should be (batch_size, num_channels, x, y)
         if (outshape is None and filtershape is None) or\
-            (outshape is not None and filtershape is not None):
+                (outshape is not None and filtershape is not None):
             raise ValueError("Either outshape or filtershape should be given,\
-                              but don't provide both of them.")
+                             but don't provide both of them.")
         self.outshape = outshape
         self.filtershape = filtershape
         self.tiedbias = tiedbias
@@ -50,7 +47,8 @@ class Conv2DLayer(StemCell):
         parent = unpack(self.parent)
         z = T.zeros(self.outshape)
         W = self.params['W_'+parent.name+self.name]
-        z += conv2d(x, W,
+        z += conv2d(
+            x, W,
             image_shape=parent.outshape,
             subsample=self.stepsize,
             border_mode=self.bordermode,
@@ -116,7 +114,7 @@ class ConvertLayer(StemCell):
                  **kwargs):
         super(ConvertLayer, self).__init__(**kwargs)
         self.outshape = outshape
-        if len(outshape) == 2 or outshape == None:
+        if len(outshape) == 2 or outshape is None:
             convert_type = 'convert2matrix'
             self.nout = outshape[1]
         elif len(outshape) == 4:
@@ -153,7 +151,7 @@ class ConvertLayer(StemCell):
         dic = self.__dict__.copy()
         dic.pop('fprop')
         return dic
-    
+
     def __setstate__(self, state):
         self.__dict__.update(state)
         self.fprop = self.which_convert(self.convert_type)

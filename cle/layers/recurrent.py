@@ -3,7 +3,7 @@ import numpy as np
 import theano.tensor as T
 
 from itertools import izip
-from cle.cle.layers import StemCell, RandomCell, InitCell
+from cle.cle.layers import StemCell, InitCell
 from cle.cle.utils import tolist
 from theano.compat.python2x import OrderedDict
 
@@ -36,8 +36,9 @@ class RecurrentLayer(StemCell):
     def initialize(self):
         super(RecurrentLayer, self).initialize()
         for i, recurrent in enumerate(self.recurrent):
-            self.alloc(self.init_U.get((recurrent.nout, self.nout),
-                                      'U_'+recurrent.name+self.name))
+            U_shape = (recurrent.nout, self.nout)
+            U_name = 'U_'+recurrent.name+self.name
+            self.alloc(self.init_U.get(U_shape, U_name))
 
 
 class SimpleRecurrent(RecurrentLayer):
@@ -74,7 +75,7 @@ class LSTM(SimpleRecurrent):
         state = T.zeros((self.batchsize, 2*self.nout))
         state = T.unbroadcast(state, *range(state.ndim))
         return state
-  
+
     def fprop(self, xh):
         # xh is a list of inputs: [state_belows, state_befores]
         # each state vector is: [state_before; cell_before]

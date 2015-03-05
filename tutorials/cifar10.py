@@ -120,7 +120,7 @@ nodes = [x, y, c1, c2, h1, h2, h3, h4, h5, h6, h7, p1, p2, cost]
 model = Net(nodes=nodes)
 model.build_graph()
 
-# You can access any output of a node by simply doing model.nodes[$node_name].out
+# You can access any output of a node by doing model.nodes[$node_name].out
 cost = model.nodes['cost'].out
 err = error(predict(model.nodes['h7'].out), predict(model.nodes['y'].out))
 cost.name = 'cost'
@@ -137,8 +137,8 @@ extension = [
     Monitoring(freq=100,
                ddout=[cost, err],
                data=[testdata]),
-    #Picklize(freq=10,
-    #         path=savepath)
+    Picklize(freq=10,
+             path=savepath)
 ]
 
 mainloop = Training(

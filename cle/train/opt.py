@@ -1,4 +1,3 @@
-import numpy as np
 import theano.tensor as T
 
 from theano.compat.python2x import OrderedDict
@@ -30,8 +29,8 @@ class Momentum(Optimizer):
 
         WRITEME
     """
-    def __init__(self, 
-                 mom=0.9, 
+    def __init__(self,
+                 mom=0.9,
                  nesterov=False,
                  **kwargs):
         self.__dict__.update(locals())
@@ -78,7 +77,6 @@ class RMSProp(Optimizer):
             u = sharedX(p.get_value() * 0.)
             avg_grad = sharedX(p.get_value() * 0.)
             sqr_grad = sharedX(p.get_value() * 0.)
-            m_t = self.coeff * avg_grad
             avg_grad_t = self.coeff * avg_grad + (1 - self.coeff) * g
             sqr_grad_t = self.coeff * sqr_grad + (1 - self.coeff) * g**2
             g_t = g / T.sqrt(sqr_grad_t - avg_grad_t**2 + self.e)

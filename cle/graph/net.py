@@ -1,7 +1,5 @@
 import ipdb
-import numpy as np
 import theano
-import theano.tensor as T
 
 from collections import OrderedDict
 from cle.cle.utils import (
@@ -24,7 +22,6 @@ class Net(object):
         if inputs is None:
             inputs = self.set_inputs(nodes)
         self.inputs = inputs
-        #self.set_graph(nodes)
         self.set_nodes(nodes)
         self.set_graph()
         self.initialize()
@@ -136,13 +133,9 @@ class Net(object):
         next_recurrence = []
         sorted_nodes = topological_sort(self.graph)
         inputs = tolist(args[:self.nseqs])
-        recurrence = tolist(args[self.nseqs:
-                                 self.nseqs+
-                                 self.nrecur])
-        inputs += tolist(args[self.nseqs+self.nrecur:
-                              self.nseqs+self.noutputs])
-        nonseqs = tolist(args[self.nseqs+
-                              self.noutputs:])
+        recurrence = tolist(args[self.nseqs:self.nseqs+self.nrecur])
+        inputs += tolist(args[self.nseqs+self.nrecur:self.nseqs+self.noutputs])
+        nonseqs = tolist(args[self.nseqs+self.noutputs:])
         for nname, node in self.nodes.items():
             for i, (aname, arg) in enumerate(self.input_args.items()):
                 if node is arg:
@@ -195,6 +188,6 @@ class Net(object):
     def del_node(self, node):
         try:
             del self.nodes[node.name]
-        except KeyError as e:
+        except KeyError:
             print("There is no such node %s.", node.name)
         self.set_graph()

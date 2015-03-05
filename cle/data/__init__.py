@@ -45,7 +45,7 @@ class DesignMatrix(Data):
 
     def __iter__(self):
         return self
- 
+
     def next(self):
         self.index += 1
         if self.index < self.nbatch:

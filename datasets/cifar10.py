@@ -24,7 +24,7 @@ class CIFAR10(DesignMatrix):
 
     def num_examples(self):
         return self.data[0].shape[0]
- 
+
     def load_data(self, path):
         X = np.load(path[0])
         y = np.load(path[1])

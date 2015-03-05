@@ -1,10 +1,6 @@
 import ipdb
-import numpy as np
-import theano.tensor as T
-
-from cle.cle.layers import StemCell, RandomCell, InitCell
-from cle.cle.utils import tolist, totuple, unpack
-from theano.compat.python2x import OrderedDict
+from cle.cle.layers import StemCell
+from cle.cle.utils import totuple, unpack
 from theano.tensor.signal.downsample import max_pool_2d
 
 
@@ -49,7 +45,6 @@ class MaxPool2D(StemCell):
 
     def fprop(self, x):
         x = unpack(x)
-        parent = unpack(self.parent)
         z = max_pool_2d(x, self.poolsize, st=self.poolstride)
         z.name = self.name
         return z

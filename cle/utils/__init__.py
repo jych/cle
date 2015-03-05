@@ -3,15 +3,12 @@ import cPickle
 import numpy as np
 import os
 import shutil
-import sys
 import tempfile
 import theano
 import theano.tensor as T
 
 from collections import deque
 from numpy.lib.stride_tricks import as_strided
-from theano.tensor.shared_randomstreams import RandomStreams
-from theano.sandbox.rng_mrg import MRG_RandomStreams
 from theano.compat.python2x import OrderedDict
 
 
@@ -31,6 +28,7 @@ def topological_sort(graph):
     this_graph = dict()
     for node in graph:
         this_graph[node] = tolist(graph[node])
+
     def dfs(node):
         state[node] = GRAY
         for k in this_graph.get(node, ()):
@@ -57,25 +55,28 @@ def one_hot(labels, nlabels=None):
 
 
 def T_one_hot(labels, nlabels=None):
-    if nlabels is None: nlabels = T.max(labels) + 1
+    if nlabels is None:
+        nlabels = T.max(labels) + 1
     ranges = T.shape_padleft(T.arange(nlabels), labels.ndim)
     return T.cast(T.eq(ranges, T.shape_padright(labels, 1)), 'floatX')
 
 
 def flatten(nested_list):
-    flattened = lambda lst: reduce(lambda l, i: l + flatten(i)\
-        if isinstance(i, (list, tuple)) else l + [i], lst, [])
+    flattened = lambda lst: reduce(lambda l, i: l + flatten(i)
+                                   if isinstance(i, (list, tuple))
+                                   else l + [i], lst, [])
     return flattened(nested_list)
 
 
-def uniqify(seq): 
-   seen = {}
-   result = []
-   for ele in seq:
-       if ele in seen: continue
-       seen[ele] = 1
-       result.append(ele)
-   return result
+def uniqify(seq):
+    seen = {}
+    result = []
+    for elem in seq:
+        if elem in seen:
+            continue
+        seen[elem] = 1
+        result.append(elem)
+    return result
 
 
 def castX(value):

@@ -24,27 +24,24 @@ datapath = '/home/junyoung/data/bouncing_balls/bouncing_ball_2balls_16wh_20len_5
 savepath = '/home/junyoung/repos/cle/saved/'
 
 batchsize = 128
-resolution = 256 
+res = 256
 debug = 0
 
 trdata = BouncingBalls(name='train',
                        path=datapath,
                        batchsize=batchsize)
 
-# Choose the random initialization method
 init_W = InitCell('randn')
 init_U = InitCell('ortho')
 init_b = InitCell('zeros')
 
-# Define nodes: objects
 inp, tar = trdata.theano_vars()
 # You must use THEANO_FLAGS="compute_test_value=raise" python -m ipdb
 if debug:
-    inp.tag.test_value = np.zeros((10, batchsize, resolution), dtype=np.float32)
-    tar.tag.test_value = np.zeros((10, batchsize, resolution), dtype=np.float32)
-x = InputLayer(name='x', root=inp, nout=resolution)
-y = InputLayer(name='y', root=tar, nout=resolution)
-# Using skip connections is easy
+    inp.tag.test_value = np.zeros((10, batchsize, res), dtype=np.float32)
+    tar.tag.test_value = np.zeros((10, batchsize, res), dtype=np.float32)
+x = InputLayer(name='x', root=inp, nout=res)
+y = InputLayer(name='y', root=tar, nout=res)
 h1 = LSTM(name='h1',
           parent=[x],
           batchsize=batchsize,
@@ -71,7 +68,7 @@ h3 = LSTM(name='h3',
           init_b=init_b)
 h4 = FullyConnectedLayer(name='h4',
                          parent=[h1, h2, h3],
-                         nout=resolution,
+                         nout=res,
                          unit='sigmoid',
                          init_W=init_W,
                          init_b=init_b)
@@ -80,8 +77,6 @@ cost = MSELayer(name='cost', parent=[h4, y])
 nodes = [x, y, h1, h2, h3, h4, cost]
 model = Net(nodes=nodes)
 
-# You can either use dict or list
-#cost = model.build_recurrent_graph(output_args={'cost': cost})
 cost = unpack(model.build_recurrent_graph(output_args=[cost]))
 cost = cost.mean()
 cost.name = 'cost'

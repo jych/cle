@@ -24,8 +24,8 @@ datapath = '/home/junyoung/data/bouncing_balls/bouncing_ball_2balls_16wh_20len_5
 savepath = '/home/junyoung/repos/cle/saved/'
 
 batchsize = 128
-resolution = 256
-debug = 1
+res = 256
+debug = 0
 
 trdata = BouncingBalls(name='train',
                        path=datapath,
@@ -40,10 +40,10 @@ init_b = InitCell('zeros')
 inp, tar = trdata.theano_vars()
 # You must use THEANO_FLAGS="compute_test_value=raise" python -m ipdb
 if debug:
-    inp.tag.test_value = np.zeros((10, batchsize, resolution), dtype=np.float32)
-    tar.tag.test_value = np.zeros((10, batchsize, resolution), dtype=np.float32)
-x = InputLayer(name='x', root=inp, nout=resolution)
-y = InputLayer(name='y', root=tar, nout=resolution)
+    inp.tag.test_value = np.zeros((10, batchsize, res), dtype=np.float32)
+    tar.tag.test_value = np.zeros((10, batchsize, res), dtype=np.float32)
+x = InputLayer(name='x', root=inp, nout=res)
+y = InputLayer(name='y', root=tar, nout=res)
 # Using skip connections is easy
 h1 = SimpleRecurrent(name='h1',
                      parent=[x],
@@ -71,7 +71,7 @@ h3 = SimpleRecurrent(name='h3',
                      init_b=init_b)
 h4 = FullyConnectedLayer(name='h4',
                          parent=[h1, h2, h3],
-                         nout=resolution,
+                         nout=res,
                          unit='sigmoid',
                          init_W=init_W,
                          init_b=init_b)
