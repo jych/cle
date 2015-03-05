@@ -25,10 +25,10 @@ from cle.datasets.mnist import MNIST
 # Toy example to use cle!
 
 # Set your dataset
-#datapath = '/data/lisa/data/mnist/mnist.pkl'
-#savepath = '/u/chungjun/repos/cle/saved/'
-datapath = '/home/junyoung/data/mnist/mnist.pkl'
-savepath = '/home/junyoung/repos/cle/saved/'
+datapath = '/data/lisa/data/mnist/mnist.pkl'
+savepath = '/u/chungjun/repos/cle/saved/'
+#datapath = '/home/junyoung/data/mnist/mnist.pkl'
+#savepath = '/home/junyoung/repos/cle/saved/'
 
 batchsize = 128
 debug = 0
@@ -84,7 +84,7 @@ err.name = 'error_rate'
 
 # Define your optimizer: Momentum (Nesterov), RMSProp, Adam
 optimizer = RMSProp(
-    lr=0.001
+    lr=0.1
 )
 
 extension = [
@@ -93,7 +93,7 @@ extension = [
     Monitoring(freq=100,
                ddout=[cost, err],
                data=[valdata]),
-    Picklize(freq=10,
+    Picklize(freq=200,
              path=savepath),
     EarlyStopping(path=savepath)
 ]
@@ -108,9 +108,3 @@ mainloop = Training(
     extension=extension
 )
 mainloop.run()
-
-# What are not done yet
-# 1. Dropout: use Theano.clone
-# 2. Other Regularization
-# 3. VAE                             laurent-dinh????????? :)
-# 4. Predefined nets: larger building block such as MLP, ConvNet and Stacked RNN

@@ -22,14 +22,14 @@ from cle.datasets.bouncing_balls import BouncingBalls
 # Will add it in ver0.2
 
 
-#datapath = '/data/lisatmp3/chungjun/bouncing_balls/bouncing_ball_2balls_16wh_20len_50000cases.npy'
-#savepath = '/u/chungjun/repos/cle/saved/'
-datapath = '/home/junyoung/data/bouncing_balls/bouncing_ball_2balls_16wh_20len_50000cases.npy'
-savepath = '/home/junyoung/repos/cle/saved/'
+datapath = '/data/lisatmp3/chungjun/bouncing_balls/bouncing_ball_2balls_16wh_20len_50000cases.npy'
+savepath = '/u/chungjun/repos/cle/saved/'
+#datapath = '/home/junyoung/data/bouncing_balls/bouncing_ball_2balls_16wh_20len_50000cases.npy'
+#savepath = '/home/junyoung/repos/cle/saved/'
 
 batchsize = 128
-resolution = 256 
-debug = 0
+resolution = 256
+debug = 1
 
 trdata = BouncingBalls(name='train',
                        path=datapath,

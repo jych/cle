@@ -130,7 +130,7 @@ err.name = 'error_rate'
 
 # Define your optimizer: Momentum (Nesterov), RMSProp, Adam
 optimizer = Adam(
-    lr=0.001
+    lr=0.1
 )
 
 extension = [
