@@ -25,7 +25,7 @@ class Extension(object):
 
 
 class GradientClipping(Extension):
-    def __init__(self, scaler=5, batch_size=1):
+    def __init__(self, scaler=5, batchsize=1):
         """
         .. todo::
 
@@ -33,7 +33,7 @@ class GradientClipping(Extension):
         """
         self.name = 'ext_grad'
         self.scaler = scaler
-        self.batch_size = batch_size
+        self.batchsize = batchsize
 
     def exe(self, mainloop):
         """
@@ -42,20 +42,8 @@ class GradientClipping(Extension):
             WRITEME
         """
         grads = mainloop.grads
-        """
-        g_norm = 0.
-        for g in grads.values():
-            g /= self.batch_size
-            g_norm += (g**2).sum()
-        g_norm = T.sqrt(g_norm)
-        not_finite = T.or_(T.isnan(g_norm), T.isinf(g_norm))
-        scaler = self.scaler / T.maximum(self.scaler, g_norm)
         for p, g in grads.items():
-            grads[p] = T.switch(not_finite, 0.1 * p, g * scaler)
-        mainloop.grads = grads
-        """
-        for p, g in grads.items():
-            g /= self.batch_size
+            g /= self.batchsize
             g_norm = T.sqrt((g**2).sum())
             not_finite = T.or_(T.isnan(g_norm), T.isinf(g_norm))
             scaler = self.scaler / T.maximum(self.scaler, g_norm)
