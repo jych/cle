@@ -95,7 +95,7 @@ nll.name = 'nll'
 model.inputs += [y, mask]
 
 optimizer = RMSProp(
-    lr=0.01,
+    lr=0.0001,
     mom=0.95
 )
 

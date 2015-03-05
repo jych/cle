@@ -50,6 +50,7 @@ class GradientClipping(Extension):
             grads[p] = T.switch(not_finite, 0.1 * p, g * scaler)
         mainloop.grads = grads
 
+
 class EpochCount(Extension):
     def __init__(self, num_epoch):
         """
@@ -66,7 +67,7 @@ class EpochCount(Extension):
 
             WRITEME
         """
-        if np.mod(mainloop.trainlog._epoch_seen, self.num_epoch)==0:
+        if np.mod(mainloop.trainlog._epoch_seen, self.num_epoch) == 0:
             mainloop.endloop = 1
 
 
@@ -119,7 +120,7 @@ class Monitoring(Extension, TheanoMixin):
             WRITEME
         """
         log = mainloop.trainlog
-        if np.mod(log._batch_seen, self.freq)==0:
+        if np.mod(log._batch_seen, self.freq) == 0:
             srt = max(0, log._batch_seen - self.freq)
             end = max(1, log._batch_seen)
             t = np.asarray(log._times)[srt: end].sum()
@@ -155,7 +156,7 @@ class Picklize(Extension):
         """
         Pickle the mainloop
         """
-        if np.mod(mainloop.trainlog._epoch_seen, self.freq)==0:
+        if np.mod(mainloop.trainlog._epoch_seen, self.freq) == 0:
             pklpath = mainloop.name + '.pkl'
             path = os.path.join(self.path, pklpath)
             logger.info("\tSaving model to: %s" % path)
