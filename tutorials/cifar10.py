@@ -23,8 +23,6 @@ from cle.cle.utils import error, predict
 from cle.datasets.cifar10 import CIFAR10
 
 
-# Toy example to use cle!
-
 # Set your dataset
 #datapath = '/data/lisa/data/cifar10/pylearn2_gcn_whitend/train.npy'
 #savepath = '/u/chungjun/repos/cle/saved/'
@@ -34,7 +32,7 @@ testdatapath = ['/home/junyoung/data/cifar10/pylearn2_gcn_whitened/test.npy',
                 '/home/junyoung/data/cifar10/pylearn2_gcn_whitened/testy.npy']
 savepath = '/home/junyoung/repos/cle/saved/'
 
-batchsize = 100
+batchsize = 128
 debug = 0
 
 trdata = CIFAR10(name='train',
