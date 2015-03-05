@@ -7,24 +7,43 @@ from scipy.fftpack import rfft
 class SequentialPrepMixin(object):
     """
     Preprocessing mixin for sequential data
-
-    Parameters
-    ----------
-    X : list of lists or ndArrays
     """
-    def normalize_by_norm(self, X, mean_norm=None):
-        if mean_norm is None:
-            mean_norm = 0
+    def normalize_by_norm(self, X, avr_norm=None):
+        """
+        Unify the norm of each sequence in X
+
+        Parameters
+        ----------
+        X       : list of lists or ndArrays
+        avr_nom : Scalar
+        """
+        if avr_norm is None:
+            avr_norm = 0
             for i in range(len(X)):
                 euclidean_norm = np.sqrt(np.square(X[i].sum()))
                 X[i] /= euclidean_norm
-                mean_norm += euclidean_norm
-            mean_norm /= len(X)
+                avr_norm += euclidean_norm
+            avr_norm /= len(X)
         else:
-            X = [x[i] / mean_norm for x in X]
-        return X, mean_norm
+            X = [x[i] / avr_norm for x in X]
+        return X, avr_norm
 
     def normalize_by_global(self, X, X_mean=None, X_std=None):
+        """
+        Globally normalize each sequence in X
+        into zero mean and unit variance
+
+        Parameters
+        ----------
+        X      : list of lists or ndArrays
+        X_mean : Scalar
+        X_std  : Scalar
+
+        Notes
+        -----
+        When computing varaince we use the relation
+        >>> Var(X) = E[X^2] - E[X]^2
+        """   
         if (X_mean or X_std) is None:
             X_len = np.array([len(x) for x in X]).sum()
             X_mean = np.array([x.sum() for x in X]).sum() / X_len
@@ -36,6 +55,16 @@ class SequentialPrepMixin(object):
         return (X, X_mean, X_std)
 
     def standardize(self, X, X_max=None, X_min=None):
+        """
+        Standardize each sequence in X
+        into range [0, 1]
+
+        Parameters
+        ----------
+        X     : list of lists or ndArrays
+        X_max : Scalar
+        X_min : Scalar
+        """
         if (X_max or X_min) is None:
             X_max = np.array([x.max() for x in X]).max()
             X_min = np.array([x.min() for x in X]).min()
