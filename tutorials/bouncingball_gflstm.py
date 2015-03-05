@@ -18,10 +18,6 @@ from cle.cle.utils import unpack
 from cle.datasets.bouncing_balls import BouncingBalls
 
 
-# Mask should be also implemented as data src and using InputLayer!
-# Will add it in ver0.2
-
-
 #datapath = '/data/lisatmp3/chungjun/bouncing_balls/bouncing_ball_2balls_16wh_20len_50000cases.npy'
 #savepath = '/u/chungjun/repos/cle/saved/'
 datapath = '/home/junyoung/data/bouncing_balls/bouncing_ball_2balls_16wh_20len_50000cases.npy'

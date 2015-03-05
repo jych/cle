@@ -22,13 +22,11 @@ from cle.cle.utils import error, predict
 from cle.datasets.mnist import MNIST
 
 
-# Toy example to use cle!
-
 # Set your dataset
-datapath = '/data/lisa/data/mnist/mnist.pkl'
-savepath = '/u/chungjun/repos/cle/saved/'
-#datapath = '/home/junyoung/data/mnist/mnist.pkl'
-#savepath = '/home/junyoung/repos/cle/saved/'
+#datapath = '/data/lisa/data/mnist/mnist.pkl'
+#savepath = '/u/chungjun/repos/cle/saved/'
+datapath = '/home/junyoung/data/mnist/mnist.pkl'
+savepath = '/home/junyoung/repos/cle/saved/'
 
 batchsize = 128
 debug = 0
