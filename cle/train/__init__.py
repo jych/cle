@@ -100,10 +100,6 @@ class Training(PickleMixin, TheanoMixin):
         return self.endloop
 
 
-class TrainingEnd(Exception):
-    pass
-
-
 class TrainLog(object):
     """
     Training log class
