@@ -58,7 +58,6 @@ class Music(TemporalSeries):
             raise StopIteration()
 
     def theano_vars(self):
-        ipdb.set_trace()
         return [T.ftensor3('x'), T.ftensor3('y'), T.fmatrix('mask')]
 
     def list2nparray(self, x, dim):

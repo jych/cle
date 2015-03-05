@@ -105,8 +105,6 @@ class Net(object):
             outputs += inputs[:len(self.iterators)]
         if self.output_args is not None:
             self.nNone = len(self.output_args)
-        else:
-            self.nNone = 0
         outputs = flatten(outputs + [None] * self.nNone)
         if self.nonseq_args is not None:
             for arg in self.nonseq_args:
@@ -122,9 +120,12 @@ class Net(object):
             n_steps=n_steps,
             go_backwards=reverse)
         result = tolist(result)
+        if len(updates) == 0:
+            #return result[self.nrecur:]
+            return result[-self.nNone:]
         for k, v in updates.iteritems():
             k.default_update = v
-        return result[self.nrecur:]
+        return result[-self.nNone:], updates
 
     def scan_fn(self, *args):
         next_recurrence = []

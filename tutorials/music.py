@@ -3,12 +3,8 @@ import numpy as np
 
 from cle.cle.cost import NllBin
 from cle.cle.graph.net import Net
-from cle.cle.layers import (
-    InputLayer,
-    InitCell,
-    MaskLayer,
-    BinCrossEntropyLayer
-)
+from cle.cle.layers import InputLayer, InitCell
+from cle.cle.layers.cost import BinCrossEntropyLayer
 from cle.cle.layers.feedforward import FullyConnectedLayer
 from cle.cle.layers.recurrent import LSTM
 from cle.cle.train import Training
