@@ -71,14 +71,11 @@ class Net(object):
                 inp.append(par.out)
             self.nodes[node].out = self.nodes[node].fprop(inp)
 
-    def build_recurrent_graph(self, **kwargs):
+    def build_recurrent_graph(self, n_steps=None, reverse=False, **kwargs):
         self.nonseq_args = kwargs.pop('nonseq_args', None)
         self.output_args = kwargs.pop('output_args', None)
         self.context_args = kwargs.pop('context_args', None)
-        self.given_args = kwargs.pop('given_args', None)
         self.iterators = kwargs.pop('iterators', None)
-        n_steps = None
-        reverse = False
         seqs = []
         inputs = []
         outputs = []
@@ -114,9 +111,6 @@ class Net(object):
         if self.nonseq_args is not None:
             for arg in self.nonseq_args:
                 nonseqs.append(arg)
-        if self.given_args is not None:
-            n_steps = self.given_args.pop('n_steps', None)
-            reverse = self.given_args.pop('reverse', False)
         self.nseqs = len(seqs)
         self.noutputs = len(outputs)
         self.nnonseqs = len(nonseqs)
@@ -158,7 +152,7 @@ class Net(object):
             inp = []
             for par in parent:
                 inp.append(par.out)
-            if hasattr(self.nodes[node], 'recurrent'):
+            if self.nodes[node] in self.recur_args.values():
                 recurrent = self.nodes[node].recurrent
                 rec_inp = []
                 for rec in recurrent:
@@ -169,11 +163,16 @@ class Net(object):
             else:
                 self.nodes[node].out = self.nodes[node].fprop(inp)
         required_outputs = []
-        ipdb.set_trace()
-        for arg in self.output_args:
-            for node in self.nodes.values():
-                if node is arg:
-                    required_outputs.append(node.out)
+        if self.iterators is not None:
+            for arg in self.iterators:
+                for node in self.nodes.values():
+                    if node is arg:
+                        required_outputs.append(node.out)
+        if self.output_args is not None:
+            for arg in self.output_args:
+                for node in self.nodes.values():
+                    if node is arg:
+                        required_outputs.append(node.out)
         return next_recurrence + required_outputs
 
     def get_params(self):

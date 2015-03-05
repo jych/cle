@@ -133,11 +133,6 @@ class RandomCell(object):
     ----------
     .. todo::
     """
-    def __init__(self,
-                 theano_seed=None,
-                 **kwargs):
-        self.theano_seed = theano_seed
-
     def rng(self):
         if getattr(self, '_rng', None) is None:
             self._rng = np.random.RandomState(self.seed)
@@ -155,7 +150,7 @@ class RandomCell(object):
 
     def theano_rng(self):
         if getattr(self, '_theano_rng', None) is None:
-            self._theano_rng = MRG_RandomStreams(self.theano_seed)
+            self._theano_rng = MRG_RandomStreams(self.theano_seed())
         return self._theano_rng
 
 
@@ -393,17 +388,15 @@ class GMMLayer(CostLayer):
                                  logvar.shape[1]/coeff.shape[-1],
                                  coeff.shape[-1]))
         trng = self.theano_rng()
-        ipdb.set_trace()
-        idx = predict(self.theano_rng.multinomial(
+        idx = predict(trng.multinomial(
             pvals=coeff,
             dtype=coeff.dtype
         ))
         mu = mu[T.arange(mu.shape[0]), :, idx]
         sig = T.exp(T.sqrt(logvar[T.arange(mu.shape[0]), :, idx]))
-        sample = self.theano_rng.normal(size=mu.shape,
-                                        avg=mu, std=sig,
-                                        dtype=mu.dtype)
-        ipdb.set_trace()
+        sample = trng.normal(size=mu.shape,
+                             avg=mu, std=sig,
+                             dtype=mu.dtype)
         return sample
 
     def __getstate__(self):
