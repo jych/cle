@@ -252,7 +252,7 @@ class ConcLayer(StemCell):
     def fprop(self, xs):
         x = xs[0]
         y = xs[1]
-        z = T.concatenate([x[:, -y.shape[-1]:], y], axis=self.axis)
+        z = T.concatenate([x[:, y.shape[-1]:], y], axis=self.axis)
         z.name = self.name
         return z
 

@@ -46,6 +46,11 @@ class Net(object):
         for node in self.nodes.values():
             node.initialize()
 
+    def set_batchsize(self, batchsize):
+        for node in self.nodes.values():
+            if hasattr(node, 'batchsize'):
+                node.batchsize = batchsize
+
     def set_graph(self):
         self.graph = {}
         for nname, node in self.nodes.items():
