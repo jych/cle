@@ -33,7 +33,6 @@ class SequentialPrepMixin(object):
             X = (X - X_mean) / X_std
         else:
             X = (X - X_mean) / X_std
-        ipdb.set_trace()
         return (X, X_mean, X_std)
 
     def standardize(self, X, X_max=None, X_min=None):
