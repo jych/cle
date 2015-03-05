@@ -88,7 +88,7 @@ optimizer = RMSProp(
 )
 
 extension = [
-    GradientClipping(batchsize),
+    GradientClipping(batchsize=batchsize),
     EpochCount(40),
     Monitoring(freq=100,
                ddout=[cost, err],
