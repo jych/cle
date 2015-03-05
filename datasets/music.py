@@ -36,16 +36,6 @@ class Music(TemporalSeries):
              for ts in np.asarray(d[1:])]) for d in data])
         return (X, y)
 
-    def num_examples(self):
-        return self.data[0].shape[0]
-
-    def batch(self, data, i):
-        batch = data[i*self.batchsize:(i+1)*self.batchsize]
-        return batch.swapaxes(0, 1)
-
-    def __iter__(self):
-        return self
-
     def next(self):
         self.index += 1
         if self.index < self.nbatch:

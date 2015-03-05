@@ -25,23 +25,5 @@ class MNIST(DesignMatrix):
         elif self.name == 'test':
             return data[2]
 
-    def num_examples(self):
-        return self.data[0].shape[0]
-
-    def batch(self, data, i):
-        batch = data[i*self.batchsize:(i+1)*self.batchsize]
-        return batch
-
-    def __iter__(self):
-        return self
-
-    def next(self):
-        self.index += 1
-        if self.index < self.nbatch:
-            return (self.batch(data, self.index) for data in self.data)
-        else:
-            self.index = -1
-            raise StopIteration()
-
     def theano_vars(self):
         return [T.fmatrix('x'), T.lvector('y')]

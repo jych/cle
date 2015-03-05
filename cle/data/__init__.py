@@ -14,10 +14,6 @@ class Data(object):
         raise NotImplementedError(
             str(type(self)) + " does not implement Data.init.")
 
-    def num_examples(self):
-        raise NotImplementedError(
-            str(type(self)) + " does not implement Data.num_examples.")
-
     def batch(self, i):
         raise NotImplementedError(
             str(type(self)) + " does not implement Data.batch.")
@@ -41,7 +37,6 @@ class DesignMatrix(Data):
         self.batchsize = batchsize
         data = self.load_data(path)
         end = min(mat.shape[0] for mat in data) if end is None else end
-        # TODO : verify start and end
         self.data = [mat[start:end] for mat in data]
         self.ndata = end - start
         self.batchsize = self.ndata if batchsize is None else batchsize
@@ -51,8 +46,23 @@ class DesignMatrix(Data):
         raise NotImplementedError(
             str(type(self)) + " does not implement DesignMatrix.load_data.")
 
+    def batch(self, data, i):
+        batch = data[i*self.batchsize:(i+1)*self.batchsize]
+        return batch
 
-class TemporalSeries(DesignMatrix):
+    def __iter__(self):
+        return self
+ 
+    def next(self):
+        self.index += 1
+        if self.index < self.nbatch:
+            return (self.batch(data, self.index) for data in self.data)
+        else:
+            self.index = -1
+            raise StopIteration()
+
+
+class TemporalSeries(Data):
     """
     Abstract class for temporal data.
     We use TemporalSeries when the data contains variable length
@@ -62,6 +72,24 @@ class TemporalSeries(DesignMatrix):
     ----------
     .. todo::
     """
+    def __init__(self, name, path, start=0, end=None, batchsize=None):
+        self.name = name
+        self.path = path
+        self.batchsize = batchsize
+        data = self.load_data(path)
+        end = min(mat.shape[0] for mat in data) if end is None else end
+        self.data = [mat[start:end] for mat in data]
+        self.ndata = end - start
+        self.batchsize = self.ndata if batchsize is None else batchsize
+        self.nbatch = int(np.float(self.ndata / float(self.batchsize)))
+        
+    def batch(self, data, i):
+        batch = data[i*self.batchsize:(i+1)*self.batchsize]
+        return batch.swapaxes(0, 1)
+
+    def __iter__(self):
+        return self
+  
     def create_mask(self, batch):
         samples_len = [len(sample) for sample in batch]
         max_sample_len = max(samples_len)
