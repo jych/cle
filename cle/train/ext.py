@@ -182,12 +182,13 @@ class EarlyStopping(Extension):
         """
         Pickle the mainloop
         """
-        if mainloop.trainlog._ddmonitors[-1][0] < self.best:
-            self.best = mainloop.trainlog._ddmonitors[-1][0]
-            pklpath = mainloop.name + '_best.pkl'
-            path = os.path.join(self.path, pklpath)
-            logger.info("\tSaving best model to: %s" % path)
-            try:
-                secure_pickle_dump(mainloop, path)
-            except Exception:
-                raise
+        if len(mainloop.trainlog._ddmonitors) > 0:
+            if mainloop.trainlog._ddmonitors[-1][0] < self.best:
+                self.best = mainloop.trainlog._ddmonitors[-1][0]
+                pklpath = mainloop.name + '_best.pkl'
+                path = os.path.join(self.path, pklpath)
+                logger.info("\tSaving best model to: %s" % path)
+                try:
+                    secure_pickle_dump(mainloop, path)
+                except Exception:
+                    raise
