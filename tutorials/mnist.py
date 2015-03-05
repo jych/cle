@@ -5,9 +5,9 @@ from cle.cle.graph.net import Net
 from cle.cle.layers import (
     InputLayer,
     OnehotLayer,
-    MulCrossEntropyLayer,
     InitCell
 )
+from cle.cle.layers.cost import MulCrossEntropyLayer
 from cle.cle.layers.feedforward import FullyConnectedLayer
 from cle.cle.train import Training
 from cle.cle.train.ext import (
