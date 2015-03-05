@@ -30,7 +30,7 @@ class SequentialPrepMixin(object):
             X_len = np.array([len(x) for x in X]).sum()
             X_mean = np.array([x.sum() for x in X]).sum() / X_len
             X_sqr = np.array([(x**2).sum() for x in X]).sum() / X_len
-            X_std = X.sqr - X_mean**2
+            X_std = X_sqr - X_mean**2
             X = (X - X_mean) / X_std
             return (X, X_mean, X_std)
         else:
