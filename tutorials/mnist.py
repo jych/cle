@@ -82,18 +82,19 @@ err.name = 'error_rate'
 
 # Define your optimizer: Momentum (Nesterov), RMSProp, Adam
 optimizer = RMSProp(
-    lr=0.1
+    lr=0.001
 )
 
 extension = [
-    GradientClipping(batchsize=batchsize),
+    #GradientClipping(batchsize=batchsize),
+    GradientClipping(),
     EpochCount(40),
     Monitoring(freq=100,
                ddout=[cost, err],
                data=[valdata]),
     Picklize(freq=200,
              path=savepath),
-    EarlyStopping(path=savepath)
+    #EarlyStopping(path=savepath)
 ]
 
 mainloop = Training(

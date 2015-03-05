@@ -10,7 +10,7 @@ class SequentialPrepMixin(object):
 
     Parameters
     ----------
-    X : list of list or ndArray
+    X : list of lists or ndArrays
     """
     def normalize_by_norm(self, X, mean_norm=None):
         if mean_norm is None:
@@ -20,10 +20,9 @@ class SequentialPrepMixin(object):
                 X[i] /= euclidean_norm
                 mean_norm += euclidean_norm
             mean_norm /= len(X)
-            return (X, mean_norm)
         else:
             X = [x[i] / mean_norm for x in X]
-            return X
+        return X, mean_norm
 
     def normalize_by_global(self, X, X_mean=None, X_std=None):
         if (X_mean or X_std) is None:
@@ -32,17 +31,15 @@ class SequentialPrepMixin(object):
             X_sqr = np.array([(x**2).sum() for x in X]).sum() / X_len
             X_std = X_sqr - X_mean**2
             X = (X - X_mean) / X_std
-            return (X, X_mean, X_std)
         else:
             X = (X - X_mean) / X_std
-            return X
+        return (X, X_mean, X_std)
 
     def standardize(self, X, X_max=None, X_min=None):
         if (X_max or X_min) is None:
             X_max = np.array([x.max() for x in X]).max()
             X_min = np.array([x.min() for x in X]).min()
             X = (X - X_min) / (X_max - X_min)
-            return (X, X_max, X_min)
         else:
             X = (X - X_min) / (X_max - X_min)
-            return X
+        return (X, X_max, X_min)
