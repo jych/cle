@@ -24,8 +24,9 @@ class Net(object):
         if inputs is None:
             inputs = self.set_inputs(nodes)
         self.inputs = inputs
-        self.set_graph(nodes)
+        #self.set_graph(nodes)
         self.set_nodes(nodes)
+        self.set_graph()
         self.initialize()
         self.params = self.get_params()
 
@@ -45,9 +46,14 @@ class Net(object):
         for node in self.nodes.values():
             node.initialize()
 
-    def set_graph(self, nodes):
+    def set_batchsize(self, batchsize):
+        for node in self.nodes.values():
+            if hasattr(node, 'batchsize'):
+                node.batchsize = batchsize
+
+    def set_graph(self):
         self.graph = {}
-        for node in nodes:
+        for nname, node in self.nodes.items():
             if not node.isroot:
                 parent = node.parent
                 for par_node in tolist(parent):
@@ -70,103 +76,110 @@ class Net(object):
                 inp.append(par.out)
             self.nodes[node].out = self.nodes[node].fprop(inp)
 
-    def build_recurrent_graph(self, **kwargs):
-        self.given_nonseq_args = kwargs.pop('nonseq_args', None)
-        self.given_output_args = kwargs.pop('output_args', None)
-        self.given_context_args = kwargs.pop('context_args', None)
-        self.given_args = kwargs.pop('given_args', None)
-        n_steps = None
-        reverse = None
+    def build_recurrent_graph(self, n_steps=None, reverse=False, **kwargs):
+        self.nonseq_args = kwargs.pop('nonseq_args', None)
+        self.output_args = kwargs.pop('output_args', None)
+        self.context_args = kwargs.pop('context_args', None)
+        self.iterators = kwargs.pop('iterators', None)
         seqs = []
+        inputs = []
         outputs = []
         nonseqs = []
-        self.seq_args = OrderedDict()
-        self.output_args = OrderedDict()
+        self.input_args = OrderedDict()
+        self.recur_args = OrderedDict()
         for name, node in self.nodes.items():
             if hasattr(node, 'isroot'):
                 if node.isroot:
-                    self.seq_args[name] = node
-                    seqs.append(node.out)
+                    self.input_args[name] = node
+                    inputs.append(node.out)
             if hasattr(node, 'get_init_state'):
-                self.output_args[name] = node
+                self.recur_args[name] = node
                 state = node.get_init_state()
                 outputs.append(state)
-        if self.given_context_args is not None:
+        self.nrecur = len(self.recur_args)
+        # Substitutes initial hidden state into a context
+        if self.context_args is not None:
             for i, (nname, node) in enumerate(self.output_args.items()):
-                for aname, arg in self.given_context_args.items():
+                for aname, arg in self.context_args.items():
                     if nname == aname:
                         outputs[i] = arg
-        def scan_fn(*args):
-            next_recurrence = []
-            sorted_nodes = topological_sort(self.graph)
-            inputs = tolist(args[:len(self.seq_args)])
-            recurrence = tolist(args[len(self.seq_args):
-                                     len(self.seq_args)+
-                                     len(self.output_args)])
-            nonseqs = tolist(args[len(self.seq_args)+
-                                  len(self.output_args):])
-            for nname, node in self.nodes.items():
-                for i, (aname, arg) in enumerate(self.seq_args.items()):
-                    if node is arg:
-                        node.out = inputs[i]
-                for i, (aname, arg) in enumerate(self.output_args.items()):
-                    if node is arg:
-                        node.rec_out = recurrence[i]
-            while sorted_nodes:
-                node = sorted_nodes.popleft()
-                if self.nodes[node].isroot:
-                    continue
-                parent = self.nodes[node].parent
-                inp = []
-                for par in parent:
-                    inp.append(par.out)
-                if hasattr(self.nodes[node], 'recurrent'):
-                    recurrent = self.nodes[node].recurrent
-                    rec_inp = []
-                    for rec in recurrent:
-                        rec_inp.append(rec.rec_out)
-                    inp = [inp, rec_inp]
-                    self.nodes[node].out = self.nodes[node].fprop(inp)
-                    next_recurrence.append(self.nodes[node].out)
-                else:
-                    self.nodes[node].out = self.nodes[node].fprop(inp)
-            required_outputs = []
-            if isinstance(self.given_output_args, dict):
-                for arg in self.given_output_args.values():
-                    for node in self.nodes.values():
-                        if node is arg:
-                            required_outputs.append(node.out)
-            elif isinstance(self.given_output_args, list):
-                for arg in self.given_output_args:
-                    for node in self.nodes.values():
-                        if node is arg:
-                            required_outputs.append(node.out)
-            #self.nNone = len(required_outputs)
-            return next_recurrence + required_outputs
-        #dummy_seqs = [seq[0] for seq in seqs]
-        #dummy_args = dummy_seqs + outputs + nonseqs
-        #dummy = scan_fn(*dummy_args)
-        self.nNone = len(self.given_output_args)
+        if self.iterators is None:
+            seqs += inputs
+        elif self.iterators is not None:
+            seqs += inputs[len(self.iterators):]
+            outputs += inputs[:len(self.iterators)]
+        if self.output_args is not None:
+            self.nNone = len(self.output_args)
         outputs = flatten(outputs + [None] * self.nNone)
-        if self.given_args is not None:
-            n_steps = self.given_args.pop('n_steps', None)
-            reverse = self.given_args.pop('reverse', False)
-        if self.given_nonseq_args is not None:
-            if isinstance(self.given_nonseq_args, dict):
-                for arg in self.given_nonseq_args.values():
-                    nonseqs.append(arg)
-            elif isinstance(self.given_nonseq_args, list):
-                for arg in self.given_nonseq_args:
-                    nonseqs.append(arg)
+        if self.nonseq_args is not None:
+            for arg in self.nonseq_args:
+                nonseqs.append(arg)
+        self.nseqs = len(seqs)
+        self.noutputs = len(outputs)
+        self.nnonseqs = len(nonseqs)
         result, updates = theano.scan(
-            fn=scan_fn,
+            fn=self.scan_fn,
             sequences=seqs,
             outputs_info=outputs,
             non_sequences=nonseqs,
             n_steps=n_steps,
             go_backwards=reverse)
         result = tolist(result)
-        return result[len(self.output_args):]
+        if len(updates) == 0:
+            #return result[self.nrecur:]
+            return result[-self.nNone:]
+        for k, v in updates.iteritems():
+            k.default_update = v
+        return result[-self.nNone:], updates
+
+    def scan_fn(self, *args):
+        next_recurrence = []
+        sorted_nodes = topological_sort(self.graph)
+        inputs = tolist(args[:self.nseqs])
+        recurrence = tolist(args[self.nseqs:
+                                 self.nseqs+
+                                 self.nrecur])
+        inputs += tolist(args[self.nseqs+self.nrecur:
+                              self.nseqs+self.noutputs])
+        nonseqs = tolist(args[self.nseqs+
+                              self.noutputs:])
+        for nname, node in self.nodes.items():
+            for i, (aname, arg) in enumerate(self.input_args.items()):
+                if node is arg:
+                    node.out = inputs[i]
+            for i, (aname, arg) in enumerate(self.recur_args.items()):
+                if node is arg:
+                    node.rec_out = recurrence[i]
+        while sorted_nodes:
+            node = sorted_nodes.popleft()
+            if self.nodes[node].isroot:
+                continue
+            parent = self.nodes[node].parent
+            inp = []
+            for par in parent:
+                inp.append(par.out)
+            if self.nodes[node] in self.recur_args.values():
+                recurrent = self.nodes[node].recurrent
+                rec_inp = []
+                for rec in recurrent:
+                    rec_inp.append(rec.rec_out)
+                inp = [inp, rec_inp]
+                self.nodes[node].out = self.nodes[node].fprop(inp)
+                next_recurrence.append(self.nodes[node].out)
+            else:
+                self.nodes[node].out = self.nodes[node].fprop(inp)
+        required_outputs = []
+        if self.iterators is not None:
+            for arg in self.iterators:
+                for node in self.nodes.values():
+                    if node is arg:
+                        required_outputs.append(node.out)
+        if self.output_args is not None:
+            for arg in self.output_args:
+                for node in self.nodes.values():
+                    if node is arg:
+                        required_outputs.append(node.out)
+        return next_recurrence + required_outputs
 
     def get_params(self):
         return flatten([node.get_params().values()
@@ -174,3 +187,14 @@ class Net(object):
 
     def get_inputs(self):
         return self.inputs
+
+    def add_node(self, node):
+        self.nodes[node.name] = node
+        self.set_graph()
+
+    def del_node(self, node):
+        try:
+            del self.nodes[node.name]
+        except KeyError as e:
+            print("There is no such node %s.", node.name)
+        self.set_graph()

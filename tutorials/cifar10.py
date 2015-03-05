@@ -5,9 +5,9 @@ from cle.cle.graph.net import Net
 from cle.cle.layers import (
     InputLayer,
     OnehotLayer,
-    MulCrossEntropyLayer,
     InitCell
 )
+from cle.cle.layers.cost import MulCrossEntropyLayer
 from cle.cle.layers.feedforward import FullyConnectedLayer
 from cle.cle.layers.conv import ConvertLayer, Conv2DLayer
 from cle.cle.layers.layer import MaxPool2D
@@ -41,7 +41,7 @@ trdata = CIFAR10(name='train',
                  path=datapath,
                  batchsize=batchsize)
 testdata = CIFAR10(name='test',
-                   path=testdatapath,
+                   path=testdatapath, start=0, end=1000,
                    batchsize=batchsize)
 
 # Choose the random initialization method
@@ -50,10 +50,10 @@ init_b = InitCell('zeros')
 
 # Define nodes: objects
 inp, tar = trdata.theano_vars()
-# You must use THEANO_FLAGS="compute_test_value=raise"
+# You must use THEANO_FLAGS="compute_test_value=raise" python -m ipdb
 if debug:
-    inp.tag.test_value = np.random.randn((batchsize, 3072))
-    tar.tag.test_value = np.random.randn((batchsize, 10))
+    inp.tag.test_value = np.zeros((batchsize, 3072), dtype=np.float32)
+    tar.tag.test_value = np.zeros((batchsize, 10), dtype=np.float32)
 x = InputLayer(name='x', root=inp, nout=3072)
 y = InputLayer(name='y', root=tar, nout=10)
 c1 = ConvertLayer(name='c1',

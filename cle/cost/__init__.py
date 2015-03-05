@@ -47,6 +47,7 @@ def Gaussian(y, mu, logvar):
 
     Parameters
     ----------
+    y      : TensorVariable
     mu     : FullyConnected (Linear)
     logvar : FullyConnected (Linear)
     """
@@ -60,15 +61,18 @@ def GMM(y, mu, logvar, coeff):
 
     Parameters
     ----------
+    y      : TensorVariable
     mu     : FullyConnected (Linear)
     logvar : FullyConnected (Linear)
     coeff  : FullyConnected (Softmax)
     """
-    ncoeff = coeff.shape[-1]
-    batchsize = mu.shape[0]
     y = y.dimshuffle(0, 1, 'x')
-    mu = mu.reshape((mu.shape[0], mu.shape[1]/ncoeff, ncoeff))
-    logvar = logvar.reshape((logvar.shape[0], logvar.shape[1]/ncoeff, ncoeff))
+    mu = mu.reshape((mu.shape[0],
+                     mu.shape[1]/coeff.shape[-1],
+                     coeff.shape[-1]))
+    logvar = logvar.reshape((logvar.shape[0],
+                             logvar.shape[1]/coeff.shape[-1],
+                             coeff.shape[-1]))
     nll = 0.5 * T.sum(T.sqr(y - mu) * T.exp(-logvar) + logvar, axis=1)
     nll = logsumexp(T.log(coeff) + nll, axis=-1)
     return nll

@@ -1,5 +1,6 @@
 import ipdb
 import numpy as np
+import theano
 import theano.tensor as T
 
 from cle.cle.data import TemporalSeries
@@ -15,17 +16,12 @@ class Music(TemporalSeries):
     .. todo::
     """
     def __init__(self, nlabel, **kwargs):
-        super(Music, self).__init__(**kwargs)
         self.nlabel = nlabel
-        self.data = self.load_data()
-        self.ndata = self.num_examples()
-        if self.batchsize is None:
-            self.batchsize = self.ndata
-        self.nbatch = int(np.float(self.ndata / float(self.batchsize)))
+        super(Music, self).__init__(**kwargs)
         self.index = -1
 
-    def load_data(self):
-        data = np.load(self.path)
+    def load_data(self, path):
+        data = np.load(path)
         if self.name == 'train':
             data = data['train']
         elif self.name == 'valid':
@@ -39,16 +35,6 @@ class Music(TemporalSeries):
             [np.asarray([self.list2nparray(ts, self.nlabel)
              for ts in np.asarray(d[1:])]) for d in data])
         return (X, y)
-
-    def num_examples(self):
-        return self.data[0].shape[0]
-
-    def batch(self, data, i):
-        batch = data[i*self.batchsize:(i+1)*self.batchsize]
-        return batch.swapaxes(0, 1)
-
-    def __iter__(self):
-        return self
 
     def next(self):
         self.index += 1

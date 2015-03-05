@@ -53,6 +53,7 @@ class Training(PickleMixin, TheanoMixin):
         logger.info("Entering main loop")
         while self.run_epoch():
             pass
+        logger.info("Terminating main loop")
 
     def run_epoch(self):
         while self.run_batch():

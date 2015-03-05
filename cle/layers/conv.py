@@ -69,7 +69,6 @@ class Conv2DLayer(StemCell):
         outshape = self.outshape
         filtershape = self.filtershape
         parshape = parent.outshape
-        #batchsize = outshape[0]
         batchsize = parshape[0]
         nchannels = parshape[1]
         if filtershape is not None:
@@ -158,6 +157,3 @@ class ConvertLayer(StemCell):
     def __setstate__(self, state):
         self.__dict__.update(state)
         self.fprop = self.which_convert(self.convert_type)
-
-
-

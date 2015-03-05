@@ -1,14 +1,12 @@
 import ipdb
 import copy
-import functools
 import numpy as np
 import scipy
 import theano.tensor as T
 
 from theano.compat.python2x import OrderedDict
 from theano.sandbox.rng_mrg import MRG_RandomStreams
-from cle.cle.cost import Gaussian, GMM, NllBin, NllMul, MSE
-from cle.cle.utils import sharedX, tolist, unpack
+from cle.cle.utils import sharedX, tolist, unpack, predict
 
 
 class InitCell(object):
@@ -133,11 +131,6 @@ class RandomCell(object):
     ----------
     .. todo::
     """
-    def __init__(self,
-                 theano_seed=None,
-                 **kwargs):
-        self.theano_seed = theano_seed
-
     def rng(self):
         if getattr(self, '_rng', None) is None:
             self._rng = np.random.RandomState(self.seed)
@@ -155,7 +148,7 @@ class RandomCell(object):
 
     def theano_rng(self):
         if getattr(self, '_theano_rng', None) is None:
-            self._theano_rng = MRG_RandomStreams(self.theano_seed)
+            self._theano_rng = MRG_RandomStreams(self.theano_seed())
         return self._theano_rng
 
 
@@ -242,139 +235,26 @@ class OnehotLayer(StemCell):
         pass
 
 
-class MaskLayer(StemCell):
+class ConcLayer(StemCell):
     """
-    Masking layer
+    Concatenate two tensor varaibles
 
     Parameters
     ----------
-    todo..
-    """
-    def fprop(self, xs):
-        x = xs[0]
-        t = xs[1]
-        if x.ndim != 2:
-            raise ValueError("Dimension of X should be 2,\
-                              but got %d instead." % t.ndim)
-        if t.ndim != 1:
-            raise ValueError("Dimension of mask should be 1,\
-                              but got %d instead." % t.ndim)
-        return x * t[:, None]
-
-    def initialize(self):
-        pass
-
-
-class CostLayer(StemCell):
-    """
-    Base cost layer
-
-    Parameters
-    ----------
-    todo..
-    """
-    def __init__(self, use_sum=False, **kwargs):
-        super(CostLayer, self).__init__(**kwargs)
-        self.use_sum = use_sum
-    
-    def fprop(self, xs):
-        raise NotImplementedError(
-            str(type(self)) + " does not implement Layer.fprop.")
-
-    def initialize(self):
-        pass
-
-
-class BinCrossEntropyLayer(CostLayer):
-    """
-    Binary cross-entropy layer
-
-    Parameters
-    ----------
-    todo..
-    """
-    def fprop(self, xs):
-        cost = NllBin(xs[0], xs[1])
-        if self.use_sum:
-            return cost.sum()
-        else:
-            return cost.mean()
-
-
-class MulCrossEntropyLayer(CostLayer):
-    """
-    Multi cross-entropy layer
-
-    Parameters
-    ----------
-    todo..
-    """
-    def fprop(self, xs):
-        cost = NllMul(xs[0], xs[1])
-        if self.use_sum:
-            return cost.sum()
-        else:
-            return cost.mean()
-
-
-class MSELayer(CostLayer):
-    """
-    Mean squared error layer
-
-    Parameters
-    ----------
-    todo..
-    """
-    def fprop(self, xs):
-        cost = MSE(xs[0], xs[1])
-        if self.use_sum:
-            return cost.sum()
-        else:
-            return cost.mean()
-
-
-class GaussianLayer(CostLayer):
-    """
-    Linear Gaussian layer
-
-    Parameters
-    ----------
-    todo..
-    """
-    def fprop(self, xs):
-        if len(xs) != 3:
-            raise ValueError("The number of inputs does not match.")
-        cost = Gaussian(xs[0], xs[1], xs[2])
-        if self.use_sum:
-            return cost.sum()
-        else:
-            return cost.mean()
-
-
-class GMMLayer(CostLayer):
-    """
-    Gaussian mixture model layer
-
-    Parameters
-    ----------
-    todo..
+    .. todo::
     """
     def __init__(self,
-                 ncoeff,
+                 axis=-1,
                  **kwargs):
-        super(GMMLayer, self).__init__(**kwargs)
-        if not isinstance(ncoeff, int):
-            raise ValueError("Provide int number for this attribute.")
-        else:
-            if ncoeff < 2:
-                raise ValueError("You want to have more than 2 Gaussians.")
-        self.ncoeff = ncoeff
-
+        super(ConcLayer, self).__init__(**kwargs)
+        self.axis = axis
+   
     def fprop(self, xs):
-        if len(xs) != 4:
-            raise ValueError("The number of inputs does not match.")
-        cost = GMM(xs[0], xs[1], xs[2], xs[3])
-        if self.use_sum:
-            return cost.sum()
-        else:
-            return cost.mean()
+        x = xs[0]
+        y = xs[1]
+        z = T.concatenate([x[:, y.shape[-1]:], y], axis=self.axis)
+        z.name = self.name
+        return z
+
+    def initialize(self):
+        pass

@@ -3,12 +3,8 @@ import numpy as np
 
 from cle.cle.cost import NllBin
 from cle.cle.graph.net import Net
-from cle.cle.layers import (
-    InputLayer,
-    InitCell,
-    MaskLayer,
-    BinCrossEntropyLayer
-)
+from cle.cle.layers import InputLayer, InitCell
+from cle.cle.layers.cost import BinCrossEntropyLayer
 from cle.cle.layers.feedforward import FullyConnectedLayer
 from cle.cle.layers.recurrent import LSTM
 from cle.cle.train import Training
@@ -28,7 +24,7 @@ from cle.datasets.music import Music
 datapath = '/home/junyoung/data/music/MuseData.pickle'
 savepath = '/home/junyoung/repos/cle/saved/'
 
-batchsize = 20
+batchsize = 10
 nlabel = 105
 debug = 0
 
@@ -42,13 +38,17 @@ valdata = Music(name='valid',
                batchsize=batchsize)
 
 # Choose the random initialization method
-init_W, init_U, init_b = InitCell('randn'), InitCell('ortho'), InitCell('zeros')
+init_W = InitCell('randn')
+init_U = InitCell('ortho')
+init_b = InitCell('zeros')
 
 # Define nodes: objects
 inp, y, mask = trdata.theano_vars()
-# You must use THEANO_FLAGS="compute_test_value=raise"
+# You must use THEANO_FLAGS="compute_test_value=raise" python -m ipdb
 if debug:
-    inp.tag.test_value = np.random.randn((batchsize, 105))
+    inp.tag.test_value = np.zeros((batchsize, 10, nlabel), dtype=np.float32)
+    y.tag.test_value = np.zeros((batchsize, 10, nlabel), dtype=np.float32)
+    mask.tag.test_value = np.ones((batchsize, 10), dtype=np.float32)
 x = InputLayer(name='x', root=inp, nout=nlabel)
 # Using skip connections is easy
 h1 = LSTM(name='h1',
@@ -105,7 +105,7 @@ extension = [
     Monitoring(freq=10,
                ddout=[cost, nll],
                data=[valdata]),
-    Picklize(freq=10,
+    Picklize(freq=5,
              path=savepath)
 ]
 

@@ -48,12 +48,6 @@ class SimpleRecurrent(RecurrentLayer):
     ----------
     .. todo::
     """
-    def __init__(self,
-                 unit='tanh',
-                 **kwargs):
-        super(SimpleRecurrent, self).__init__(**kwargs)
-        self.nonlin = self.which_nonlin(unit)
-
     def fprop(self, xh):
         # xh is a list of inputs: [state_belows, state_befores]
         xs, hs = xh
