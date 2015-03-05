@@ -27,7 +27,8 @@ from cle.datasets.bouncing_balls import BouncingBalls
 datapath = '/home/junyoung/data/bouncing_balls/bouncing_ball_2balls_16wh_20len_50000cases.npy'
 savepath = '/home/junyoung/repos/cle/saved/'
 
-batchsize = 100
+batchsize = 128
+resolution = 256 
 debug = 0
 
 trdata = BouncingBalls(name='train',
@@ -41,10 +42,10 @@ init_W, init_U, init_b = InitCell('randn'), InitCell('ortho'), InitCell('zeros')
 inp, tar = trdata.theano_vars()
 # You must use THEANO_FLAGS="compute_test_value=raise" python -m ipdb
 if debug:
-    inp.tag.test_value = np.zeros((batchsize, 10, 256), dtype=np.float32)
-    tar.tag.test_value = np.zeros((batchsize, 10, 256), dtype=np.float32)
-x = InputLayer(name='x', root=inp, nout=256)
-y = InputLayer(name='y', root=tar, nout=256)
+    inp.tag.test_value = np.zeros((10, batchsize, resolution), dtype=np.float32)
+    tar.tag.test_value = np.zeros((10, batchsize, resolution), dtype=np.float32)
+x = InputLayer(name='x', root=inp, nout=resolution)
+y = InputLayer(name='y', root=tar, nout=resolution)
 # Using skip connections is easy
 h1 = GFLSTM(name='h1',
             parent=[x],
@@ -76,7 +77,7 @@ h2.recurrent.append(h3)
 h1.recurrent += [h2, h3]
 h4 = FullyConnectedLayer(name='h4',
                          parent=[h1, h2, h3],
-                         nout=256,
+                         nout=resolution,
                          unit='sigmoid',
                          init_W=init_W,
                          init_b=init_b)
