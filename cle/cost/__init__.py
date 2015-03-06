@@ -52,7 +52,9 @@ def Gaussian(y, mu, logvar):
     mu     : FullyConnected (Linear)
     logvar : FullyConnected (Linear)
     """
-    nll = 0.5 * T.sum(T.sqr(y - mu) * T.exp(-logvar) + logvar, axis=1)
+    #nll = 0.5 * T.sum(T.sqr(y - mu) * T.exp(-logvar) + logvar, axis=:1)
+    nll = 0.5 * T.sum(T.sqr(y - mu) * T.exp(-logvar) + logvar +
+                      T.log(2 * np.pi), axis=-1)
     return nll
 
 
@@ -75,6 +77,7 @@ def GMM(y, mu, logvar, coeff):
                              logvar.shape[1] / coeff.shape[-1],
                              coeff.shape[-1]))
     #nll = 0.5 * T.sum(T.sqr(y - mu) * T.exp(-logvar) + logvar, axis=-1)
+    ipdb.set_trace()
     nll = 0.5 * T.sum(T.sqr(y - mu) * T.exp(-logvar) + logvar +
                       T.log(2 * np.pi), axis=-1)
     nll = logsumexp(T.log(coeff) + nll, axis=-1)
