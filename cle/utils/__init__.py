@@ -21,7 +21,7 @@ def topological_sort(graph):
 
     Parameters
     ----------
-    None
+    graph : dict
     """
     GRAY, BLACK = 0, 1
     order, enter, state = deque(), set(graph), {}
@@ -134,9 +134,6 @@ def totuple(arg):
 class PickleMixin(object):
     """
     This code is brought from Kyle Kastner
-
-    ----------
-    .. todo::
     """
     def __getstate__(self):
         if not hasattr(self, '_pickle_skip_list'):

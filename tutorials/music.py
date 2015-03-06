@@ -1,6 +1,7 @@
 import ipdb
 import numpy as np
 
+from cle.cle.data import Iterator
 from cle.cle.cost import NllBin
 from cle.cle.graph.net import Net
 from cle.cle.layers import InputLayer, InitCell
@@ -24,16 +25,14 @@ savepath = '/u/chungjun/repos/cle/saved/'
 
 batchsize = 10
 nlabel = 105
-debug = 0
+debug = 1
 
 trdata = Music(name='train',
                path=datapath,
-               nlabel=nlabel,
-               batchsize=batchsize)
+               nlabel=nlabel)
 valdata = Music(name='valid',
                 path=datapath,
-                nlabel=nlabel,
-                batchsize=batchsize)
+                nlabel=nlabel)
 
 # Choose the random initialization method
 init_W = InitCell('randn')
@@ -43,9 +42,9 @@ init_b = InitCell('zeros')
 inp, y, mask = trdata.theano_vars()
 # You must use THEANO_FLAGS="compute_test_value=raise" python -m ipdb
 if debug:
-    inp.tag.test_value = np.zeros((batchsize, 10, nlabel), dtype=np.float32)
-    y.tag.test_value = np.zeros((batchsize, 10, nlabel), dtype=np.float32)
-    mask.tag.test_value = np.ones((batchsize, 10), dtype=np.float32)
+    inp.tag.test_value = np.zeros((10, batchsize, nlabel), dtype=np.float32)
+    y.tag.test_value = np.zeros((10, batchsize, nlabel), dtype=np.float32)
+    mask.tag.test_value = np.ones((10, batchsize), dtype=np.float32)
 x = InputLayer(name='x', root=inp, nout=nlabel)
 h1 = LSTM(name='h1',
           parent=[x],
@@ -99,14 +98,14 @@ extension = [
     EpochCount(100),
     Monitoring(freq=10,
                ddout=[cost, nll],
-               data=[valdata]),
+               data=[Iterator(valdata, batchsize)]),
     Picklize(freq=5,
              path=savepath)
 ]
 
 mainloop = Training(
     name='toy_music',
-    data=trdata,
+    data=Iterator(trdata, batchsize),
     model=model,
     optimizer=optimizer,
     cost=cost,

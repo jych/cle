@@ -49,13 +49,13 @@ class SimpleRecurrent(RecurrentLayer):
     ----------
     .. todo::
     """
-    def fprop(self, xh):
-        # xh is a list of inputs: [state_belows, state_befores]
-        xs, hs = xh
+    def fprop(self, XH):
+        # XH is a list of inputs: [state_belows, state_befores]
+        X, H = XH
         z = T.zeros(self.nout)
-        for x, parent in izip(xs, self.parent):
+        for x, parent in izip(X, self.parent):
             z += T.dot(x, self.params['W_'+parent.name+self.name])
-        for h, recurrent in izip(hs, self.recurrent):
+        for h, recurrent in izip(H, self.recurrent):
             z += T.dot(h, self.params['U_'+recurrent.name+self.name])
         z += self.params['b_'+self.name]
         z = self.nonlin(z)
@@ -76,18 +76,18 @@ class LSTM(SimpleRecurrent):
         state = T.unbroadcast(state, *range(state.ndim))
         return state
 
-    def fprop(self, xh):
-        # xh is a list of inputs: [state_belows, state_befores]
+    def fprop(self, XH):
+        # XH is a list of inputs: [state_belows, state_befores]
         # each state vector is: [state_before; cell_before]
         # Hence, you use h[:, :self.nout] to compute recurrent term
-        xs, hs = xh
+        X, H = XH
         # The index of self recurrence is 0
-        z_t = hs[0]
+        z_t = H[0]
         z = T.zeros((self.batchsize, 4*self.nout))
-        for x, parent in izip(xs, self.parent):
+        for x, parent in izip(X, self.parent):
             W = self.params['W_'+parent.name+self.name]
             z += T.dot(x[:, :parent.nout], W)
-        for h, recurrent in izip(hs, self.recurrent):
+        for h, recurrent in izip(H, self.recurrent):
             U = self.params['U_'+recurrent.name+self.name]
             z += T.dot(h[:, :recurrent.nout], U)
         z += self.params['b_'+self.name]
@@ -133,19 +133,19 @@ class GFLSTM(LSTM):
     ----------
     .. todo::
     """
-    def fprop(self, xh):
-        # xh is a list of inputs: [state_belows, state_befores]
+    def fprop(self, XH):
+        # XH is a list of inputs: [state_belows, state_befores]
         # each state vector is: [state_before; cell_before]
         # Hence, you use h[:, :self.nout] to compute recurrent term
-        xs, hs = xh
+        X, H = XH
         # The index of self recurrence is 0
-        z_t = hs[0]
+        z_t = H[0]
         Nm = len(self.recurrent)
         z = T.zeros((self.batchsize, 4*self.nout+Nm))
-        for x, parent in izip(xs, self.parent):
+        for x, parent in izip(X, self.parent):
             W = self.params['W_'+parent.name+self.name]
             z += T.dot(x[:, :parent.nout], W)
-        for h, recurrent in izip(hs, self.recurrent):
+        for h, recurrent in izip(H, self.recurrent):
             U = self.params['U_'+recurrent.name+self.name]
             z = T.inc_subtensor(
                 z[:, self.nout:],
@@ -158,7 +158,7 @@ class GFLSTM(LSTM):
         o_on = T.nnet.sigmoid(z[:, 3*self.nout:4*self.nout])
         gron = T.nnet.sigmoid(z[:, 4*self.nout:])
         c_t = z[:, :self.nout]
-        for i, (h, recurrent) in enumerate(izip(hs, self.recurrent)):
+        for i, (h, recurrent) in enumerate(izip(H, self.recurrent)):
             gated_h = h[:, :recurrent.nout] * gron[:, i].dimshuffle(0, 'x')
             U = self.params['U_'+recurrent.name+self.name]
             c_t += T.dot(gated_h, U[:, :self.nout])

@@ -12,20 +12,7 @@ class MNIST(DesignMatrix):
     ----------
     .. todo::
     """
-    def __init__(self, name, path, batchsize=None):
-        self.name = name
-        self.path = path
-        self.batchsize = batchsize
-        self.data = self.load_data(path)
-        self.nexp = self.num_examples()
-        self.batchsize = self.nexp if batchsize is None else batchsize
-        self.nbatch = int(np.float(self.nexp / float(self.batchsize)))
-        self.index = -1
-
-    def num_examples(self):
-        return self.data[0].shape[0]
-
-    def load_data(self, path):
+    def load(self, path):
         data = np.load(path)
         if self.name == 'train':
             return data[0]

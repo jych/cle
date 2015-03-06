@@ -55,26 +55,18 @@ class Training(PickleMixin, TheanoMixin):
         logger.info("Terminating main loop")
 
     def run_epoch(self):
-        while self.run_batch():
-            pass
+        for batch in self.data:
+            batch_t0 = time.time()
+            this_cost = self.cost_fn(*batch)
+            self.trainlog._times.append(time.time() - batch_t0)
+            self.trainlog._batches.append(this_cost)
+            self.trainlog._batch_seen += 1
+            self.run_extension('ext_monitor')
         self.trainlog._epoch_seen += 1
         self.run_extension('ext_term')
         self.run_extension('ext_save')
         if self.end_training():
             return False
-        return True
-
-    def run_batch(self):
-        try:
-            batch = self.data.next()
-        except:
-            return False
-        batch_t0 = time.time()
-        this_cost = self.cost_fn(*batch)
-        self.trainlog._times.append(time.time() - batch_t0)
-        self.trainlog._batches.append(this_cost)
-        self.trainlog._batch_seen += 1
-        self.run_extension('ext_monitor')
         return True
 
     def find_extension(self, name):

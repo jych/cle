@@ -10,26 +10,58 @@ class Data(object):
     ----------
     .. todo::
     """
-    def __init__(self):
-        raise NotImplementedError(
-            str(type(self)) + " does not implement Data.init.")
+    def __init__(self, name, path):
+        self.name = name
+        self.data = self.load(path)
 
-    def load_data(self, path):
-        raise NotImplementedError(
-            str(type(self)) + " does not implement Data.load_data.")
+    def load(self, path):
+        return np.load(path)
 
-    def batch(self, i):
+    def slices(self, i):
         raise NotImplementedError(
-            str(type(self)) + " does not implement Data.batch.")
+            str(type(self)) + " does not implement Data.slice.")
 
     def num_examples(self):
-        raise NotImplementedError(
-            str(type(self)) + " does not implement Data.num_examples.")
+        return max(mat.shape[0] for mat in self.data)
 
     def theano_vars(self):
         raise NotImplementedError(
             str(type(self)) + " does not implement Data.theano_vars.")
 
+
+class Iterator(object):
+    """
+    Dataset iterator
+
+    Parameters
+    ----------
+    .. todo::
+    """
+    def __init__(self, data, batchsize=None, nbatch=None,
+                 start=0, end=None):
+        if (batchsize or nbatch) is None:
+            raise ValueError("Either batchsize or nbatch should be given.")
+        if (batchsize and nbatch) is not None:
+            raise ValueError("Provide either batchsize or nbatch.")
+        self.start = start
+        self.end = data.num_examples() if end is None else end
+        if self.start >= self.end or self.start < 0:
+            raise ValueError("Got wrong value for start %d.", self.start)
+        self.nexp = self.end - self.start
+        if nbatch is not None:
+            self.batchsize = int(np.float(self.nexp / float(nbatch)))
+            self.nbatch = nbatch
+        elif batchsize is not None:
+            self.batchsize = batchsize
+            self.nbatch = int(np.float(self.nexp / float(batchsize)))
+        self.data = data
+        self.name = self.data.name
+
+    def __iter__(self):
+        start = self.start
+        end = self.end - self.batchsize
+        for idx in xrange(start, end, self.batchsize):
+            yield self.data.slices(idx, idx + self.batchsize)
 
 class DesignMatrix(Data):
     """
@@ -39,20 +71,8 @@ class DesignMatrix(Data):
     ----------
     .. todo::
     """
-    def batch(self, data, i):
-        batch = data[i*self.batchsize:(i+1)*self.batchsize]
-        return batch
-
-    def __iter__(self):
-        return self
-
-    def next(self):
-        self.index += 1
-        if self.index < self.nbatch:
-            return (self.batch(data, self.index) for data in self.data)
-        else:
-            self.index = -1
-            raise StopIteration()
+    def slices(self, start, end):
+        return (mat[start:end] for mat in self.data)
 
 
 class TemporalSeries(Data):
@@ -65,12 +85,9 @@ class TemporalSeries(Data):
     ----------
     .. todo::
     """
-    def batch(self, data, i):
-        batch = data[i*self.batchsize:(i+1)*self.batchsize]
-        return batch.swapaxes(0, 1)
-
-    def __iter__(self):
-        return self
+    def slices(self, start, end):
+        return (mat[start:end].swapaxes(0, 1)
+                for mat in self.data)
 
     def create_mask(self, batch):
         samples_len = [len(sample) for sample in batch]
