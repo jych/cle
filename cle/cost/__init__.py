@@ -1,4 +1,5 @@
 import ipdb
+import numpy as np
 import theano.tensor as T
 
 from cle.cle.utils.op import logsumexp
@@ -73,6 +74,8 @@ def GMM(y, mu, logvar, coeff):
     logvar = logvar.reshape((logvar.shape[0],
                              logvar.shape[1] / coeff.shape[-1],
                              coeff.shape[-1]))
-    nll = 0.5 * T.sum(T.sqr(y - mu) * T.exp(-logvar) + logvar, axis=1)
+    #nll = 0.5 * T.sum(T.sqr(y - mu) * T.exp(-logvar) + logvar, axis=-1)
+    nll = 0.5 * T.sum(T.sqr(y - mu) * T.exp(-logvar) + logvar +
+                      T.log(2 * np.pi), axis=-1)
     nll = logsumexp(T.log(coeff) + nll, axis=-1)
     return nll
