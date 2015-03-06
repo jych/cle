@@ -20,11 +20,11 @@ class FullyConnectedLayer(StemCell):
         super(FullyConnectedLayer, self).__init__(**kwargs)
         self.nonlin = self.which_nonlin(unit)
     """
-    def fprop(self, xs):
-        # xs could be a list of inputs.
+    def fprop(self, X):
+        # X could be a list of inputs.
         # depending the number of parents.
         z = T.zeros(self.nout)
-        for x, parent in izip(xs, self.parent):
+        for x, parent in izip(X, self.parent):
             W = self.params['W_'+parent.name+self.name]
             z += T.dot(x[:, :parent.nout], W)
         z += self.params['b_'+self.name]

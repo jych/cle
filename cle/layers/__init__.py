@@ -249,9 +249,9 @@ class ConcLayer(StemCell):
         super(ConcLayer, self).__init__(**kwargs)
         self.axis = axis
    
-    def fprop(self, xs):
-        x = xs[0]
-        y = xs[1]
+    def fprop(self, X):
+        x = X[0]
+        y = X[1]
         z = T.concatenate([x[:, y.shape[-1]:], y], axis=self.axis)
         z.name = self.name
         return z
