@@ -59,7 +59,7 @@ class Iterator(object):
 
     def __iter__(self):
         start = self.start
-        end = self.end - self.batchsize
+        end = self.end - self.end % self.batchsize
         for idx in xrange(start, end, self.batchsize):
             yield self.data.slices(idx, idx + self.batchsize)
 
