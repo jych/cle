@@ -11,7 +11,6 @@ def dropout(x, p, theano_rng):
 
 
 def logsumexp(x, axis=None):
-
     x_max = T.max(x, axis=axis, keepdims=True)
     z = T.log(T.sum(T.exp(x - x_max), axis=axis, keepdims=True)) + x_max
     return z.sum(axis=axis)
