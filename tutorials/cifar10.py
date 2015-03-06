@@ -1,6 +1,7 @@
 import ipdb
 import numpy as np
 
+from cle.cle.data import Iterator
 from cle.cle.graph.net import Net
 from cle.cle.layers import (
     InputLayer,
@@ -36,11 +37,9 @@ batchsize = 128
 debug = 0
 
 trdata = CIFAR10(name='train',
-                 path=datapath,
-                 batchsize=batchsize)
+                 path=datapath)
 testdata = CIFAR10(name='test',
-                   path=testdatapath, start=0, end=1000,
-                   batchsize=batchsize)
+                   path=testdatapath)
 
 # Choose the random initialization method
 init_W = InitCell('randn')
@@ -136,14 +135,14 @@ extension = [
     EpochCount(100),
     Monitoring(freq=100,
                ddout=[cost, err],
-               data=[testdata]),
+               data=[Iterator(testdata, batchsize)]),
     Picklize(freq=10,
              path=savepath)
 ]
 
 mainloop = Training(
     name='toy_cifar',
-    data=trdata,
+    data=Iterator(trdata, batchsize),
     model=model,
     optimizer=optimizer,
     cost=cost,

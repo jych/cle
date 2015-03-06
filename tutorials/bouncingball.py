@@ -1,6 +1,7 @@
 import ipdb
 import numpy as np
 
+from cle.cle.data import Iterator
 from cle.cle.graph.net import Net
 from cle.cle.layers import InputLayer, InitCell
 from cle.cle.layers.cost import MSELayer
@@ -28,8 +29,7 @@ res = 256
 debug = 0
 
 trdata = BouncingBalls(name='train',
-                       path=datapath,
-                       batchsize=batchsize)
+                       path=datapath)
 
 # Choose the random initialization method
 init_W = InitCell('randn')
@@ -80,7 +80,6 @@ cost = MSELayer(name='cost', parent=[h4, y])
 nodes = [x, y, h1, h2, h3, h4, cost]
 model = Net(nodes=nodes)
 
-# You can either use dict or list
 cost = unpack(model.build_recurrent_graph(output_args=[cost]))
 cost = cost.mean()
 cost.name = 'cost'
@@ -100,7 +99,7 @@ extension = [
 
 mainloop = Training(
     name='toy_bb',
-    data=trdata,
+    data=Iterator(trdata, batchsize),
     model=model,
     optimizer=optimizer,
     cost=cost,

@@ -1,6 +1,7 @@
 import ipdb
 import numpy as np
 
+from cle.cle.data import Iterator
 from cle.cle.graph.net import Net
 from cle.cle.layers import InputLayer, InitCell
 from cle.cle.layers.cost import MSELayer
@@ -28,8 +29,7 @@ res = 256
 debug = 0
 
 trdata = BouncingBalls(name='train',
-                       path=datapath,
-                       batchsize=batchsize)
+                       path=datapath)
 
 init_W = InitCell('randn')
 init_U = InitCell('ortho')
@@ -96,7 +96,7 @@ extension = [
 
 mainloop = Training(
     name='toy_bb',
-    data=trdata,
+    data=Iterator(trdata, batchsize),
     model=model,
     optimizer=optimizer,
     cost=cost,

@@ -1,6 +1,7 @@
 import ipdb
 import numpy as np
 
+from cle.cle.data import Iterator
 from cle.cle.graph.net import Net
 from cle.cle.layers import (
     InputLayer,
@@ -32,11 +33,9 @@ batchsize = 128
 debug = 0
 
 trdata = MNIST(name='train',
-               path=datapath,
-               batchsize=batchsize)
+               path=datapath)
 valdata = MNIST(name='valid',
-                path=datapath,
-                batchsize=batchsize)
+                path=datapath)
 
 # Choose the random initialization method
 init_W = InitCell('randn')
@@ -91,7 +90,8 @@ extension = [
     EpochCount(40),
     Monitoring(freq=100,
                ddout=[cost, err],
-               data=[valdata]),
+               data=[Iterator(trdata, batchsize),
+                     Iterator(valdata, batchsize)]),
     Picklize(freq=200,
              path=savepath),
     #EarlyStopping(path=savepath)
@@ -99,7 +99,7 @@ extension = [
 
 mainloop = Training(
     name='toy_mnist',
-    data=trdata,
+    data=Iterator(trdata, batchsize),
     model=model,
     optimizer=optimizer,
     cost=cost,
