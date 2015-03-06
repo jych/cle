@@ -23,10 +23,10 @@ from cle.datasets.mnist import MNIST
 
 
 # Set your dataset
-#datapath = '/data/lisa/data/mnist/mnist.pkl'
-#savepath = '/u/chungjun/repos/cle/saved/'
-datapath = '/home/junyoung/data/mnist/mnist.pkl'
-savepath = '/home/junyoung/repos/cle/saved/'
+datapath = '/data/lisa/data/mnist/mnist.pkl'
+savepath = '/u/chungjun/repos/cle/saved/'
+#datapath = '/home/junyoung/data/mnist/mnist.pkl'
+#savepath = '/home/junyoung/repos/cle/saved/'
 
 batchsize = 128
 debug = 0

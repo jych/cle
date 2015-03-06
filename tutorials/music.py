@@ -17,10 +17,10 @@ from cle.cle.train.opt import RMSProp
 from cle.datasets.music import Music
 
 
-#datapath = '/data/lisa/data/music/MuseData.pickle'
-#savepath = '/u/chungjun/repos/cle/saved/'
-datapath = '/home/junyoung/data/music/MuseData.pickle'
-savepath = '/home/junyoung/repos/cle/saved/'
+datapath = '/data/lisa/data/music/MuseData.pickle'
+savepath = '/u/chungjun/repos/cle/saved/'
+#datapath = '/home/junyoung/data/music/MuseData.pickle'
+#savepath = '/home/junyoung/repos/cle/saved/'
 
 batchsize = 10
 nlabel = 105

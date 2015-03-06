@@ -18,10 +18,10 @@ from cle.cle.utils import unpack
 from cle.datasets.bouncing_balls import BouncingBalls
 
 
-#datapath = '/data/lisatmp3/chungjun/bouncing_balls/bouncing_ball_2balls_16wh_20len_50000cases.npy'
-#savepath = '/u/chungjun/repos/cle/saved/'
-datapath = '/home/junyoung/data/bouncing_balls/bouncing_ball_2balls_16wh_20len_50000cases.npy'
-savepath = '/home/junyoung/repos/cle/saved/'
+datapath = '/data/lisatmp3/chungjun/bouncing_balls/bouncing_ball_2balls_16wh_20len_50000cases.npy'
+savepath = '/u/chungjun/repos/cle/saved/'
+#datapath = '/home/junyoung/data/bouncing_balls/bouncing_ball_2balls_16wh_20len_50000cases.npy'
+#savepath = '/home/junyoung/repos/cle/saved/'
 
 batchsize = 128
 res = 256
