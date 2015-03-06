@@ -1,8 +1,8 @@
 import ipdb
 import theano.tensor as T
 
-from itertools import izip
 from cle.cle.layers import StemCell
+from itertools import izip
 
 
 class FullyConnectedLayer(StemCell):

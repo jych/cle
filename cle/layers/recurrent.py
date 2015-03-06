@@ -2,9 +2,9 @@ import ipdb
 import numpy as np
 import theano.tensor as T
 
-from itertools import izip
 from cle.cle.layers import StemCell, InitCell
 from cle.cle.utils import tolist
+from itertools import izip
 from theano.compat.python2x import OrderedDict
 
 
