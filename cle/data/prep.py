@@ -8,7 +8,7 @@ class SequentialPrepMixin(object):
     """
     Preprocessing mixin for sequential data
     """
-    def normalize_by_norm(self, X, avr_norm=None):
+    def norm_normalize(self, X, avr_norm=None):
         """
         Unify the norm of each sequence in X
 
@@ -28,10 +28,9 @@ class SequentialPrepMixin(object):
             X = [x[i] / avr_norm for x in X]
         return X, avr_norm
 
-    def normalize_by_global(self, X, X_mean=None, X_std=None):
+    def global_normalize(self, X, X_mean=None, X_std=None):
         """
-        Globally normalize each sequence in X
-        into zero mean and unit variance
+        Globally normalize X into zero mean and unit variance
 
         Parameters
         ----------
@@ -41,7 +40,7 @@ class SequentialPrepMixin(object):
 
         Notes
         -----
-        When computing varaince we use the relation
+        Compute varaince using the relation
         >>> Var(X) = E[X^2] - E[X]^2
         """   
         if (X_mean or X_std) is None:
@@ -56,8 +55,7 @@ class SequentialPrepMixin(object):
 
     def standardize(self, X, X_max=None, X_min=None):
         """
-        Standardize each sequence in X
-        into range [0, 1]
+        Standardize X such that X \in [0, 1]
 
         Parameters
         ----------
