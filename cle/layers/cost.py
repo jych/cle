@@ -22,7 +22,7 @@ class CostLayer(StemCell, RandomCell):
         super(CostLayer, self).__init__(**kwargs)
         self.use_sum = use_sum
     
-    def fprop(self, xs):
+    def fprop(self, X):
         raise NotImplementedError(
             str(type(self)) + " does not implement Layer.fprop.")
 
@@ -38,8 +38,8 @@ class BinCrossEntropyLayer(CostLayer):
     ----------
     todo..
     """
-    def fprop(self, xs):
-        cost = NllBin(xs[0], xs[1])
+    def fprop(self, X):
+        cost = NllBin(X[0], X[1])
         if self.use_sum:
             return cost.sum()
         else:
@@ -54,8 +54,8 @@ class MulCrossEntropyLayer(CostLayer):
     ----------
     todo..
     """
-    def fprop(self, xs):
-        cost = NllMul(xs[0], xs[1])
+    def fprop(self, X):
+        cost = NllMul(X[0], X[1])
         if self.use_sum:
             return cost.sum()
         else:
@@ -70,8 +70,8 @@ class MSELayer(CostLayer):
     ----------
     todo..
     """
-    def fprop(self, xs):
-        cost = MSE(xs[0], xs[1])
+    def fprop(self, X):
+        cost = MSE(X[0], X[1])
         if self.use_sum:
             return cost.sum()
         else:
@@ -86,10 +86,10 @@ class GaussianLayer(CostLayer):
     ----------
     todo..
     """
-    def fprop(self, xs):
-        if len(xs) != 3:
+    def fprop(self, X):
+        if len(X) != 3:
             raise ValueError("The number of inputs does not match.")
-        cost = Gaussian(xs[0], xs[1], xs[2])
+        cost = Gaussian(X[0], X[1], X[2])
         if self.use_sum:
             return cost.sum()
         else:
@@ -117,19 +117,19 @@ class GMMLayer(CostLayer):
     def which_method(self, which):
         return getattr(self, which)
 
-    def cost(self, xs):
-        if len(xs) != 4:
+    def cost(self, X):
+        if len(X) != 4:
             raise ValueError("The number of inputs does not match.")
-        cost = GMM(xs[0], xs[1], xs[2], xs[3])
+        cost = GMM(X[0], X[1], X[2], X[3])
         if self.use_sum:
             return cost.sum()
         else:
             return cost.mean()
 
-    def sample(self, xs):
-        mu = xs[0]
-        logvar = xs[1]
-        coeff = xs[2]
+    def sample(self, X):
+        mu = X[0]
+        logvar = X[1]
+        coeff = X[2]
         mu = mu.reshape((mu.shape[0],
                          mu.shape[1]/coeff.shape[-1],
                          coeff.shape[-1]))
