@@ -74,7 +74,7 @@ def GMM(y, mu, logvar, coeff):
                      coeff.shape[-1]))
     logvar = logvar.reshape((logvar.shape[0],
                              logvar.shape[1] / coeff.shape[-1],
-                             coeff.shape[-1]))
+                             coeff.shape[-1])) + np.log(1e-8) # added tolerance value
     nll = 0.5 * T.sum(T.sqr(y - mu) * T.exp(-logvar) + logvar +
                       T.log(2 * np.pi), axis=1)
     nll = logsumexp(T.log(coeff) + nll, axis=1)
