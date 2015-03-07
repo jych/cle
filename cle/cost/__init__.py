@@ -52,13 +52,13 @@ def Gaussian(y, mu, logvar):
     mu     : FullyConnected (Linear)
     logvar : FullyConnected (Linear)
     """
-    logvar = T.maximum(logvar, np.log(1e-10))  # added tolerance value
+    logvar = T.maximum(logvar, np.log(tol))  # added tolerance value
     nll = 0.5 * T.sum(T.sqr(y - mu) * T.exp(-logvar) + logvar +
                       T.log(2 * np.pi), axis=1)
     return nll
 
 
-def GMM(y, mu, logvar, coeff):
+def GMM(y, mu, logvar, coeff, tol=0.):
     """
     Gaussian mixture model negative log-likelihood
 
@@ -76,7 +76,7 @@ def GMM(y, mu, logvar, coeff):
     logvar = logvar.reshape((logvar.shape[0],
                              logvar.shape[1] / coeff.shape[-1],
                              coeff.shape[-1]))
-    logvar = T.maximum(logvar, np.log(1e-10))  # added tolerance value
+    logvar = T.maximum(logvar, np.log(tol))  # added tolerance value
     nll = 0.5 * T.sum(T.sqr(y - mu) * T.exp(-logvar) + logvar +
                       T.log(2 * np.pi), axis=1)
     nll = logsumexp(T.log(coeff) + nll, axis=1)

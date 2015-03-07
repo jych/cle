@@ -86,10 +86,16 @@ class GaussianLayer(CostLayer):
     ----------
     todo..
     """
+    def __init__(self,
+                 tol=0.,
+                 **kwargs):
+        super(GaussianLayer, self).__init__(**kwargs)
+        self.tol = tol
+   
     def fprop(self, X):
         if len(X) != 3:
             raise ValueError("The number of inputs does not match.")
-        cost = Gaussian(X[0], X[1], X[2])
+        cost = Gaussian(X[0], X[1], X[2], self.tol)
         if self.use_sum:
             return cost.sum()
         else:
@@ -106,6 +112,7 @@ class GMMLayer(CostLayer):
     """
     def __init__(self,
                  use_sample=False,
+                 tol=0.,
                  **kwargs):
         super(GMMLayer, self).__init__(**kwargs)
         self.use_sample = use_sample
@@ -113,6 +120,7 @@ class GMMLayer(CostLayer):
             self.fprop = self.which_method('sample')
         else:
             self.fprop = self.which_method('cost')
+        self.tol = tol
 
     def which_method(self, which):
         return getattr(self, which)
@@ -120,7 +128,7 @@ class GMMLayer(CostLayer):
     def cost(self, X):
         if len(X) != 4:
             raise ValueError("The number of inputs does not match.")
-        cost = GMM(X[0], X[1], X[2], X[3])
+        cost = GMM(X[0], X[1], X[2], X[3], self.tol)
         if self.use_sum:
             return cost.sum()
         else:
