@@ -24,7 +24,7 @@ savepath = '/u/chungjun/repos/cle/saved/'
 #datapath = '/home/junyoung/data/bouncing_balls/bouncing_ball_2balls_16wh_20len_50000cases.npy'
 #savepath = '/home/junyoung/repos/cle/saved/'
 
-batchsize = 128
+batch_size = 128
 res = 256
 debug = 0
 
@@ -38,13 +38,13 @@ init_b = InitCell('zeros')
 inp, tar = trdata.theano_vars()
 # You must use THEANO_FLAGS="compute_test_value=raise" python -m ipdb
 if debug:
-    inp.tag.test_value = np.zeros((10, batchsize, res), dtype=np.float32)
-    tar.tag.test_value = np.zeros((10, batchsize, res), dtype=np.float32)
+    inp.tag.test_value = np.zeros((10, batch_size, res), dtype=np.float32)
+    tar.tag.test_value = np.zeros((10, batch_size, res), dtype=np.float32)
 x = InputLayer(name='x', root=inp, nout=res)
 y = InputLayer(name='y', root=tar, nout=res)
 h1 = LSTM(name='h1',
           parent=[x],
-          batchsize=batchsize,
+          batch_size=batch_size,
           nout=200,
           unit='tanh',
           init_W=init_W,
@@ -52,7 +52,7 @@ h1 = LSTM(name='h1',
           init_b=init_b)
 h2 = LSTM(name='h2',
           parent=[x, h1],
-          batchsize=batchsize,
+          batch_size=batch_size,
           nout=200,
           unit='tanh',
           init_W=init_W,
@@ -60,7 +60,7 @@ h2 = LSTM(name='h2',
           init_b=init_b)
 h3 = LSTM(name='h3',
           parent=[x, h2],
-          batchsize=batchsize,
+          batch_size=batch_size,
           nout=200,
           unit='tanh',
           init_W=init_W,
@@ -86,7 +86,7 @@ optimizer = Adam(
 )
 
 extension = [
-    GradientClipping(batchsize=batchsize),
+    GradientClipping(batch_size=batch_size),
     EpochCount(100),
     Monitoring(freq=100,
                ddout=[cost]),
@@ -96,7 +96,7 @@ extension = [
 
 mainloop = Training(
     name='toy_bb',
-    data=Iterator(trdata, batchsize),
+    data=Iterator(trdata, batch_size),
     model=model,
     optimizer=optimizer,
     cost=cost,

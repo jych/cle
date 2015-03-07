@@ -42,7 +42,7 @@ class SequentialPrepMixin(object):
         -----
         Compute varaince using the relation
         >>> Var(X) = E[X^2] - E[X]^2
-        """   
+        """
         if (X_mean or X_std) is None:
             X_len = np.array([len(x) for x in X]).sum()
             X_mean = np.array([x.sum() for x in X]).sum() / X_len

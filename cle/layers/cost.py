@@ -21,7 +21,7 @@ class CostLayer(StemCell, RandomCell):
     def __init__(self, use_sum=False, **kwargs):
         super(CostLayer, self).__init__(**kwargs)
         self.use_sum = use_sum
-    
+
     def fprop(self, X):
         raise NotImplementedError(
             str(type(self)) + " does not implement Layer.fprop.")

@@ -29,7 +29,7 @@ savepath = '/u/chungjun/repos/cle/saved/'
 #datapath = '/home/junyoung/data/mnist/mnist.pkl'
 #savepath = '/home/junyoung/repos/cle/saved/'
 
-batchsize = 128
+batch_size = 128
 debug = 0
 
 trdata = MNIST(name='train',
@@ -45,8 +45,8 @@ init_b = InitCell('zeros')
 inp, tar = trdata.theano_vars()
 # You must use THEANO_FLAGS="compute_test_value=raise" python -m ipdb
 if debug:
-    inp.tag.test_value = np.zeros((batchsize, 784), dtype=np.float32)
-    tar.tag.test_value = np.zeros((batchsize, 1), dtype=np.float32)
+    inp.tag.test_value = np.zeros((batch_size, 784), dtype=np.float32)
+    tar.tag.test_value = np.zeros((batch_size, 1), dtype=np.float32)
 x = InputLayer(name='x', root=inp, nout=784)
 y = InputLayer(name='y', root=tar, nout=1)
 onehot = OnehotLayer(name='onehot',
@@ -85,13 +85,13 @@ optimizer = RMSProp(
 )
 
 extension = [
-    #GradientClipping(batchsize=batchsize),
+    #GradientClipping(batch_size=batch_size),
     GradientClipping(),
     EpochCount(40),
     Monitoring(freq=100,
                ddout=[cost, err],
-               data=[Iterator(trdata, batchsize),
-                     Iterator(valdata, batchsize)]),
+               data=[Iterator(trdata, batch_size),
+                     Iterator(valdata, batch_size)]),
     Picklize(freq=200,
              path=savepath),
     #EarlyStopping(path=savepath)
@@ -99,7 +99,7 @@ extension = [
 
 mainloop = Training(
     name='toy_mnist',
-    data=Iterator(trdata, batchsize),
+    data=Iterator(trdata, batch_size),
     model=model,
     optimizer=optimizer,
     cost=cost,

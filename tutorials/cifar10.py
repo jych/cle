@@ -33,7 +33,7 @@ testdatapath = ['/home/junyoung/data/cifar10/pylearn2_gcn_whitened/test.npy',
                 '/home/junyoung/data/cifar10/pylearn2_gcn_whitened/testy.npy']
 savepath = '/home/junyoung/repos/cle/saved/'
 
-batchsize = 128
+batch_size = 128
 debug = 0
 
 trdata = CIFAR10(name='train',
@@ -49,22 +49,22 @@ init_b = InitCell('zeros')
 inp, tar = trdata.theano_vars()
 # You must use THEANO_FLAGS="compute_test_value=raise" python -m ipdb
 if debug:
-    inp.tag.test_value = np.zeros((batchsize, 3072), dtype=np.float32)
-    tar.tag.test_value = np.zeros((batchsize, 10), dtype=np.float32)
+    inp.tag.test_value = np.zeros((batch_size, 3072), dtype=np.float32)
+    tar.tag.test_value = np.zeros((batch_size, 10), dtype=np.float32)
 x = InputLayer(name='x', root=inp, nout=3072)
 y = InputLayer(name='y', root=tar, nout=10)
 c1 = ConvertLayer(name='c1',
                   parent=[x],
-                  outshape=(batchsize, 3, 32, 32))
+                  outshape=(batch_size, 3, 32, 32))
 h1 = Conv2DLayer(name='h1',
                  parent=[c1],
-                 outshape=(batchsize, 96, 30, 30),
+                 outshape=(batch_size, 96, 30, 30),
                  unit='relu',
                  init_W=init_W,
                  init_b=init_b)
 h2 = Conv2DLayer(name='h2',
                  parent=[h1],
-                 outshape=(batchsize, 96, 28, 28),
+                 outshape=(batch_size, 96, 28, 28),
                  unit='relu',
                  init_W=init_W,
                  init_b=init_b)
@@ -74,19 +74,19 @@ p1 = MaxPool2D(name='p1',
                poolstride=(2, 2))
 h3 = Conv2DLayer(name='h3',
                  parent=[p1],
-                 outshape=(batchsize, 192, 11, 11),
+                 outshape=(batch_size, 192, 11, 11),
                  unit='relu',
                  init_W=init_W,
                  init_b=init_b)
 h4 = Conv2DLayer(name='h4',
                  parent=[h3],
-                 outshape=(batchsize, 192, 9, 9),
+                 outshape=(batch_size, 192, 9, 9),
                  unit='relu',
                  init_W=init_W,
                  init_b=init_b)
 h5 = Conv2DLayer(name='h5',
                  parent=[h4],
-                 outshape=(batchsize, 192, 7, 7),
+                 outshape=(batch_size, 192, 7, 7),
                  unit='relu',
                  init_W=init_W,
                  init_b=init_b)
@@ -96,13 +96,13 @@ p2 = MaxPool2D(name='p2',
                poolstride=(2, 2))
 h6 = Conv2DLayer(name='h6',
                  parent=[p2],
-                 outshape=(batchsize, 192, 1, 1),
+                 outshape=(batch_size, 192, 1, 1),
                  unit='relu',
                  init_W=init_W,
                  init_b=init_b)
 c2 = ConvertLayer(name='c2',
                   parent=[h6],
-                  outshape=(batchsize, 192))
+                  outshape=(batch_size, 192))
 # Global average pooling missing
 h7 = FullyConnectedLayer(name='h7',
                          parent=[c2],
@@ -131,18 +131,18 @@ optimizer = Adam(
 )
 
 extension = [
-    GradientClipping(batchsize=batchsize),
+    GradientClipping(batch_size=batch_size),
     EpochCount(100),
     Monitoring(freq=100,
                ddout=[cost, err],
-               data=[Iterator(testdata, batchsize)]),
+               data=[Iterator(testdata, batch_size)]),
     Picklize(freq=10,
              path=savepath)
 ]
 
 mainloop = Training(
     name='toy_cifar',
-    data=Iterator(trdata, batchsize),
+    data=Iterator(trdata, batch_size),
     model=model,
     optimizer=optimizer,
     cost=cost,

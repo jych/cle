@@ -17,19 +17,19 @@ class RecurrentLayer(StemCell):
     .. todo::
     """
     def __init__(self,
-                 batchsize,
+                 batch_size,
                  recurrent=[],
                  init_U=InitCell('ortho'),
                  **kwargs):
         super(RecurrentLayer, self).__init__(**kwargs)
         self.recurrent = tolist(recurrent)
         self.recurrent.append(self)
-        self.batchsize = batchsize
+        self.batch_size = batch_size
         self.init_U = init_U
         self.init_states = OrderedDict()
 
     def get_init_state(self):
-        state = T.zeros((self.batchsize, self.nout))
+        state = T.zeros((self.batch_size, self.nout))
         state = T.unbroadcast(state, *range(state.ndim))
         return state
 
@@ -63,7 +63,7 @@ class SimpleRecurrent(RecurrentLayer):
         return z
 
 
-class LSTM(SimpleRecurrent):
+class LSTM(RecurrentLayer):
     """
     Long short-term memory
 
@@ -72,7 +72,7 @@ class LSTM(SimpleRecurrent):
     .. todo::
     """
     def get_init_state(self):
-        state = T.zeros((self.batchsize, 2*self.nout))
+        state = T.zeros((self.batch_size, 2*self.nout))
         state = T.unbroadcast(state, *range(state.ndim))
         return state
 
@@ -83,7 +83,7 @@ class LSTM(SimpleRecurrent):
         X, H = XH
         # The index of self recurrence is 0
         z_t = H[0]
-        z = T.zeros((self.batchsize, 4*self.nout))
+        z = T.zeros((self.batch_size, 4*self.nout))
         for x, parent in izip(X, self.parent):
             W = self.params['W_'+parent.name+self.name]
             z += T.dot(x[:, :parent.nout], W)
@@ -141,7 +141,7 @@ class GFLSTM(LSTM):
         # The index of self recurrence is 0
         z_t = H[0]
         Nm = len(self.recurrent)
-        z = T.zeros((self.batchsize, 4*self.nout+Nm))
+        z = T.zeros((self.batch_size, 4*self.nout+Nm))
         for x, parent in izip(X, self.parent):
             W = self.params['W_'+parent.name+self.name]
             z += T.dot(x[:, :parent.nout], W)

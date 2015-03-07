@@ -67,7 +67,7 @@ class Conv2DLayer(StemCell):
         outshape = self.outshape
         filtershape = self.filtershape
         parshape = parent.outshape
-        batchsize = parshape[0]
+        batch_size = parshape[0]
         nchannels = parshape[1]
         if filtershape is not None:
             nfilters = filtershape[1]
@@ -77,7 +77,7 @@ class Conv2DLayer(StemCell):
             else:
                 x = parshape[2] + filtershape[2] - 1
                 y = parshape[3] + filtershape[3] - 1
-            self.outshape = (batchsize, nfilters, x, y)
+            self.outshape = (batch_size, nfilters, x, y)
         else:
             nfilters = outshape[1]
             if self.bordermode == 'valid':

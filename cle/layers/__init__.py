@@ -1,12 +1,11 @@
 import ipdb
-import copy
 import numpy as np
 import scipy
 import theano.tensor as T
 
 from theano.compat.python2x import OrderedDict
 from theano.sandbox.rng_mrg import MRG_RandomStreams
-from cle.cle.utils import sharedX, tolist, unpack, predict
+from cle.cle.utils import sharedX, tolist, unpack
 
 
 class InitCell(object):
@@ -63,7 +62,7 @@ class InitCell(object):
         if self.init_type is not None:
             dic.pop('init_param')
         return dic
-    
+
     def __setstate__(self, state):
         self.__dict__.update(state)
         if self.init_type is not None:
@@ -82,7 +81,7 @@ class NonlinCell(object):
         self.unit = unit
         if unit is not None:
             self.nonlin = self.which_nonlin(unit)
- 
+
     def which_nonlin(self, which):
         return getattr(self, which)
 
@@ -115,10 +114,10 @@ class NonlinCell(object):
         if self.unit is not None:
             dic.pop('nonlin')
         return dic
-    
+
     def __setstate__(self, state):
         self.__dict__.update(state)
-        if self.unit is not None:        
+        if self.unit is not None:
             self.nonlin = self.which_nonlin(self.unit)
 
 
@@ -248,7 +247,7 @@ class ConcLayer(StemCell):
                  **kwargs):
         super(ConcLayer, self).__init__(**kwargs)
         self.axis = axis
-   
+
     def fprop(self, X):
         x = X[0]
         y = X[1]

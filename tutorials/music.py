@@ -23,7 +23,7 @@ savepath = '/u/chungjun/repos/cle/saved/'
 #datapath = '/home/junyoung/data/music/MuseData.pickle'
 #savepath = '/home/junyoung/repos/cle/saved/'
 
-batchsize = 10
+batch_size = 10
 nlabel = 105
 debug = 1
 
@@ -42,13 +42,13 @@ init_b = InitCell('zeros')
 inp, y, mask = trdata.theano_vars()
 # You must use THEANO_FLAGS="compute_test_value=raise" python -m ipdb
 if debug:
-    inp.tag.test_value = np.zeros((10, batchsize, nlabel), dtype=np.float32)
-    y.tag.test_value = np.zeros((10, batchsize, nlabel), dtype=np.float32)
-    mask.tag.test_value = np.ones((10, batchsize), dtype=np.float32)
+    inp.tag.test_value = np.zeros((10, batch_size, nlabel), dtype=np.float32)
+    y.tag.test_value = np.zeros((10, batch_size, nlabel), dtype=np.float32)
+    mask.tag.test_value = np.ones((10, batch_size), dtype=np.float32)
 x = InputLayer(name='x', root=inp, nout=nlabel)
 h1 = LSTM(name='h1',
           parent=[x],
-          batchsize=batchsize,
+          batch_size=batch_size,
           nout=50,
           unit='tanh',
           init_W=init_W,
@@ -56,7 +56,7 @@ h1 = LSTM(name='h1',
           init_b=init_b)
 h2 = LSTM(name='h2',
           parent=[x, h1],
-          batchsize=batchsize,
+          batch_size=batch_size,
           nout=50,
           unit='tanh',
           init_W=init_W,
@@ -64,7 +64,7 @@ h2 = LSTM(name='h2',
           init_b=init_b)
 h3 = LSTM(name='h3',
           parent=[x, h2],
-          batchsize=batchsize,
+          batch_size=batch_size,
           nout=50,
           unit='tanh',
           init_W=init_W,
@@ -94,18 +94,18 @@ optimizer = RMSProp(
 )
 
 extension = [
-    GradientClipping(batchsize=batchsize),
+    GradientClipping(batch_size=batch_size),
     EpochCount(100),
     Monitoring(freq=10,
                ddout=[cost, nll],
-               data=[Iterator(valdata, batchsize)]),
+               data=[Iterator(valdata, batch_size)]),
     Picklize(freq=5,
              path=savepath)
 ]
 
 mainloop = Training(
     name='toy_music',
-    data=Iterator(trdata, batchsize),
+    data=Iterator(trdata, batch_size),
     model=model,
     optimizer=optimizer,
     cost=cost,
