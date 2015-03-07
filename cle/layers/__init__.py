@@ -149,6 +149,12 @@ class NonlinCell(RandomCell):
     def hard_sigmoid(self, z):
         return T.clip(z + 0.5, 0., 1.)
 
+    def spikenslab_relu(self, z):
+        b = self.theano_rng.binomial(p=T.nnet.sigmoid(z - 3),
+                                     size=z.shape)
+        return z * b
+
+
     def __getstate__(self):
         dic = self.__dict__.copy()
         if self.unit is not None:
