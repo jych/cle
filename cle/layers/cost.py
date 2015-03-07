@@ -136,10 +136,12 @@ class GMMLayer(CostLayer):
         logvar = logvar.reshape((logvar.shape[0],
                                  logvar.shape[1]/coeff.shape[-1],
                                  coeff.shape[-1]))
-        idx = predict(self.theano_rng.multinomial(
-            pvals=coeff,
-            dtype=coeff.dtype
-        ))
+        idx = predict(
+            self.theano_rng.multinomial(
+                pvals=coeff,
+                dtype=coeff.dtype
+            )
+        )
         mu = mu[T.arange(mu.shape[0]), :, idx]
         sig = T.sqrt(T.exp(logvar[T.arange(mu.shape[0]), :, idx]))
         sample = self.theano_rng.normal(size=mu.shape,
