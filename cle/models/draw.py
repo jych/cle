@@ -12,9 +12,9 @@ class ReadLayer(RecurrentLayer):
 
     Parameters
     ----------
-    L(h^dec) : Linear
-    x        : TensorVariable
-    \hat{x}  : Transformed TensorVariable
+    h^dec   : Linear
+    x       : TensorVariable
+    \hat{x} : Transformed TensorVariable
     """
     def __init__(self,
                  N,
