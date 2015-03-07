@@ -10,7 +10,7 @@ from cle.cle.layers import RandomCell, StemCell
 from cle.cle.utils import sharedX, tolist, unpack, predict
 
 
-class CostLayer(StemCell, RandomCell):
+class CostLayer(StemCell):
     """
     Base cost layer
 
@@ -136,16 +136,15 @@ class GMMLayer(CostLayer):
         logvar = logvar.reshape((logvar.shape[0],
                                  logvar.shape[1]/coeff.shape[-1],
                                  coeff.shape[-1]))
-        trng = self.theano_rng()
-        idx = predict(trng.multinomial(
+        idx = predict(self.theano_rng.multinomial(
             pvals=coeff,
             dtype=coeff.dtype
         ))
         mu = mu[T.arange(mu.shape[0]), :, idx]
         sig = T.sqrt(T.exp(logvar[T.arange(mu.shape[0]), :, idx]))
-        sample = trng.normal(size=mu.shape,
-                             avg=mu, std=sig,
-                             dtype=mu.dtype)
+        sample = self.theano_rng.normal(size=mu.shape,
+                                        avg=mu, std=sig,
+                                        dtype=mu.dtype)
         return sample
 
     def __getstate__(self):

@@ -69,7 +69,47 @@ class InitCell(object):
             self.init_param = self.which_init(self.init_type)
 
 
-class NonlinCell(object):
+class RandomCell(object):
+    seed_rng = np.random.RandomState((2015, 2, 19))
+    """
+    WRITEME
+
+    Parameters
+    ----------
+    .. todo::
+    """
+    def rng(self):
+        if getattr(self, '_rng', None) is None:
+            self._rng = np.random.RandomState(self.seed)
+        return self._rng
+
+    def seed(self):
+        if getattr(self, '_seed', None) is None:
+            self._seed = self.seed_rng.randint(np.iinfo(np.int32).max)
+        return self._seed
+
+    @property
+    def theano_seed(self):
+        if getattr(self, '_theano_seed', None) is None:
+            self._theano_seed = self.seed_rng.randint(np.iinfo(np.int32).max)
+        return self._theano_seed
+
+    @theano_seed.setter
+    def theano_seed(self, value):
+        self._theano_seed = value
+
+    @property
+    def theano_rng(self):
+        if getattr(self, '_theano_rng', None) is None:
+            self._theano_rng = MRG_RandomStreams(self.theano_seed)
+        return self._theano_rng
+
+    @theano_rng.setter
+    def theano_rng(self, theano_rng):
+        self._theano_rng = theano_rng
+
+
+class NonlinCell(RandomCell):
     """
     WRITEME
 
@@ -119,36 +159,6 @@ class NonlinCell(object):
         self.__dict__.update(state)
         if self.unit is not None:
             self.nonlin = self.which_nonlin(self.unit)
-
-
-class RandomCell(object):
-    seed_rng = np.random.RandomState((2015, 2, 19))
-    """
-    WRITEME
-
-    Parameters
-    ----------
-    .. todo::
-    """
-    def rng(self):
-        if getattr(self, '_rng', None) is None:
-            self._rng = np.random.RandomState(self.seed)
-        return self._rng
-
-    def seed(self):
-        if getattr(self, '_seed', None) is None:
-            self._seed = self.seed_rng.randint(np.iinfo(np.int32).max)
-        return self._seed
-
-    def theano_seed(self):
-        if getattr(self, '_theano_seed', None) is None:
-            self._theano_seed = self.seed_rng.randint(np.iinfo(np.int32).max)
-        return self._theano_seed
-
-    def theano_rng(self):
-        if getattr(self, '_theano_rng', None) is None:
-            self._theano_rng = MRG_RandomStreams(self.theano_seed())
-        return self._theano_rng
 
 
 class StemCell(NonlinCell):
