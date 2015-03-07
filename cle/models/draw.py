@@ -12,7 +12,7 @@ class ReadLayer(RecurrentLayer):
 
     Parameters
     ----------
-    h^dec   : Linear
+    h_dec   : Linear
     x       : TensorVariable
     \hat{x} : Transformed TensorVariable
     """
