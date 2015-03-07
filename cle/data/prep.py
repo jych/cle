@@ -70,3 +70,36 @@ class SequentialPrepMixin(object):
         else:
             X = (X - X_min) / (X_max - X_min)
         return (X, X_max, X_min)
+
+    def fill_zeros(self, X, mode='righthand'):
+        """
+        Given variable lengths sequences,
+        fill-in zeros w.r.t to the maximum
+        length sequences and create a
+        dense design matrix
+
+        Parameters
+        ----------
+        mode : string
+            Strategy to fill-in the zeros
+            'righthand': pad the zeros at the right space
+            'lefthand' : pad the zeros at the left space
+            'random'   : pad the zeros with randomly
+                         chosen left space and right space
+        """
+        X_max = np.array([x.max() for x in X]).max()
+        new_X = np.zeros((len(X), X_max))
+        for i, x in enumerate(X):
+            free_ = X_max - len(x)
+            if mode == 'lefthand':
+                x = np.concatenate([np.zeros((1, free_)), x], axis=1)
+            elif mode == 'righthand':
+                x = np.concatenate([x, np.zeros((1, free_))], axis=1)
+            elif mode == 'random':
+                j = np.random.randint(free_)
+                x = np.concatenate(
+                    [np.zeros((1, j)), x, np.zeros((1, free_ - j))],
+                    axis=1
+                )
+            new_X[i] = x
+        return new_X
