@@ -52,7 +52,6 @@ def Gaussian(y, mu, logvar):
     mu     : FullyConnected (Linear)
     logvar : FullyConnected (Linear)
     """
-    #logvar = T.maximum(logvar, np.log(tol))  # added tolerance value
     logvar = T.log(T.exp(logvar) + tol)
     nll = 0.5 * T.sum(T.sqr(y - mu) * T.exp(-logvar) + logvar +
                       T.log(2 * np.pi), axis=1)
@@ -77,7 +76,6 @@ def GMM(y, mu, logvar, coeff, tol=0.):
     logvar = logvar.reshape((logvar.shape[0],
                              logvar.shape[1] / coeff.shape[-1],
                              coeff.shape[-1]))
-    #logvar = T.maximum(logvar, np.log(tol))  # added tolerance value
     logvar = T.log(T.exp(logvar) + tol)
     nll = 0.5 * T.sum(T.sqr(y - mu) * T.exp(-logvar) + logvar +
                       T.log(2 * np.pi), axis=1)
