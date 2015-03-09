@@ -1,0 +1,19 @@
+# Python
+*.pyc
+*.pkl
+
+# Latex
+*.aux
+*.log
+*.nav
+*.out
+*.pdf
+*.snm
+*.toc
+*.vrb
+
+# Mac
+.DS_Store
+
+# Ignore all emacs backup files
+*~
