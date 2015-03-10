@@ -42,7 +42,7 @@ def MSE(y, y_hat):
     return mse
 
 
-def Gaussian(y, mu, logvar):
+def Gaussian(y, mu, logvar, tol=0.):
     """
     Gaussian negative log-likelihood
 

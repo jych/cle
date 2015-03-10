@@ -71,35 +71,66 @@ class SequentialPrepMixin(object):
             X = (X - X_min) / (X_max - X_min)
         return (X, X_max, X_min)
 
-    def fill_zeros(self, X, mode='righthand'):
+    def fill_zero(self, X, pad_len=0, mode='righthand'):
         """
         Given variable lengths sequences,
-        fill-in zeros w.r.t to the maximum
+        pad zeros w.r.t to the maximum
         length sequences and create a
         dense design matrix
 
         Parameters
         ----------
-        mode : string
+        X       : list of ndArrays or lists
+        pad_len : integer
+            if 0, we consider that output should be
+            a design matrix.
+        mode    : string
             Strategy to fill-in the zeros
             'righthand': pad the zeros at the right space
             'lefthand' : pad the zeros at the left space
             'random'   : pad the zeros with randomly
                          chosen left space and right space
         """
-        X_max = np.array([x.max() for x in X]).max()
-        new_X = np.zeros((len(X), X_max))
-        for i, x in enumerate(X):
-            free_ = X_max - len(x)
-            if mode == 'lefthand':
-                x = np.concatenate([np.zeros((1, free_)), x], axis=1)
-            elif mode == 'righthand':
-                x = np.concatenate([x, np.zeros((1, free_))], axis=1)
-            elif mode == 'random':
-                j = np.random.randint(free_)
-                x = np.concatenate(
-                    [np.zeros((1, j)), x, np.zeros((1, free_ - j))],
-                    axis=1
-                )
-            new_X[i] = x
+        if pad_len == 0:
+            X_max = np.array([x.max() for x in X]).max()
+            new_X = np.zeros((len(X), X_max))
+            for i, x in enumerate(X):
+                free_ = X_max - len(x)
+                if mode == 'lefthand':
+                    new_x = np.concatenate([np.zeros((free_)), x], axis=1)
+                elif mode == 'righthand':
+                    new_x = np.concatenate([x, np.zeros((free_))], axis=1)
+                elif mode == 'random':
+                    j = np.random.randint(free_)
+                    new_x = np.concatenate(
+                        [np.zeros((j)), x, np.zeros((free_ - j))],
+                        axis=1
+                    )
+                new_X[i] = new_x
+        else:
+            new_X = []
+            for x in X:
+                if mode == 'lefthand':
+                    new_x = np.concatenate([np.zeros((pad_len)), x], axis=1)
+                elif mode == 'righthand':
+                    new_x = np.concatenate([x, np.zeros((pad_len))], axis=1)
+                elif mode == 'random':
+                    new_x = np.concatenate(
+                        [np.zeros((pad_len)), x, np.zeros((pad_len))],
+                         axis=1
+                    )
+                new_X.append(new_x)
+        return new_X
+
+    def reverse(self, X):
+        """
+        Reverse each sequence of X
+
+        Parameters
+        ----------
+        X       : list of ndArrays or lists
+        """
+        new_X = []
+        for x in X:
+            new_X.append(x[::-1])
         return new_X
