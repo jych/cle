@@ -182,7 +182,7 @@ class StemCell(NonlinCell):
     ----------
     .. todo::
     """
-    def __init__(self, parent, nout=None, init_W=InitCell('randn'),
+    def __init__(self, parent=[], nout=None, init_W=InitCell('randn'),
                  init_b=InitCell('zeros'), name=None, **kwargs):
         super(StemCell, self).__init__(**kwargs)
         self.isroot = False
@@ -280,3 +280,19 @@ class ConcLayer(StemCell):
 
     def initialize(self):
         pass
+
+
+class RealVectorLayer(StemCell):
+    """
+    Concatenate two tensor varaibles
+
+    Parameters
+    ----------
+    .. todo::
+    """
+    def fprop(self, X=None):
+        z = self.params['b_'+self.name]
+        if z.ndim == 1:
+            z = z.dimshuffle('x', 0)
+        z.name = self.name
+        return z
