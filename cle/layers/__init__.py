@@ -151,13 +151,15 @@ class NonlinCell(RandomCell):
 
     def sigmoidal_spikenslab_relu(self, z):
         b = self.theano_rng.binomial(p=T.nnet.sigmoid(z - 3),
-                                     size=z.shape)
+                                     size=z.shape,
+                                     dtype=z.dtype)
         return z * b
 
     def gaussian_spikenslab_relu(self, z):
         z = T.exp(-T.sqr(z)) / float(np.sqrt(np.pi))
         b = self.theano_rng.binomial(p=(z.sum() - 3),
-                                     size=z.shape)
+                                     size=z.shape,
+                                     dtype=z.dtype)
         return z * b
 
     def __getstate__(self):
