@@ -87,34 +87,10 @@ class GaussianLayer(CostLayer):
     todo..
     """
     def __init__(self,
-                 tol=0.,
-                 **kwargs):
-        super(GaussianLayer, self).__init__(**kwargs)
-        self.tol = tol
-   
-    def fprop(self, X):
-        if len(X) != 3:
-            raise ValueError("The number of inputs does not match.")
-        cost = Gaussian(X[0], X[1], X[2], self.tol)
-        if self.use_sum:
-            return cost.sum()
-        else:
-            return cost.mean()
-
-
-class GMMLayer(CostLayer):
-    """
-    Gaussian mixture model layer
-
-    Parameters
-    ----------
-    todo..
-    """
-    def __init__(self,
                  use_sample=False,
                  tol=0.,
                  **kwargs):
-        super(GMMLayer, self).__init__(**kwargs)
+        super(GaussianLayer, self).__init__(**kwargs)
         self.use_sample = use_sample
         if use_sample:
             self.fprop = self.which_method('sample')
@@ -124,7 +100,46 @@ class GMMLayer(CostLayer):
 
     def which_method(self, which):
         return getattr(self, which)
+ 
+    def cost(self, X):
+        if len(X) != 3:
+            raise ValueError("The number of inputs does not match.")
+        cost = Gaussian(X[0], X[1], X[2], self.tol)
+        if self.use_sum:
+            return cost.sum()
+        else:
+            return cost.mean()
 
+    def sample(self, X):
+        mu = X[0]
+        logvar = X[1]
+        sig = T.sqrt(T.exp(logvar))
+        sample = self.theano_rng.normal(size=mu.shape,
+                                        avg=mu, std=sig,
+                                        dtype=mu.dtype)
+        return sample
+
+    def __getstate__(self):
+        dic = self.__dict__.copy()
+        dic.pop('fprop')
+        return dic
+    
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        if self.use_sample:
+            self.fprop = which_method('sample')
+        else:
+            self.fprop = which_method('cost')
+
+
+class GMMLayer(GaussianLayer):
+    """
+    Gaussian mixture model layer
+
+    Parameters
+    ----------
+    todo..
+    """
     def cost(self, X):
         if len(X) != 4:
             raise ValueError("The number of inputs does not match.")
@@ -156,15 +171,3 @@ class GMMLayer(CostLayer):
                                         avg=mu, std=sig,
                                         dtype=mu.dtype)
         return sample
-
-    def __getstate__(self):
-        dic = self.__dict__.copy()
-        dic.pop('fprop')
-        return dic
-    
-    def __setstate__(self, state):
-        self.__dict__.update(state)
-        if self.use_sample:
-            self.fprop = which_method('sample')
-        else:
-            self.fprop = which_method('cost')

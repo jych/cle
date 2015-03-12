@@ -296,3 +296,8 @@ class RealVectorLayer(StemCell):
             z = z.dimshuffle('x', 0)
         z.name = self.name
         return z
+
+    def initialize(self):
+        b_name = 'b_' + self.name
+        self.alloc(self.init_b.get(self.nout, b_name))
+        self.out = self.params[b_name]

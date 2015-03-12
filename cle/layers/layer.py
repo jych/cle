@@ -1,5 +1,8 @@
 import ipdb
+import theano
+
 from cle.cle.layers import StemCell
+from cle.cle.layers.feedforward import FullyConnectedLayer
 from cle.cle.utils import totuple, unpack
 from theano.tensor.signal.downsample import max_pool_2d
 
@@ -51,3 +54,25 @@ class MaxPool2D(StemCell):
 
     def initialize(self):
         pass
+
+
+class ClockworkLayer(StemCell):
+    """
+    Clockwork layer
+
+    Parameters
+    ----------
+    .. todo::
+    """
+    def __init__(self,
+                 N=1,
+                 **kwargs):
+        super(ClockworkLayer, self).__init__(**kwargs)
+        self.N = N
+    
+    def fprop(self, z):
+        z = theano.ifelse.ifelse(T.mod(idx, self.N) != 0,
+                                 T.zeros_like(z),
+                                 z)
+        z.name = self.name
+        return z

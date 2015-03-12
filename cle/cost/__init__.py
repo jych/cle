@@ -81,3 +81,18 @@ def GMM(y, mu, logvar, coeff, tol=0.):
                       T.log(2 * np.pi), axis=1)
     nll = logsumexp(T.log(coeff) + nll, axis=1)
     return nll
+
+
+def KLGaussianNormal(mu, logvar, tol=0.):
+    """
+    Re-parameterized formula for KL
+    between output of encoder and normal dist.
+
+    Parameters
+    ----------
+    mu     : FullyConnected (Linear)
+    logvar : FullyConnected (Linear)
+    """
+    logvar = T.log(T.exp(logvar) + tol)
+    kl = -0.5 * (1 + logvar - mu**2 - T.exp(logvar))
+    return kl
