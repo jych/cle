@@ -227,6 +227,11 @@ class Net(object):
         for inp in inputs:
             self.inputs[inp.name] = inp
 
+    def reset_input(self, inputs):
+        self.inputs = OrderedDict()
+        for inp in inputs:
+            self.inputs[inp.name] = inp
+
     def add_node(self, nodes):
         for node in tolist(nodes):
             self.nodes[node.name] = node
@@ -234,9 +239,16 @@ class Net(object):
         self.params = self.get_params()
 
     def del_node(self, node):
-        try:
-            del self.nodes[node.name]
-        except KeyError:
-            print("There is no such node %s.", node.name)
-        self.set_graph()
+        if isinstance(node, str):
+            try:
+                del self.nodes[node]
+            except KeyError:
+                print("There is no such node %s.", node)
+        else:
+            try:
+                del self.nodes[node.name]
+            except KeyError:
+                print("There is no such node %s.", node.name)
+        # In case of removing nodes, you need to manually
+        # set graph after deleting all the nodes.
         self.params = self.get_params()
