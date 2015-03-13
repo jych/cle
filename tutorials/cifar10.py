@@ -22,9 +22,9 @@ from cle.datasets.cifar10 import CIFAR10
 
 
 # Set your dataset
-#datapath = ['/data/lisa/data/cifar10/pylearn2_gcn_whitend/train.npy',
+#datapath = ['/data/lisa/data/cifar10/pylearn2_gcn_whitened/train.npy',
 #            '/u/chungjun/repos/cle/data/trainy.npy']
-#testdatapath = ['/data/lisa/data/cifar10/pylearn2_gcn_whitend/test.npy',
+#testdatapath = ['/data/lisa/data/cifar10/pylearn2_gcn_whitened/test.npy',
 #                '/u/chungjun/repos/cle/data/testy.npy']
 #savepath = '/u/chungjun/repos/cle/saved/'
 datapath = ['/home/junyoung/data/cifar10/pylearn2_gcn_whitened/train.npy',
