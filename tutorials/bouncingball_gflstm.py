@@ -1,8 +1,9 @@
 import ipdb
 import numpy as np
 
+from cle.cle.data import Iterator
 from cle.cle.graph.net import Net
-from cle.cle.layers import InputLayer, InitCell
+from cle.cle.layers import InitCell
 from cle.cle.layers.cost import MSELayer
 from cle.cle.layers.feedforward import FullyConnectedLayer
 from cle.cle.layers.recurrent import GFLSTM
@@ -14,7 +15,7 @@ from cle.cle.train.ext import (
     Picklize
 )
 from cle.cle.train.opt import Adam
-from cle.cle.utils import unpack
+from cle.cle.utils import unpack, OrderedDict
 from cle.datasets.bouncing_balls import BouncingBalls
 
 
@@ -28,22 +29,24 @@ res = 256
 debug = 0
 
 trdata = BouncingBalls(name='train',
-                       path=datapath,
-                       batch_size=batch_size)
+                       path=datapath)
 
 init_W = InitCell('randn')
 init_U = InitCell('ortho')
 init_b = InitCell('zeros')
 
 inp, tar = trdata.theano_vars()
+x, y = trdata.theano_vars()
+inputs = OrderedDict(x=x)
+inputs['y'] = y
+inputs_dim = {'x':256, 'y':256}
 # You must use THEANO_FLAGS="compute_test_value=raise" python -m ipdb
 if debug:
-    inp.tag.test_value = np.zeros((10, batch_size, res), dtype=np.float32)
-    tar.tag.test_value = np.zeros((10, batch_size, res), dtype=np.float32)
-x = InputLayer(name='x', root=inp, nout=res)
-y = InputLayer(name='y', root=tar, nout=res)
+    x.tag.test_value = np.zeros((10, batch_size, res), dtype=np.float32)
+    y.tag.test_value = np.zeros((10, batch_size, res), dtype=np.float32)
 h1 = GFLSTM(name='h1',
-            parent=[x],
+            parent=['x'],
+            recurrent=['h2', 'h3'],
             batch_size=batch_size,
             nout=200,
             unit='tanh',
@@ -51,8 +54,8 @@ h1 = GFLSTM(name='h1',
             init_U=init_U,
             init_b=init_b)
 h2 = GFLSTM(name='h2',
-            parent=[x, h1],
-            recurrent=[h1],
+            parent=['x', 'h1'],
+            recurrent=['h1', 'h3'],
             batch_size=batch_size,
             nout=200,
             unit='tanh',
@@ -60,27 +63,24 @@ h2 = GFLSTM(name='h2',
             init_U=init_U,
             init_b=init_b)
 h3 = GFLSTM(name='h3',
-            parent=[x, h2],
-            recurrent=[h1, h2],
+            parent=['x', 'h2'],
+            recurrent=['h1', 'h2'],
             batch_size=batch_size,
             nout=200,
             unit='tanh',
             init_W=init_W,
             init_U=init_U,
             init_b=init_b)
-h2.recurrent.append(h3)
-h1.recurrent += [h2, h3]
 h4 = FullyConnectedLayer(name='h4',
-                         parent=[h1, h2, h3],
+                         parent=['h1', 'h2', 'h3'],
                          nout=res,
                          unit='sigmoid',
                          init_W=init_W,
                          init_b=init_b)
-cost = MSELayer(name='cost', parent=[h4, y])
+cost = MSELayer(name='cost', parent=['h4', 'y'])
 
-nodes = [x, y, h1, h2, h3, h4, cost]
-model = Net(nodes=nodes)
-
+nodes = [h1, h2, h3, h4, cost]
+model = Net(inputs=inputs, inputs_dim=inputs_dim, nodes=nodes)
 cost = unpack(model.build_recurrent_graph(output_args=[cost]))
 cost = cost.mean()
 cost.name = 'cost'
@@ -99,8 +99,8 @@ extension = [
 ]
 
 mainloop = Training(
-    name='toy_bb',
-    data=trdata,
+    name='toy_bb_gflstm',
+    data=Iterator(trdata, batch_size),
     model=model,
     optimizer=optimizer,
     cost=cost,

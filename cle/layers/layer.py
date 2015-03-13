@@ -21,12 +21,16 @@ class MaxPool2D(StemCell):
                  ignoreborder=False,
                  **kwargs):
         super(MaxPool2D, self).__init__(**kwargs)
-        parent = unpack(self.parent)
+        self.poolsize = poolsize
+        self.poolstride = poolstride
+        self.ignoreborder = ignoreborder
+
+    def set_shape(self):
+        parname, parshape = unpack(self.parent.items())
         # Shape should be (batch_size, num_channels, x, y)
-        parshape = parent.outshape
-        poolsize = totuple(poolsize)
-        poolstride = totuple(poolstride)
-        if ignoreborder:
+        poolsize = totuple(self.poolsize)
+        poolstride = totuple(self.poolstride)
+        if self.ignoreborder:
             newx = (parshape[2] - poolsize[0]) // poolstride[0] + 1
             newy = (parshape[3] - poolsize[1]) // poolstride[1] + 1
         else:
@@ -41,10 +45,7 @@ class MaxPool2D(StemCell):
                 newy = max(0, (parshape[3] - 1 - poolsize[1]) //
                            poolstride[1] + 1) + 1
         outshape = (parshape[0], parshape[1], newx, newy)
-        self.ignoreborder = ignoreborder
         self.outshape = outshape
-        self.poolsize = poolsize
-        self.poolstride = poolstride
 
     def fprop(self, x):
         x = unpack(x)
@@ -53,6 +54,7 @@ class MaxPool2D(StemCell):
         return z
 
     def initialize(self):
+        self.set_shape()
         pass
 
 

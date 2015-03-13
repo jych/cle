@@ -185,14 +185,15 @@ class StemCell(NonlinCell):
     def __init__(self, parent=[], nout=None, init_W=InitCell('randn'),
                  init_b=InitCell('zeros'), name=None, **kwargs):
         super(StemCell, self).__init__(**kwargs)
-        self.isroot = False
         if name is None:
             name = self.__class__.name__.lower()
         self.name = name
         self.nout = nout
-        self.parent = tolist(parent)
         self.init_W = init_W
         self.init_b = init_b
+        self.parent = OrderedDict()
+        for par in tolist(parent):
+            self.parent[par] = None
         self.params = OrderedDict()
 
     def get_params(self):
@@ -206,34 +207,11 @@ class StemCell(NonlinCell):
         self.params[x.name] = x
 
     def initialize(self):
-        for i, parent in enumerate(self.parent):
-            W_shape = (parent.nout, self.nout)
-            W_name = 'W_'+parent.name+self.name
+        for parname, parout in self.parent.items():
+            W_shape = (parout, self.nout)
+            W_name = 'W_'+parname+self.name
             self.alloc(self.init_W.get(W_shape, W_name))
         self.alloc(self.init_b.get(self.nout, 'b_'+self.name))
-
-
-class InputLayer(object):
-    """
-    Root layer
-
-    Parameters
-    ----------
-    .. todo::
-    """
-    def __init__(self, name, root, nout=None):
-        self.isroot = True
-        self.name = name
-        root.name = self.name
-        self.out = root
-        self.nout = nout
-        self.params = OrderedDict()
-
-    def get_params(self):
-        return self.params
-
-    def initialize(self):
-        pass
 
 
 class OnehotLayer(StemCell):

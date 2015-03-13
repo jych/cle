@@ -4,6 +4,7 @@ import theano
 from collections import OrderedDict
 from cle.cle.utils import (
     flatten,
+    todict,
     tolist,
     topological_sort,
     PickleMixin
@@ -18,21 +19,14 @@ class Net(object):
     ----------
     .. todo::
     """
-    def __init__(self, nodes, inputs=None):
-        if inputs is None:
-            inputs = self.set_inputs(nodes)
-        self.inputs = inputs
+    def __init__(self, nodes, inputs, inputs_dim):
+        # inputs and inputs_dim is Dict or OrderedDict
+        self.inputs = todict(inputs)
+        self.inputs_dim = inputs_dim
         self.set_nodes(nodes)
         self.set_graph()
         self.initialize()
         self.params = self.get_params()
-
-    def set_inputs(self, nodes):
-        inputs = []
-        for node in nodes:
-            if node.isroot:
-                inputs.append(node.out)
-        return inputs
 
     def set_nodes(self, nodes):
         self.nodes = {}
@@ -51,26 +45,45 @@ class Net(object):
     def set_graph(self):
         self.graph = {}
         for nname, node in self.nodes.items():
-            if not node.isroot:
-                parent = node.parent
-                for par_node in tolist(parent):
-                    if par_node.name in self.graph.keys():
-                        self.graph[par_node.name] =\
-                            tolist(self.graph[par_node.name]) +\
-                            [node.name]
+            parent = node.parent
+            for par in tolist(parent.keys()):
+                try:
+                    node.parent[par] = self.inputs_dim[par]
+                except:
+                    if self.nodes[par].nout is not None:
+                        # Assume this is FullyConnectedLayer
+                        node.parent[par] = self.nodes[par].nout
                     else:
-                        self.graph[par_node.name] = node.name
+                        # Assume this is ConvLayer
+                        try:
+                            node.parent[par] = self.nodes[par].outshape
+                        except:
+                            # Assume this is MaxPool2D
+                            self.nodes[par].initialize()
+                            node.parent[par] = self.nodes[par].outshape
+                if par in self.inputs.keys():
+                    continue
+                if par in self.graph.keys():
+                    self.graph[par] =\
+                        tolist(self.graph[par]) + [node.name]
+                else:
+                    self.graph[par] = node.name
+            if hasattr(node, 'recurrent'):
+                recurrent = node.recurrent
+                for rec in tolist(recurrent.keys()):
+                    node.recurrent[rec] = self.nodes[rec].nout
 
     def build_graph(self):
         sorted_nodes = topological_sort(self.graph)
         while sorted_nodes:
             node = sorted_nodes.popleft()
-            if self.nodes[node].isroot:
-                continue
-            parent = self.nodes[node].parent
             inp = []
+            parent = self.nodes[node].parent
             for par in parent:
-                inp.append(par.out)
+                try:
+                    inp.append(self.inputs[par])
+                except:
+                    inp.append(self.nodes[par].out)
             self.nodes[node].out = self.nodes[node].fprop(inp)
 
     def build_recurrent_graph(self, n_steps=None, reverse=False, **kwargs):
@@ -78,17 +91,14 @@ class Net(object):
         self.output_args = kwargs.pop('output_args', None)
         self.context_args = kwargs.pop('context_args', None)
         self.iterators = kwargs.pop('iterators', None)
+        self.nNone = 0
+        inputs = self.inputs.values()
         seqs = []
-        inputs = []
         outputs = []
         nonseqs = []
         self.input_args = OrderedDict()
         self.recur_args = OrderedDict()
         for name, node in self.nodes.items():
-            if hasattr(node, 'isroot'):
-                if node.isroot:
-                    self.input_args[name] = node
-                    inputs.append(node.out)
             if hasattr(node, 'get_init_state'):
                 self.recur_args[name] = node
                 state = node.get_init_state()
@@ -122,8 +132,9 @@ class Net(object):
             n_steps=n_steps,
             go_backwards=reverse)
         result = tolist(result)
+        if self.output_args is None:
+            return result
         if len(updates) == 0:
-            #return result[self.nrecur:]
             return result[-self.nNone:]
         for k, v in updates.iteritems():
             k.default_update = v
@@ -137,30 +148,58 @@ class Net(object):
         inputs += tolist(args[self.nseqs+self.nrecur:self.nseqs+self.noutputs])
         nonseqs = tolist(args[self.nseqs+self.noutputs:])
         for nname, node in self.nodes.items():
-            for i, (aname, arg) in enumerate(self.input_args.items()):
-                if node is arg:
-                    node.out = inputs[i]
             for i, (aname, arg) in enumerate(self.recur_args.items()):
                 if node is arg:
                     node.rec_out = recurrence[i]
-        while sorted_nodes:
-            node = sorted_nodes.popleft()
-            if self.nodes[node].isroot:
-                continue
-            parent = self.nodes[node].parent
-            inp = []
-            for par in parent:
-                inp.append(par.out)
-            if self.nodes[node] in self.recur_args.values():
-                recurrent = self.nodes[node].recurrent
-                rec_inp = []
-                for rec in recurrent:
-                    rec_inp.append(rec.rec_out)
-                inp = [inp, rec_inp]
-                self.nodes[node].out = self.nodes[node].fprop(inp)
-                next_recurrence.append(self.nodes[node].out)
-            else:
-                self.nodes[node].out = self.nodes[node].fprop(inp)
+        if len(sorted_nodes) != 0:
+            while sorted_nodes:
+                node = sorted_nodes.popleft()
+                inp = []
+                parent = self.nodes[node].parent
+                for par in parent:
+                    tok = 1
+                    for inp2 in inputs:
+                        if par in inp2.name:
+                            inp.append(inp2)
+                            tok = 0
+                            break
+                    if tok:
+                        inp.append(self.nodes[par].out)
+                if self.nodes[node] in self.recur_args.values():
+                    rec_inp = []
+                    recurrent = self.nodes[node].recurrent
+                    for rec in recurrent:
+                        rec_inp.append(self.nodes[rec].rec_out)
+                    inp = [inp, rec_inp]
+                    self.nodes[node].out = self.nodes[node].fprop(inp)
+                    next_recurrence.append(self.nodes[node].out)
+                else:
+                    self.nodes[node].out = self.nodes[node].fprop(inp)
+        else:
+            # Assume that you have only single depth (parallel) graph
+            # Instead of Queue use for-loop to forcibly run the operation
+            for node in self.nodes:
+                inp = []
+                parent = self.nodes[node].parent
+                for par in parent:
+                    tok = 1
+                    for inp2 in inputs:
+                        if par in inp2.name:
+                            inp.append(inp2)
+                            tok = 0
+                            break
+                    if tok:
+                        inp.append(self.nodes[par].out)
+                if self.nodes[node] in self.recur_args.values():
+                    rec_inp = []
+                    recurrent = self.nodes[node].recurrent
+                    for rec in recurrent:
+                        rec_inp.append(self.nodes[rec].rec_out)
+                    inp = [inp, rec_inp]
+                    self.nodes[node].out = self.nodes[node].fprop(inp)
+                    next_recurrence.append(self.nodes[node].out)
+                else:
+                    self.nodes[node].out = self.nodes[node].fprop(inp)
         required_outputs = []
         if self.iterators is not None:
             for arg in self.iterators:
@@ -179,11 +218,20 @@ class Net(object):
                         for node in self.nodes.values()])
 
     def get_inputs(self):
-        return self.inputs
+        if len(self.inputs) != 0:
+            return self.inputs.values()
+        else:
+            return []
 
-    def add_node(self, node):
-        self.nodes[node.name] = node
+    def add_input(self, inputs):
+        for inp in inputs:
+            self.inputs[inp.name] = inp
+
+    def add_node(self, nodes):
+        for node in tolist(nodes):
+            self.nodes[node.name] = node
         self.set_graph()
+        self.params = self.get_params()
 
     def del_node(self, node):
         try:
@@ -191,3 +239,4 @@ class Net(object):
         except KeyError:
             print("There is no such node %s.", node.name)
         self.set_graph()
+        self.params = self.get_params()

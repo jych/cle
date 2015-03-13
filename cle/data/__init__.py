@@ -95,7 +95,7 @@ class TemporalSeries(Data):
         mask = np.zeros((max_sample_len, len(batch)),
                         dtype=batch.dtype)
         for i, sample_len in enumerate(samples_len):
-            mask[:sample_len, i] = 1
+            mask[:sample_len, i] = 1.
         return mask
 
     def zero_pad(self, batch):

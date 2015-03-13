@@ -5,6 +5,7 @@ import time
 
 from itertools import izip
 from cle.cle.graph import TheanoMixin
+from cle.cle.models import Model
 from cle.cle.utils import PickleMixin, OrderedDict, tolist
 
 logging.basicConfig(level=logging.INFO)
@@ -31,19 +32,19 @@ class Training(PickleMixin, TheanoMixin):
         self.data = data
         self.model = model
         self.optimizer = optimizer
-        self.inputs = model.get_inputs()
+        self.inputs = model.inputs
+        self.params = model.get_params()
         self.cost = cost
         self.outputs = tolist(outputs)
         self.extension = extension
 
         self.cost_fn = self.build_training_graph()
         self.trainlog = TrainLog()
-
         self.endloop = 0
 
     def build_training_graph(self):
-        self.grads = OrderedDict(izip(self.model.params,
-                                      T.grad(self.cost, self.model.params)))
+        self.grads = OrderedDict(izip(self.params,
+                                      T.grad(self.cost, self.params)))
         self.run_extension('ext_grad')
         updates = self.optimizer.get_updates(self.grads)
         return self.build_theano_graph(self.inputs, self.outputs, updates)

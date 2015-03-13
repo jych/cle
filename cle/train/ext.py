@@ -89,7 +89,7 @@ class Monitoring(Extension, TheanoMixin):
             WRITEME
         """
         if self.monitor_fn is None:
-            inputs = mainloop.model.get_inputs()
+            inputs = mainloop.inputs
             self.monitor_fn = self.build_theano_graph(inputs, self.ddout)
         if self.data is not None:
             data_record = []

@@ -3,11 +3,7 @@ import numpy as np
 
 from cle.cle.data import Iterator
 from cle.cle.graph.net import Net
-from cle.cle.layers import (
-    InputLayer,
-    OnehotLayer,
-    InitCell
-)
+from cle.cle.layers import InitCell, OnehotLayer
 from cle.cle.layers.cost import MulCrossEntropyLayer
 from cle.cle.layers.feedforward import FullyConnectedLayer
 from cle.cle.train import Training
@@ -19,15 +15,15 @@ from cle.cle.train.ext import (
     EarlyStopping
 )
 from cle.cle.train.opt import RMSProp
-from cle.cle.utils import error, predict
+from cle.cle.utils import error, predict, OrderedDict
 from cle.datasets.mnist import MNIST
 
 
 # Set your dataset
-datapath = '/data/lisa/data/mnist/mnist.pkl'
-savepath = '/u/chungjun/repos/cle/saved/'
-#datapath = '/home/junyoung/data/mnist/mnist.pkl'
-#savepath = '/home/junyoung/repos/cle/saved/'
+#datapath = '/data/lisa/data/mnist/mnist.pkl'
+#savepath = '/u/chungjun/repos/cle/saved/'
+datapath = '/home/junyoung/data/mnist/mnist.pkl'
+savepath = '/home/junyoung/repos/cle/saved/'
 
 batch_size = 128
 debug = 0
@@ -42,35 +38,36 @@ init_W = InitCell('randn')
 init_b = InitCell('zeros')
 
 # Define nodes: objects
-inp, tar = trdata.theano_vars()
+x, y = trdata.theano_vars()
+inputs = OrderedDict(x=x)
+inputs['y'] = y
+inputs_dim = {'x':784, 'y':1}
 # You must use THEANO_FLAGS="compute_test_value=raise" python -m ipdb
 if debug:
-    inp.tag.test_value = np.zeros((batch_size, 784), dtype=np.float32)
-    tar.tag.test_value = np.zeros((batch_size, 1), dtype=np.float32)
-x = InputLayer(name='x', root=inp, nout=784)
-y = InputLayer(name='y', root=tar, nout=1)
+    x.tag.test_value = np.zeros((batch_size, 784), dtype=np.float32)
+    y.tag.test_value = np.zeros((batch_size, 1), dtype=np.float32)
 onehot = OnehotLayer(name='onehot',
-                     parent=[y],
+                     parent=['y'],
                      nout=10)
 h1 = FullyConnectedLayer(name='h1',
-                         parent=[x],
+                         parent=['x'],
                          nout=1000,
                          unit='relu',
                          init_W=init_W,
                          init_b=init_b)
 h2 = FullyConnectedLayer(name='h2',
-                         parent=[h1],
+                         parent=['h1'],
                          nout=10,
                          unit='softmax',
                          init_W=init_W,
                          init_b=init_b)
-cost = MulCrossEntropyLayer(name='cost', parent=[onehot, h2])
+cost = MulCrossEntropyLayer(name='cost', parent=['onehot', 'h2'])
 
 # You will fill in a list of nodes and fed them to the model constructor
-nodes = [x, y, onehot, h1, h2, cost]
+nodes = [onehot, h1, h2, cost]
 
 # Your model will build the Theano computational graph
-model = Net(nodes=nodes)
+model = Net(inputs=inputs, inputs_dim=inputs_dim, nodes=nodes)
 model.build_graph()
 
 # You can access any output of a node by doing model.nodes[$node_name].out

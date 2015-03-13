@@ -22,8 +22,10 @@ class RecurrentLayer(StemCell):
                  init_U=InitCell('ortho'),
                  **kwargs):
         super(RecurrentLayer, self).__init__(**kwargs)
-        self.recurrent = tolist(recurrent)
-        self.recurrent.append(self)
+        self.recurrent = OrderedDict()
+        self.recurrent[self.name] = self.nout
+        for rec in tolist(recurrent):
+            self.recurrent[rec] = None
         self.batch_size = batch_size
         self.init_U = init_U
         self.init_states = OrderedDict()
@@ -35,9 +37,9 @@ class RecurrentLayer(StemCell):
 
     def initialize(self):
         super(RecurrentLayer, self).initialize()
-        for i, recurrent in enumerate(self.recurrent):
-            U_shape = (recurrent.nout, self.nout)
-            U_name = 'U_'+recurrent.name+self.name
+        for recname, recout in self.recurrent.items():
+            U_shape = (recout, self.nout)
+            U_name = 'U_'+recname+self.name
             self.alloc(self.init_U.get(U_shape, U_name))
 
 
@@ -52,11 +54,13 @@ class SimpleRecurrent(RecurrentLayer):
     def fprop(self, XH):
         # XH is a list of inputs: [state_belows, state_befores]
         X, H = XH
-        z = T.zeros(self.nout)
-        for x, parent in izip(X, self.parent):
-            z += T.dot(x, self.params['W_'+parent.name+self.name])
-        for h, recurrent in izip(H, self.recurrent):
-            z += T.dot(h, self.params['U_'+recurrent.name+self.name])
+        z = T.zeros((self.batch_size, self.nout))
+        for x, (parname, parout) in izip(X, self.parent.items()):
+            W = self.params['W_'+parname+self.name]
+            z += T.dot(x[:, :parout], W)
+        for h, (recname, recout) in izip(H, self.recurrent.items()):
+            U = self.params['U_'+recname+self.name]
+            z += T.dot(h[:, :recout], U)
         z += self.params['b_'+self.name]
         z = self.nonlin(z)
         z.name = self.name
@@ -84,12 +88,12 @@ class LSTM(RecurrentLayer):
         # The index of self recurrence is 0
         z_t = H[0]
         z = T.zeros((self.batch_size, 4*self.nout))
-        for x, parent in izip(X, self.parent):
-            W = self.params['W_'+parent.name+self.name]
-            z += T.dot(x[:, :parent.nout], W)
-        for h, recurrent in izip(H, self.recurrent):
-            U = self.params['U_'+recurrent.name+self.name]
-            z += T.dot(h[:, :recurrent.nout], U)
+        for x, (parname, parout) in izip(X, self.parent.items()):
+            W = self.params['W_'+parname+self.name]
+            z += T.dot(x[:, :parout], W)
+        for h, (recname, recout) in izip(H, self.recurrent.items()):
+            U = self.params['U_'+recname+self.name]
+            z += T.dot(h[:, :recout], U)
         z += self.params['b_'+self.name]
         # Compute activations of gating units
         i_on = T.nnet.sigmoid(z[:, self.nout:2*self.nout])
@@ -110,16 +114,16 @@ class LSTM(RecurrentLayer):
 
     def initialize(self):
         N = self.nout
-        for i, parent in enumerate(self.parent):
-            W_shape = (parent.nout, 4*N)
-            W_name = 'W_'+parent.name+self.name
+        for parname, parout in self.parent.items():
+            W_shape = (parout, 4*N)
+            W_name = 'W_'+parname+self.name
             self.alloc(self.init_W.get(W_shape, W_name))
-        for i, recurrent in enumerate(self.recurrent):
-            M = recurrent.nout
+        for recname, recout in self.recurrent.items():
+            M = recout
             U = self.init_U.ortho((M, N))
             for j in xrange(3):
                 U = np.concatenate([U, self.init_U.ortho((M, N))], axis=-1)
-            U_name = 'U_'+recurrent.name+self.name
+            U_name = 'U_'+recname+self.name
             U = self.init_U.setX(U, U_name)
             self.alloc(U)
         self.alloc(self.init_b.get(4*N, 'b_'+self.name))
@@ -127,7 +131,7 @@ class LSTM(RecurrentLayer):
 
 class GFLSTM(LSTM):
     """
-    Gated feedback long short-term memory
+    Gated feedback long short-term w
 
     Parameters
     ----------
@@ -142,14 +146,14 @@ class GFLSTM(LSTM):
         z_t = H[0]
         Nm = len(self.recurrent)
         z = T.zeros((self.batch_size, 4*self.nout+Nm))
-        for x, parent in izip(X, self.parent):
-            W = self.params['W_'+parent.name+self.name]
-            z += T.dot(x[:, :parent.nout], W)
-        for h, recurrent in izip(H, self.recurrent):
-            U = self.params['U_'+recurrent.name+self.name]
+        for x, (parname, parout) in izip(X, self.parent.items()):
+            W = self.params['W_'+parname+self.name]
+            z += T.dot(x[:, :parout], W)
+        for h, (recname, recout) in izip(H, self.recurrent.items()):
+            U = self.params['U_'+recname+self.name]
             z = T.inc_subtensor(
                 z[:, self.nout:],
-                T.dot(h[:, :recurrent.nout], U[:, self.nout:])
+                T.dot(h[:, :recout], U[:, self.nout:])
             )
         z += self.params['b_'+self.name]
         # Compute activations of gating units
@@ -158,9 +162,9 @@ class GFLSTM(LSTM):
         o_on = T.nnet.sigmoid(z[:, 3*self.nout:4*self.nout])
         gron = T.nnet.sigmoid(z[:, 4*self.nout:])
         c_t = z[:, :self.nout]
-        for i, (h, recurrent) in enumerate(izip(H, self.recurrent)):
-            gated_h = h[:, :recurrent.nout] * gron[:, i].dimshuffle(0, 'x')
-            U = self.params['U_'+recurrent.name+self.name]
+        for i, (h, (recname, recout)) in enumerate(izip(H, self.recurrent.items())):
+            gated_h = h[:, :recout] * gron[:, i].dimshuffle(0, 'x')
+            U = self.params['U_'+recname+self.name]
             c_t += T.dot(gated_h, U[:, :self.nout])
         # Update hidden & cell states
         z_t = T.set_subtensor(
@@ -178,17 +182,17 @@ class GFLSTM(LSTM):
     def initialize(self):
         N = self.nout
         Nm = len(self.recurrent)
-        for i, parent in enumerate(self.parent):
-            W_shape = (parent.nout, 4*N+Nm)
-            W_name = 'W_'+parent.name+self.name
+        for parname, parout in self.parent.items():
+            W_shape = (parout, 4*N)
+            W_name = 'W_'+parname+self.name
             self.alloc(self.init_W.get(W_shape, W_name))
-        for i, recurrent in enumerate(self.recurrent):
-            M = recurrent.nout
+        for recname, recout in self.recurrent.items():
+            M = recout
             U = self.init_U.ortho((M, N))
             for j in xrange(3):
                 U = np.concatenate([U, self.init_U.ortho((M, N))], axis=-1)
             U = np.concatenate([U, self.init_U.rand((M, Nm))], axis=-1)
-            U_name = 'U_'+recurrent.name+self.name
+            U_name = 'U_'+recname+self.name
             U = self.init_U.setX(U, U_name)
             self.alloc(U)
         self.alloc(self.init_b.get(4*N+Nm, 'b_'+self.name))

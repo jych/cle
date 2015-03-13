@@ -44,12 +44,12 @@ class Conv2DLayer(StemCell):
         # that can embed multiple conv layer parents
         # into same hidden space.
         x = unpack(x)
-        parent = unpack(self.parent)
+        parname, parshape = unpack(self.parent.items())
         z = T.zeros(self.outshape)
-        W = self.params['W_'+parent.name+self.name]
+        W = self.params['W_'+parname+self.name]
         z += conv2d(
             x, W,
-            image_shape=parent.outshape,
+            image_shape=parshape,
             subsample=self.stepsize,
             border_mode=self.bordermode,
             filter_shape=self.filtershape
@@ -63,10 +63,9 @@ class Conv2DLayer(StemCell):
         return z
 
     def initialize(self):
-        parent = unpack(self.parent)
+        parname, parshape = unpack(self.parent.items())
         outshape = self.outshape
         filtershape = self.filtershape
-        parshape = parent.outshape
         batch_size = parshape[0]
         nchannels = parshape[1]
         if filtershape is not None:
@@ -88,7 +87,7 @@ class Conv2DLayer(StemCell):
                 y = outshape[3] - parshape[3] + 1
             W_shape = (nfilters, nchannels, x, y)
             self.filtershape = W_shape
-        W_name = 'W_'+parent.name+self.name
+        W_name = 'W_'+parname+self.name
         self.alloc(self.init_W.get(self.filtershape, W_name))
         b_name = 'b_'+self.name
         if self.tiedbias:
