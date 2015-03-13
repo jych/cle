@@ -4,7 +4,7 @@ import numpy as np
 from cle.cle.data import Iterator
 from cle.cle.graph.net import Net
 from cle.cle.models import Model
-from cle.cle.layers import InitCell, OnehotLayer
+from cle.cle.layers import InitCell
 from cle.cle.layers.cost import MulCrossEntropyLayer
 from cle.cle.layers.feedforward import FullyConnectedLayer
 from cle.cle.layers.conv import ConvertLayer, Conv2DLayer
@@ -17,12 +17,15 @@ from cle.cle.train.ext import (
     Picklize
 )
 from cle.cle.train.opt import Adam
-from cle.cle.utils import error, predict, OrderedDict
+from cle.cle.utils import error, predict
 from cle.datasets.cifar10 import CIFAR10
 
 
 # Set your dataset
-#datapath = '/data/lisa/data/cifar10/pylearn2_gcn_whitend/train.npy'
+#datapath = ['/data/lisa/data/cifar10/pylearn2_gcn_whitend/train.npy',
+#            '/u/chungjun/repos/cle/data/trainy.npy']
+#testdatapath = ['/data/lisa/data/cifar10/pylearn2_gcn_whitend/test.npy',
+#                '/u/chungjun/repos/cle/data/testy.npy']
 #savepath = '/u/chungjun/repos/cle/saved/'
 datapath = ['/home/junyoung/data/cifar10/pylearn2_gcn_whitened/train.npy',
             '/home/junyoung/data/cifar10/pylearn2_gcn_whitened/trainy.npy']
