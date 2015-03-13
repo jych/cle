@@ -3,6 +3,7 @@ import numpy as np
 
 from cle.cle.data import Iterator
 from cle.cle.graph.net import Net
+from cle.cle.models import Model
 from cle.cle.layers import InitCell, OnehotLayer
 from cle.cle.layers.cost import MulCrossEntropyLayer
 from cle.cle.layers.feedforward import FullyConnectedLayer
@@ -32,6 +33,7 @@ savepath = '/home/junyoung/repos/cle/saved/'
 batch_size = 128
 debug = 0
 
+model = Model()
 trdata = CIFAR10(name='train',
                  path=datapath)
 testdata = CIFAR10(name='test',
@@ -42,14 +44,15 @@ init_W = InitCell('randn')
 init_b = InitCell('zeros')
 
 # Define nodes: objects
-x, y = trdata.theano_vars()
-inputs = OrderedDict(x=x)
-inputs['y'] = y
-inputs_dim = {'x':3072, 'y':10}
+model.inputs = trdata.theano_vars()
+x, y = model.inputs
 # You must use THEANO_FLAGS="compute_test_value=raise" python -m ipdb
 if debug:
     x.tag.test_value = np.zeros((batch_size, 3072), dtype=np.float32)
     y.tag.test_value = np.zeros((batch_size, 10), dtype=np.float32)
+
+inputs = [x, y]
+inputs_dim = {'x':3072, 'y':10}
 c1 = ConvertLayer(name='c1',
                   parent=['x'],
                   outshape=(batch_size, 3, 32, 32))
@@ -113,14 +116,15 @@ cost = MulCrossEntropyLayer(name='cost', parent=['y', 'h7'])
 nodes = [c1, c2, h1, h2, h3, h4, h5, h6, h7, p1, p2, cost]
 
 # Your model will build the Theano computational graph
-model = Net(inputs=inputs, inputs_dim=inputs_dim, nodes=nodes)
-model.build_graph()
+cnn = Net(inputs=inputs, inputs_dim=inputs_dim, nodes=nodes)
+cnn.build_graph()
 
 # You can access any output of a node by doing model.nodes[$node_name].out
-cost = model.nodes['cost'].out
-err = error(predict(model.nodes['h7'].out), predict(y))
+cost = cnn.nodes['cost'].out
+err = error(predict(cnn.nodes['h7'].out), predict(y))
 cost.name = 'cost'
 err.name = 'error_rate'
+model.graphs = [cnn]
 
 # Define your optimizer: Momentum (Nesterov), RMSProp, Adam
 optimizer = Adam(

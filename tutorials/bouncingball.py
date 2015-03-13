@@ -3,6 +3,7 @@ import numpy as np
 
 from cle.cle.data import Iterator
 from cle.cle.graph.net import Net
+from cle.cle.models import Model
 from cle.cle.layers import InitCell
 from cle.cle.layers.cost import MSELayer
 from cle.cle.layers.feedforward import FullyConnectedLayer
@@ -28,6 +29,7 @@ batch_size = 128
 res = 256
 debug = 0
 
+model = Model()
 trdata = BouncingBalls(name='train',
                        path=datapath)
 
@@ -37,14 +39,15 @@ init_U = InitCell('ortho')
 init_b = InitCell('zeros')
 
 # Define nodes: objects
-x, y = trdata.theano_vars()
-inputs = OrderedDict(x=x)
-inputs['y'] = y
-inputs_dim = {'x':256, 'y':256}
+model.inputs = trdata.theano_vars()
+x, y = model.inputs
 # You must use THEANO_FLAGS="compute_test_value=raise" python -m ipdb
 if debug:
     x.tag.test_value = np.zeros((10, batch_size, res), dtype=np.float32)
     y.tag.test_value = np.zeros((10, batch_size, res), dtype=np.float32)
+
+inputs = [x, y]
+inputs_dim = {'x':256, 'y':256}
 # Using skip connections is easy
 h1 = SimpleRecurrent(name='h1',
                      parent=['x'],
@@ -79,10 +82,11 @@ h4 = FullyConnectedLayer(name='h4',
 cost = MSELayer(name='cost', parent=['h4', 'y'])
 
 nodes = [h1, h2, h3, h4, cost]
-model = Net(inputs=inputs, inputs_dim=inputs_dim, nodes=nodes)
-cost = unpack(model.build_recurrent_graph(output_args=[cost]))
+rnn = Net(inputs=inputs, inputs_dim=inputs_dim, nodes=nodes)
+cost = unpack(rnn.build_recurrent_graph(output_args=[cost]))
 cost = cost.mean()
 cost.name = 'cost'
+model.graphs = [rnn]
 
 optimizer = Adam(
     lr=0.01
