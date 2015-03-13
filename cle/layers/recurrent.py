@@ -196,3 +196,59 @@ class GFLSTM(LSTM):
             U = self.init_U.setX(U, U_name)
             self.alloc(U)
         self.alloc(self.init_b.get(4*N+Nm, 'b_'+self.name))
+
+
+class GRU(RecurrentLayer):
+    """
+    Long short-term memory
+
+    Parameters
+    ----------
+    .. todo::
+    """
+    def fprop(self, XH):
+        # XH is a list of inputs: [state_belows, state_befores]
+        # each state vector is: [state_before; cell_before]
+        # Hence, you use h[:, :self.nout] to compute recurrent term
+        X, H = XH
+        # The index of self recurrence is 0
+        z_tm1 = H[0]
+        z = T.zeros((self.batch_size, 3*self.nout))
+        for x, (parname, parout) in izip(X, self.parent.items()):
+            W = self.params['W_'+parname+self.name]
+            z += T.dot(x[:, :parout], W)
+        for h, (recname, recout) in izip(H, self.recurrent.items()):
+            U = self.params['U_'+recname+self.name]
+            z = T.inc_subtensor(
+                z[:, self.nout:],
+                T.dot(h[:, :recout], U[:, self.nout:])
+            )
+        z += self.params['b_'+self.name]
+        # Compute activations of gating units
+        r_on = T.nnet.sigmoid(z[:, self.nout:2*self.nout])
+        u_on = T.nnet.sigmoid(z[:, 2*self.nout:])
+        # Update hidden & cell states
+        c_t = T.zeros_like(z_tm1)
+        for h, (recname, recout) in izip(H, self.recurrent.items()):
+            U = self.params['U_'+recname+self.name]
+            c_t += T.dot(h[:, :recout], U[:, :self.nout])
+        z_t = T.tanh(z[:, :self.nout] + r_on * c_t)
+        z_t = u_on * z_tm1 + (1. - u_on) * z_t
+        z_t.name = self.name
+        return z_t
+
+    def initialize(self):
+        N = self.nout
+        for parname, parout in self.parent.items():
+            W_shape = (parout, 3*N)
+            W_name = 'W_'+parname+self.name
+            self.alloc(self.init_W.get(W_shape, W_name))
+        for recname, recout in self.recurrent.items():
+            M = recout
+            U = self.init_U.ortho((M, N))
+            for j in xrange(2):
+                U = np.concatenate([U, self.init_U.ortho((M, N))], axis=-1)
+            U_name = 'U_'+recname+self.name
+            U = self.init_U.setX(U, U_name)
+            self.alloc(U)
+        self.alloc(self.init_b.get(3*N, 'b_'+self.name))
