@@ -49,4 +49,4 @@ def overlap_sum(X, p):
             new_x[start:start+len_x] += X[i][j]
             start += overlap
         new_X.append(new_x)
-    return new_X
+    return np.asarray(new_X)
