@@ -166,7 +166,7 @@ class GMMLayer(GaussianLayer):
             )
         )
         mu = mu[T.arange(mu.shape[0]), :, idx]
-        sig = T.sqrt(T.exp(logvar[T.arange(mu.shape[0]), :, idx]))
+        sig = T.sqrt(T.exp(logvar[T.arange(logvar.shape[0]), :, idx]))
         sample = self.theano_rng.normal(size=mu.shape,
                                         avg=mu, std=sig,
                                         dtype=mu.dtype)
