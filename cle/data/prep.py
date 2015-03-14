@@ -1,7 +1,7 @@
 import ipdb
 import numpy as np
 
-from scipy.fftpack import rfft
+from scipy.fftpack import rfft, irfft
 
 
 class SequentialPrepMixin(object):
@@ -70,6 +70,28 @@ class SequentialPrepMixin(object):
         else:
             X = (X - X_min) / (X_max - X_min)
         return (X, X_max, X_min)
+
+    def rfft(self, X):
+        """
+        Apply real FFT to X
+
+        Parameters
+        ----------
+        X     : list of lists or ndArrays
+        """
+        X = np.array([rfft(x) for x in X])
+        return X
+
+    def irfft(self, X):
+        """
+        Apply real FFT to X
+
+        Parameters
+        ----------
+        X     : list of lists or ndArrays
+        """
+        X = np.array([irfft(x) for x in X])
+        return X
 
     def fill_zero(self, X, pad_len=0, mode='righthand'):
         """

@@ -25,7 +25,7 @@ def add_noise(x, stddev, theano_rng):
     return x
 
 
-def overlap_sum(X, p):
+def overlap_sum(X, overlap):
     """
     WRITEME
 
@@ -41,7 +41,7 @@ def overlap_sum(X, p):
     new_X = []
     for i in xrange(len(X)):
         len_x = len(X[i][0])
-        overlap = int(len_x * p)
+        #overlap = int(len_x * p)
         time_steps = len(X[i])
         new_x = np.zeros(len_x + (time_steps - 1) * overlap)
         start = 0
