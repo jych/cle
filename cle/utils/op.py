@@ -1,4 +1,5 @@
 import ipdb
+import numpy as np
 import theano.tensor as T
 
 
@@ -22,3 +23,30 @@ def add_noise(x, stddev, theano_rng):
                            std=stddev,
                            dtype=x.dtype)
     return x
+
+
+def overlap_sum(X, p):
+    """
+    WRITEME
+
+    Parameters
+    ----------
+    x : list of lists or ndArrays
+    p : portion of overlap (max 1.0)
+
+    Notes
+    -----
+    This function assumes x as 3D
+    """
+    new_X = []
+    for i in xrange(len(X)):
+        len_x = len(X[i][0])
+        overlap = int(len_x * p)
+        time_steps = len(X[i])
+        new_x = np.zeros(len_x + (time_steps - 1) * overlap)
+        start = 0
+        for j in xrange(time_steps):
+            new_x[start:start+len_x] += X[i][j]
+            start += overlap
+        new_X.append(new_x)
+    return new_X
