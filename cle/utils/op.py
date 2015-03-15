@@ -47,5 +47,5 @@ def overlap_sum(X, overlap):
         for j in xrange(time_steps):
             new_x[start:start+len_x] += X[i][j]
             start += overlap
-        new_X.append(new_x)
+        new_X.append(new_x[:-1])
     return np.asarray(new_X)

@@ -93,6 +93,36 @@ class SequentialPrepMixin(object):
         X = np.array([irfft(x) for x in X])
         return X
 
+    def fill_zero1D(self, x, pad_len=0, mode='righthand'):
+        """
+        Given variable lengths sequences,
+        pad zeros w.r.t to the maximum
+        length sequences and create a
+        dense design matrix
+
+        Parameters
+        ----------
+        X       : list or 1D ndArray
+        pad_len : integer
+            if 0, we consider that output should be
+            a design matrix.
+        mode    : string
+            Strategy to fill-in the zeros
+            'righthand': pad the zeros at the right space
+            'lefthand' : pad the zeros at the left space
+            'random'   : pad the zeros with randomly
+                         chosen left space and right space
+        """
+        if mode == 'lefthand':
+            new_x = np.concatenate([np.zeros((pad_len)), x])
+        elif mode == 'righthand':
+            new_x = np.concatenate([x, np.zeros((pad_len))])
+        elif mode == 'random':
+            new_x = np.concatenate(
+                [np.zeros((pad_len)), x, np.zeros((pad_len))]
+            )
+        return new_x
+
     def fill_zero(self, X, pad_len=0, mode='righthand'):
         """
         Given variable lengths sequences,
