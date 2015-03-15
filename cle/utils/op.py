@@ -31,8 +31,8 @@ def overlap_sum(X, overlap):
 
     Parameters
     ----------
-    x : list of lists or ndArrays
-    p : portion of overlap (max 1.0)
+    x       : list of lists or ndArrays
+    overlap : amount of overlap (usually half of the window size)
 
     Notes
     -----
