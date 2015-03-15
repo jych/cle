@@ -80,5 +80,4 @@ def GMM(y, mu, logvar, coeff, tol=0.):
     inner = -0.5 * T.sum(T.sqr(y - mu) * T.exp(-logvar) + logvar +
                         T.log(2 * np.pi), axis=1)
     nll = -logsumexp(T.log(coeff) + inner, axis=1)
-   
     return nll
