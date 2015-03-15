@@ -285,7 +285,7 @@ class GFGRU(GRU):
         z += self.params['b_'+self.name]
         # Compute activations of gating units
         r_on = T.nnet.sigmoid(z[:, self.nout:2*self.nout])
-        u_on = T.nnet.sigmoid(z[:, 2*self.nout:])
+        u_on = T.nnet.sigmoid(z[:, 2*self.nout:3*self.nout])
         gron = T.nnet.sigmoid(z[:, 3*self.nout:])
         # Update hidden & cell states
         c_t = T.zeros_like(z_tm1)
