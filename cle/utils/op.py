@@ -41,7 +41,6 @@ def overlap_sum(X, overlap):
     new_X = []
     for i in xrange(len(X)):
         len_x = len(X[i][0])
-        #overlap = int(len_x * p)
         time_steps = len(X[i])
         new_x = np.zeros(len_x + (time_steps - 1) * overlap)
         start = 0
