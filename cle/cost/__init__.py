@@ -74,7 +74,7 @@ def GMM(y, mu, logvar, coeff, tol=0.):
                      mu.shape[1]/coeff.shape[-1],
                      coeff.shape[-1]))
     logvar = logvar.reshape((logvar.shape[0],
-                             logvar.shape[1] / coeff.shape[-1],
+                             logvar.shape[1]/coeff.shape[-1],
                              coeff.shape[-1]))
     logvar = T.log(T.exp(logvar) + tol)
     inner = -0.5 * T.sum(T.sqr(y - mu) * T.exp(-logvar) + logvar +
