@@ -163,7 +163,8 @@ class GMMLayer(GaussianLayer):
             self.theano_rng.multinomial(
                 pvals=coeff,
                 dtype=coeff.dtype
-            )
+            ),
+            axis=1
         )
         mu = mu[T.arange(mu.shape[0]), :, idx]
         sig = T.sqrt(T.exp(logvar[T.arange(logvar.shape[0]), :, idx]))

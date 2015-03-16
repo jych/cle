@@ -95,8 +95,8 @@ def shared_int(value, dtype='int32', name=None, borrow=False):
     return theano.shared(theano_args)
 
 
-def predict(probs):
-    return T.argmax(probs, axis=-1)
+def predict(probs, axis=-1):
+    return T.argmax(probs, axis=axis)
 
 
 def error(labels, pred_labels):
