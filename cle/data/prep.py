@@ -4,6 +4,47 @@ import numpy as np
 from scipy.fftpack import rfft, irfft
 
 
+class StaticPrepMixin(object):
+    """
+    Preprocessing mixin for static data
+    """
+    def normalize(self, X, X_mean=None, X_std=None, axis=0):
+        """
+        Globally normalize X into zero mean and unit variance
+
+        Parameters
+        ----------
+        X      : list or ndArray
+        X_mean : Scalar
+        X_std  : Scalar
+        """
+        if X_mean is None or X_std is None:
+            X_mean = np.array(X).mean(axis=axis)
+            X_std = np.array(X).std(axis=axis)
+            X = (X - X_mean) / X_std
+        else:
+            X = (X - X_mean) / X_std
+        return (X, X_mean, X_std)
+
+    def global_normalize(self, X, X_mean=None, X_std=None):
+        """
+        Globally normalize X into zero mean and unit variance
+
+        Parameters
+        ----------
+        X      : list or ndArray
+        X_mean : Scalar
+        X_std  : Scalar
+        """
+        if (X_mean or X_std) is None:
+            X_mean = np.array(X).mean()
+            X_std = np.array(X).std()
+            X = (X - X_mean) / X_std
+        else:
+            X = (X - X_mean) / X_std
+        return (X, X_mean, X_std)
+
+
 class SequentialPrepMixin(object):
     """
     Preprocessing mixin for sequential data
@@ -43,7 +84,7 @@ class SequentialPrepMixin(object):
         Compute varaince using the relation
         >>> Var(X) = E[X^2] - E[X]^2
         """
-        if (X_mean or X_std) is None:
+        if X_mean is None or X_std is None:
             X_len = np.array([len(x) for x in X]).sum()
             X_mean = np.array([x.sum() for x in X]).sum() / X_len
             X_sqr = np.array([(x**2).sum() for x in X]).sum() / X_len
@@ -63,7 +104,7 @@ class SequentialPrepMixin(object):
         X_max : Scalar
         X_min : Scalar
         """
-        if (X_max or X_min) is None:
+        if X_max is None or X_min is None:
             X_max = np.array([x.max() for x in X]).max()
             X_min = np.array([x.min() for x in X]).min()
             X = (X - X_min) / (X_max - X_min)

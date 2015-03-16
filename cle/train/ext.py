@@ -171,8 +171,9 @@ class EarlyStopping(Extension):
 
         WRITEME
     """
-    def __init__(self, path):
+    def __init__(self, freq, path):
         self.name = 'ext_save'
+        self.freq = freq
         if not os.path.exists(path):
             os.makedirs(path)
         self.path = path
@@ -183,12 +184,13 @@ class EarlyStopping(Extension):
         Pickle the mainloop
         """
         if len(mainloop.trainlog._ddmonitors) > 0:
-            if mainloop.trainlog._ddmonitors[-1][0] < self.best:
-                self.best = mainloop.trainlog._ddmonitors[-1][0]
-                pklpath = mainloop.name + '_best.pkl'
-                path = os.path.join(self.path, pklpath)
-                logger.info("\tSaving best model to: %s" % path)
-                try:
-                    secure_pickle_dump(mainloop, path)
-                except Exception:
-                    raise
+            if np.mod(mainloop.trainlog._epoch_seen, self.freq) == 0:
+                if mainloop.trainlog._ddmonitors[-1][0] < self.best:
+                    self.best = mainloop.trainlog._ddmonitors[-1][0]
+                    pklpath = mainloop.name + '_best.pkl'
+                    path = os.path.join(self.path, pklpath)
+                    logger.info("\tSaving best model to: %s" % path)
+                    try:
+                        secure_pickle_dump(mainloop, path)
+                    except Exception:
+                        raise
