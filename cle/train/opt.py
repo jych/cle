@@ -45,7 +45,7 @@ class Momentum(Optimizer):
         """
         updates = OrderedDict()
         for p, g in grads.items():
-            u = sharedX(param.get_value() * 0.)
+            u = sharedX(p.get_value() * 0.)
             u_t = self.mom * u - self.lr * g
             if self.nesterov:
                 u_t = self.mom * u_t - self.lr * g

@@ -6,8 +6,6 @@ from cle.cle.utils import tolist, totuple, unpack
 from theano.tensor.nnet import conv2d
 
 
-# Pooling layers exist separately in layer.py
-# Batch normalization should also locate in layer.py
 class Conv2DLayer(StemCell):
     """
     2D convolutional layer

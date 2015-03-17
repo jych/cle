@@ -23,9 +23,9 @@ from cle.datasets.cifar10 import CIFAR10
 
 # Set your dataset
 #datapath = ['/data/lisa/data/cifar10/pylearn2_gcn_whitened/train.npy',
-#            '/u/chungjun/repos/cle/data/trainy.npy']
+#            '/u/chungjun/repos/cle/labels/trainy.npy']
 #testdatapath = ['/data/lisa/data/cifar10/pylearn2_gcn_whitened/test.npy',
-#                '/u/chungjun/repos/cle/data/testy.npy']
+#                '/u/chungjun/repos/cle/labels/testy.npy']
 #savepath = '/u/chungjun/repos/cle/saved/'
 datapath = ['/home/junyoung/data/cifar10/pylearn2_gcn_whitened/train.npy',
             '/home/junyoung/data/cifar10/pylearn2_gcn_whitened/trainy.npy']
@@ -43,7 +43,7 @@ testdata = CIFAR10(name='test',
                    path=testdatapath)
 
 # Choose the random initialization method
-init_W = InitCell('randn')
+init_W = InitCell('rand')
 init_b = InitCell('zeros')
 
 # Define nodes: objects
@@ -61,62 +61,36 @@ c1 = ConvertLayer(name='c1',
                   outshape=(batch_size, 3, 32, 32))
 h1 = Conv2DLayer(name='h1',
                  parent=['c1'],
-                 outshape=(batch_size, 96, 30, 30),
+                 outshape=(batch_size, 64, 21, 21),
                  unit='relu',
                  init_W=init_W,
                  init_b=init_b)
 h2 = Conv2DLayer(name='h2',
                  parent=['h1'],
-                 outshape=(batch_size, 96, 28, 28),
+                 outshape=(batch_size, 128, 10, 10),
                  unit='relu',
                  init_W=init_W,
                  init_b=init_b)
-p1 = MaxPool2D(name='p1',
-               parent=['h2'],
-               poolsize=(3, 3),
-               poolstride=(2, 2))
 h3 = Conv2DLayer(name='h3',
-                 parent=['p1'],
-                 outshape=(batch_size, 192, 11, 11),
-                 unit='relu',
-                 init_W=init_W,
-                 init_b=init_b)
-h4 = Conv2DLayer(name='h4',
-                 parent=['h3'],
-                 outshape=(batch_size, 192, 9, 9),
-                 unit='relu',
-                 init_W=init_W,
-                 init_b=init_b)
-h5 = Conv2DLayer(name='h5',
-                 parent=['h4'],
-                 outshape=(batch_size, 192, 7, 7),
-                 unit='relu',
-                 init_W=init_W,
-                 init_b=init_b)
-p2 = MaxPool2D(name='p2',
-               parent=['h5'],
-               poolsize=(3, 3),
-               poolstride=(2, 2))
-h6 = Conv2DLayer(name='h6',
-                 parent=['p2'],
-                 outshape=(batch_size, 192, 1, 1),
+                 parent=['h2'],
+                 outshape=(batch_size, 128, 1, 1),
                  unit='relu',
                  init_W=init_W,
                  init_b=init_b)
 c2 = ConvertLayer(name='c2',
-                  parent=['h6'],
-                  outshape=(batch_size, 192))
+                  parent=['h3'],
+                  outshape=(batch_size, 128))
 # Global average pooling missing
-h7 = FullyConnectedLayer(name='h7',
+h4 = FullyConnectedLayer(name='h4',
                          parent=['c2'],
                          nout=10,
                          unit='softmax',
                          init_W=init_W,
                          init_b=init_b)
-cost = MulCrossEntropyLayer(name='cost', parent=['y', 'h7'])
+cost = MulCrossEntropyLayer(name='cost', parent=['y', 'h4'])
 
 # You will fill in a list of nodes and fed them to the model constructor
-nodes = [c1, c2, h1, h2, h3, h4, h5, h6, h7, p1, p2, cost]
+nodes = [c1, c2, h1, h2, h3, h4, cost]
 
 # Your model will build the Theano computational graph
 cnn = Net(inputs=inputs, inputs_dim=inputs_dim, nodes=nodes)
@@ -124,14 +98,14 @@ cnn.build_graph()
 
 # You can access any output of a node by doing model.nodes[$node_name].out
 cost = cnn.nodes['cost'].out
-err = error(predict(cnn.nodes['h7'].out), predict(y))
+err = error(predict(cnn.nodes['h4'].out), predict(y))
 cost.name = 'cost'
 err.name = 'error_rate'
 model.graphs = [cnn]
 
 # Define your optimizer: Momentum (Nesterov), RMSProp, Adam
 optimizer = Adam(
-    lr=0.1
+    lr=0.00005
 )
 
 extension = [
