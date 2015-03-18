@@ -171,7 +171,7 @@ class EarlyStopping(Extension):
 
         WRITEME
     """
-    def __init__(self, freq, path):
+    def __init__(self, path, freq=1):
         self.name = 'ext_save'
         self.freq = freq
         if not os.path.exists(path):

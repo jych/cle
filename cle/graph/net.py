@@ -132,7 +132,7 @@ class Net(object):
             n_steps=n_steps,
             go_backwards=reverse)
         result = tolist(result)
-        if self.output_args is None:
+        if self.output_args is None and self.iterators is None:
             return result
         if len(updates) == 0:
             return result[-self.nNone:]
@@ -235,7 +235,6 @@ class Net(object):
     def add_node(self, nodes):
         for node in tolist(nodes):
             self.nodes[node.name] = node
-        self.set_graph()
         self.params = self.get_params()
 
     def del_node(self, node):

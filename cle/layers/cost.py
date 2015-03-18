@@ -16,7 +16,7 @@ class CostLayer(StemCell):
 
     Parameters
     ----------
-    todo..
+    ..todo::
     """
     def __init__(self, use_sum=False, **kwargs):
         super(CostLayer, self).__init__(**kwargs)
@@ -36,7 +36,7 @@ class BinCrossEntropyLayer(CostLayer):
 
     Parameters
     ----------
-    todo..
+    ..todo::
     """
     def fprop(self, X):
         cost = NllBin(X[0], X[1])
@@ -52,7 +52,7 @@ class MulCrossEntropyLayer(CostLayer):
 
     Parameters
     ----------
-    todo..
+    ..todo::
     """
     def fprop(self, X):
         cost = NllMul(X[0], X[1])
@@ -68,7 +68,7 @@ class MSELayer(CostLayer):
 
     Parameters
     ----------
-    todo..
+    ..todo::
     """
     def fprop(self, X):
         cost = MSE(X[0], X[1])
@@ -84,7 +84,7 @@ class GaussianLayer(CostLayer):
 
     Parameters
     ----------
-    todo..
+    ..todo::
     """
     def __init__(self,
                  use_sample=False,
