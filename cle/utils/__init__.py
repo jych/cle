@@ -134,12 +134,9 @@ def totuple(arg):
 def todict(args):
     rval = OrderedDict()
     if isinstance(args, (list, tuple)):
-        if len(args) > 1:
-            for arg in args:
-                rval[arg.name] = arg
-        else:
-            rval[args.name] = args
-    elif type(args) is not tuple:
+        for arg in args:
+            rval[arg.name] = arg
+    else:
         rval[args.name] = args
     return rval
 
