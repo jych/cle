@@ -235,6 +235,30 @@ class OnehotLayer(StemCell):
         pass
 
 
+class ProjectionLayer(StemCell):
+    """
+    Transform a scalar to one-hot vector
+
+    Parameters
+    ----------
+    .. todo::
+    """
+    def fprop(self, x):
+        x = unpack(x)
+        z = T.zeros((x.shape[0], self.nout))
+        for x, (parname, parout) in izip(X, self.parent.items()):
+            W = self.params['W_'+parname+self.name]
+            z += T.dot(x[:, :parout], W)
+        z.name = self.name
+        return z
+
+    def initialize(self):
+        for parname, parout in self.parent.items():
+            W_shape = (parout, self.nout)
+            W_name = 'W_'+parname+self.name
+            self.alloc(self.init_W.get(W_shape, W_name))
+
+
 class ConcLayer(StemCell):
     """
     Concatenate two tensor varaibles
