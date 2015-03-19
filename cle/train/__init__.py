@@ -63,9 +63,9 @@ class Training(PickleMixin, TheanoMixin):
             self.trainlog._batches.append(this_cost)
             self.trainlog._batch_seen += 1
             self.run_extension('ext_monitor')
-            self.run_extension('ext_term')
             self.run_extension('ext_save')
         self.trainlog._epoch_seen += 1
+        self.run_extension('ext_term')
         #self.run_extension('ext_term')
         #self.run_extension('ext_save')
         if self.end_training():
