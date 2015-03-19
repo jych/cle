@@ -155,7 +155,7 @@ class Picklize(Extension):
         """
         Pickle the mainloop
         """
-        if np.mod(mainloop.trainlog._batch_seen, self.freq):
+        if np.mod(mainloop.trainlog._batch_seen, self.freq) == 0:
             pklpath = mainloop.name + '.pkl'
             path = os.path.join(self.path, pklpath)
             logger.info("\tSaving model to: %s" % path)
