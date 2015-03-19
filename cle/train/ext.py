@@ -155,7 +155,8 @@ class Picklize(Extension):
         """
         Pickle the mainloop
         """
-        if np.mod(mainloop.trainlog._epoch_seen, self.freq) == 0:
+        if np.mod(mainloop.trainlog._batch_seen, self.freq) == 0\
+                and not mainloop.trainlog._updated_switch:
             pklpath = mainloop.name + '.pkl'
             path = os.path.join(self.path, pklpath)
             logger.info("\tSaving model to: %s" % path)
@@ -184,7 +185,7 @@ class EarlyStopping(Extension):
         Pickle the mainloop
         """
         if len(mainloop.trainlog._ddmonitors) > 0:
-            if np.mod(mainloop.trainlog._epoch_seen, self.freq) == 0:
+            if np.mod(mainloop.trainlog._batch_seen, self.freq) == 0:
                 if mainloop.trainlog._ddmonitors[-1][0] < self.best:
                     self.best = mainloop.trainlog._ddmonitors[-1][0]
                     pklpath = mainloop.name + '_best.pkl'
