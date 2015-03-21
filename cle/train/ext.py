@@ -194,3 +194,26 @@ class EarlyStopping(Extension):
                         secure_pickle_dump(mainloop, path)
                     except Exception:
                         raise
+
+
+class WeightDecay(Extension):
+    def __init__(self, lambd=0.0002, param_name=['W']):
+        """
+        .. todo::
+
+            WRITEME
+        """
+        self.name = 'ext_regularize'
+        self.lambd = lambd
+        self.param_name = param_name
+
+    def exe(self, mainloop):
+        """
+        .. todo::
+
+            WRITEME
+        """
+        for p in mainloop.params:
+            for pname in self.param_name:
+                if pname in p.name:
+                    mainloop.cost += self.lambd * 0.5 * (p**2).sum()

@@ -43,6 +43,7 @@ class Training(PickleMixin, TheanoMixin):
         self.endloop = 0
 
     def build_training_graph(self):
+        self.run_extension('ext_regularize')
         self.grads = OrderedDict(izip(self.params,
                                       T.grad(self.cost, self.params)))
         self.run_extension('ext_grad')
@@ -66,8 +67,6 @@ class Training(PickleMixin, TheanoMixin):
             self.run_extension('ext_save')
         self.trainlog._epoch_seen += 1
         self.run_extension('ext_term')
-        #self.run_extension('ext_term')
-        #self.run_extension('ext_save')
         if self.end_training():
             return False
         return True
