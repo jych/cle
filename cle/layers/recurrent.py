@@ -184,7 +184,6 @@ class GFLSTM(LSTM):
         N = self.nout
         Nm = len(self.recurrent)
         for parname, parout in self.parent.items():
-            #W_shape = (parout, 4*N)
             W_shape = (parout, 4*N+Nm)
             W_name = 'W_'+parname+self.name
             self.alloc(self.init_W.get(W_shape, W_name))

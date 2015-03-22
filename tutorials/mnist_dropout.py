@@ -68,24 +68,16 @@ h2 = FullyConnectedLayer(name='h2',
                          init_W=init_W,
                          init_b=init_b)
 d2 = DropoutLayer(name='d2', parent=['h2'], nout=1000)
-#h3 = FullyConnectedLayer(name='h3',
-#                         parent=['d2'],
-#                         nout=500,
-#                         unit='relu',
-#                         init_W=init_W,
-#                         init_b=init_b)
-#d3 = DropoutLayer(name='d3', parent=['h3'], nout=500)
-h4 = FullyConnectedLayer(name='h4',
+h3 = FullyConnectedLayer(name='h3',
                          parent=['d2'],
                          nout=10,
                          unit='softmax',
                          init_W=init_W,
                          init_b=init_b)
-cost = MulCrossEntropyLayer(name='cost', parent=['onehot', 'h4'])
+cost = MulCrossEntropyLayer(name='cost', parent=['onehot', 'h3'])
 
 # You will fill in a list of nodes and fed them to the model constructor
-#nodes = [onehot, h1, h2, h3, h4, d1, d2, d3, cost]
-nodes = [onehot, h1, h2, h4, d1, d2, cost]
+nodes = [onehot, h1, h2, h3, d1, d2, cost]
 
 # Your model will build the Theano computational graph
 mlp = Net(inputs=inputs, inputs_dim=inputs_dim, nodes=nodes)
@@ -93,19 +85,18 @@ mlp.build_graph()
 
 # You can access any output of a node by doing model.nodes[$node_name].out
 cost_ = mlp.nodes['cost'].out
-err = error(predict(mlp.nodes['h4'].out), predict(mlp.nodes['onehot'].out))
+err = error(predict(mlp.nodes['h3'].out), predict(mlp.nodes['onehot'].out))
 cost_.name = 'cost'
 err.name = 'error_rate'
 model.graphs = [mlp]
 
 mlp.nodes['d1'].set_mode(1)
 mlp.nodes['d2'].set_mode(1)
-#mlp.nodes['d3'].set_mode(1)
 mlp.build_graph()
 mn_cost = mlp.nodes['cost'].out
-mn_cost.name = 'test_cost'
-mn_err = error(predict(mlp.nodes['h4'].out), predict(mlp.nodes['onehot'].out))
-mn_err.name = 'test_err'
+mn_cost.name = 'mn_cost'
+mn_err = error(predict(mlp.nodes['h3'].out), predict(mlp.nodes['onehot'].out))
+mn_err.name = 'mn_err'
 monitor_fn = theano.function(inputs, [mn_cost, mn_err])
 
 # Define your optimizer: Momentum (Nesterov), RMSProp, Adam
@@ -117,7 +108,7 @@ extension = [
     GradientClipping(),
     EpochCount(500),
     Monitoring(freq=100,
-               ddout=[cost_, err],
+               ddout=[mn_cost, mn_err],
                data=[Iterator(trdata, batch_size),
                      Iterator(valdata, batch_size)],
                monitor_fn=monitor_fn),
