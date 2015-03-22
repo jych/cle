@@ -1,5 +1,6 @@
 import ipdb
 import numpy as np
+import theano
 
 from cle.cle.data import Iterator
 from cle.cle.graph.net import Net
@@ -7,6 +8,7 @@ from cle.cle.models import Model
 from cle.cle.layers import InitCell, OnehotLayer
 from cle.cle.layers.cost import MulCrossEntropyLayer
 from cle.cle.layers.feedforward import FullyConnectedLayer
+from cle.cle.layers.layer import DropoutLayer
 from cle.cle.train import Training
 from cle.cle.train.ext import (
     EpochCount,
@@ -54,20 +56,35 @@ onehot = OnehotLayer(name='onehot',
                      nout=10)
 h1 = FullyConnectedLayer(name='h1',
                          parent=['x'],
-                         nout=1000,
+                         nout=500,
                          unit='relu',
                          init_W=init_W,
                          init_b=init_b)
+d1 = DropoutLayer(name='d1', parent=['h1'], nout=500)
 h2 = FullyConnectedLayer(name='h2',
-                         parent=['h1'],
+                         parent=['d1'],
+                         nout=500,
+                         unit='relu',
+                         init_W=init_W,
+                         init_b=init_b)
+d2 = DropoutLayer(name='d2', parent=['h2'], nout=500)
+h3 = FullyConnectedLayer(name='h3',
+                         parent=['d2'],
+                         nout=500,
+                         unit='relu',
+                         init_W=init_W,
+                         init_b=init_b)
+d3 = DropoutLayer(name='d3', parent=['h3'], nout=500)
+h4 = FullyConnectedLayer(name='h4',
+                         parent=['d3'],
                          nout=10,
                          unit='softmax',
                          init_W=init_W,
                          init_b=init_b)
-cost = MulCrossEntropyLayer(name='cost', parent=['onehot', 'h2'])
+cost = MulCrossEntropyLayer(name='cost', parent=['onehot', 'h4'])
 
 # You will fill in a list of nodes and fed them to the model constructor
-nodes = [onehot, h1, h2, cost]
+nodes = [onehot, h1, h2, h3, h4, d1, d2, d3, cost]
 
 # Your model will build the Theano computational graph
 mlp = Net(inputs=inputs, inputs_dim=inputs_dim, nodes=nodes)
@@ -75,10 +92,17 @@ mlp.build_graph()
 
 # You can access any output of a node by doing model.nodes[$node_name].out
 cost = mlp.nodes['cost'].out
-err = error(predict(mlp.nodes['h2'].out), predict(mlp.nodes['onehot'].out))
+err = error(predict(mlp.nodes['h4'].out), predict(mlp.nodes['onehot'].out))
 cost.name = 'cost'
 err.name = 'error_rate'
 model.graphs = [mlp]
+
+d1 = DropoutLayer(name='d1', parent=['h1'], is_test=1)
+d2 = DropoutLayer(name='d2', parent=['h2'], is_test=1)
+d3 = DropoutLayer(name='d3', parent=['h3'], is_test=1)
+monitor = Net(inputs=inputs, inputs_dim=inputs_dim, nodes=nodes)
+monitor.build_graph()
+monitor_fn = theano.function(inputs, [cost, err])
 
 # Define your optimizer: Momentum (Nesterov), RMSProp, Adam
 optimizer = RMSProp(
@@ -91,13 +115,14 @@ extension = [
     Monitoring(freq=100,
                ddout=[cost, err],
                data=[Iterator(trdata, batch_size),
-                     Iterator(valdata, batch_size)]),
+                     Iterator(valdata, batch_size)],
+               monitor_fn=monitor_fn),
     Picklize(freq=200,
              path=savepath)
 ]
 
 mainloop = Training(
-    name='toy_mnist',
+    name='toy_mnist_dropout',
     data=Iterator(trdata, batch_size),
     model=model,
     optimizer=optimizer,

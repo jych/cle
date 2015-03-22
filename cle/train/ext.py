@@ -70,7 +70,7 @@ class EpochCount(Extension):
 
 
 class Monitoring(Extension, TheanoMixin):
-    def __init__(self, freq, ddout=None, data=None):
+    def __init__(self, freq, ddout=None, data=None, monitor_fn=None):
         """
         .. todo::
 
@@ -80,7 +80,7 @@ class Monitoring(Extension, TheanoMixin):
         self.freq = freq
         self.ddout = ddout
         self.data = data
-        self.monitor_fn = None
+        self.monitor_fn = monitor_fn
 
     def monitor_data_based_channels(self, mainloop):
         """

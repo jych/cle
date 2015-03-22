@@ -4,6 +4,7 @@ import theano
 from cle.cle.layers import StemCell
 from cle.cle.layers.feedforward import FullyConnectedLayer
 from cle.cle.utils import totuple, unpack
+from cle.cle.utils.op import dropout
 from theano.tensor.signal.downsample import max_pool_2d
 
 
@@ -108,12 +109,14 @@ class DropoutLayer(StemCell):
         return getattr(self, which)
     
     def train_prop(self, z):
+        z = unpack(z)
         z = dropout(z, self.p, self.theano_rng)
         z *= self.train_scale
         z.name = self.name
         return z       
 
     def test_prop(self, z):
+        z = unpack(z)
         z *= self.test_scale
         z.name = self.name
         return z
