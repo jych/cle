@@ -81,3 +81,37 @@ def GMM(y, mu, logvar, coeff, tol=0.):
                          T.log(2 * np.pi), axis=1)
     nll = -logsumexp(T.log(coeff) + inner, axis=1)
     return nll
+
+
+def KLGaussianStdGaussian(mu, logvar, tol=0.):
+    """
+    Re-parameterized formula for KL
+    between Gaussian predicted by encoder and standardized Gaussian dist.
+
+    Parameters
+    ----------
+    mu     : FullyConnected (Linear)
+    logvar : FullyConnected (Linear)
+    """
+    logvar = T.log(T.exp(logvar) + tol)
+    kl = -0.5 * (1 + logvar - mu**2 - T.exp(logvar))
+    return kl
+
+
+def KLGaussianGaussian(mu1, logvar1, mu2, logvar2, tol=0.):
+    """
+    Re-parameterized formula for KL
+    between Gaussian predicted by encoder and Gaussian dist.
+
+    Parameters
+    ----------
+    mu1     : FullyConnected (Linear)
+    logvar1 : FullyConnected (Linear)
+    mu2     : FullyConnected (Linear)
+    logvar2 : FullyConnected (Linear)
+    """
+    logvar1 = T.log(T.exp(logvar1) + tol)
+    logvar2 = T.log(T.exp(logvar2) + tol)
+    kl = 0.5 * (logvar2 - logvar1 + (T.exp(logvar1) + (mu1 - mu2)**2) /
+                T.exp(logvar2) - 1)
+    return kl

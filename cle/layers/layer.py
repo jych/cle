@@ -1,10 +1,12 @@
 import ipdb
 import theano
 
+from cle.cle.cost import KLGaussianStdGaussian, KLGaussianGaussian
 from cle.cle.layers import StemCell
 from cle.cle.layers.feedforward import FullyConnectedLayer
 from cle.cle.utils import totuple, unpack
 from cle.cle.utils.op import dropout
+
 from theano.tensor.signal.downsample import max_pool_2d
 
 
@@ -131,6 +133,77 @@ class DropoutLayer(StemCell):
     def __setstate__(self, state):
         self.__dict__.update(state)
         self.set_mode(self.is_test)
+  
+    def initialize(self):
+        pass
+
+
+class PriorLayer(StemCell):
+    """
+    Prior layer which either computes
+    the kl of VAE or generates samples using
+    normal distribution when mod(t, N)==0
+
+    Parameters
+    ----------
+    .. todo::
+    """
+    def __init__(self,
+                 use_sample=False,
+                 tol=0.,
+                 num_sample=1,
+                 **kwargs):
+        super(PriorLayer, self).__init__(**kwargs)
+        self.use_sample = use_sample
+        if self.use_sample:
+            self.fprop = self.which_method('sample')
+        else:
+            self.fprop = self.which_method('cost')
+        self.tol = tol
+        if use_sample:
+            if num_sample is None:
+                raise ValueError("If you are going to use sampling,\
+                                  provide the number of samples.")
+        self.num_sample = num_sample
+
+    def which_method(self, which):
+        return getattr(self, which)
+ 
+    def cost(self, X):
+        if len(X) != 2 and len(X) != 4:
+            raise ValueError("The number of inputs does not match.")
+        if len(X) == 2:
+            return KLGaussianStdGaussian(X[0], X[1], self.tol)
+        elif len(X) == 4:
+            return KLGaussianGaussian(X[0], X[1], X[2], X[3], self.tol)
+
+    def sample(self, X):
+        if len(X) != 2 and len(X) != 4:
+            raise ValueError("The number of inputs does not match.")
+        mu = X[0]
+        logvar = X[1]
+        mu = mu.dimshuffle(0, 'x', 1)
+        logvar = logvar.dimshuffle(0, 'x', 1)
+        epsilon = self.theano_rng.normal(size=(mu.shape[0],
+                                               self.num_sample,
+                                               mu.shape[-1]),
+                                         avg=0., std=1.,
+                                         dtype=mu.dtype)
+        z = mu + T.sqrt(T.exp(logvar)) * epsilon
+        z = z.reshape((z.shape[0] * z.shape[1], -1))
+        return z
+
+    def __getstate__(self):
+        dic = self.__dict__.copy()
+        dic.pop('fprop')
+        return dic
+    
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        if self.use_sample:
+            self.fprop = self.which_method('sample')
+        else:
+            self.fprop = self.which_method('cost')
   
     def initialize(self):
         pass
