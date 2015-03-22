@@ -15,9 +15,9 @@ from cle.cle.train.ext import (
     GradientClipping,
     Monitoring,
     Picklize,
-    EarlyStopping
+    WeightNorm
 )
-from cle.cle.train.opt import RMSProp
+from cle.cle.train.opt import Momentum
 from cle.cle.utils import error, predict, OrderedDict
 from cle.datasets.mnist import MNIST
 
@@ -38,7 +38,7 @@ valdata = MNIST(name='valid',
                 path=datapath)
 
 # Choose the random initialization method
-init_W = InitCell('randn')
+init_W = InitCell('rand')
 init_b = InitCell('zeros')
 
 # Define nodes: objects
@@ -97,28 +97,29 @@ cost.name = 'cost'
 err.name = 'error_rate'
 model.graphs = [mlp]
 
-d1 = DropoutLayer(name='d1', parent=['h1'], is_test=1)
-d2 = DropoutLayer(name='d2', parent=['h2'], is_test=1)
-d3 = DropoutLayer(name='d3', parent=['h3'], is_test=1)
+d1.is_test = 1
+d2.is_test = 1
+d3.is_test = 1
 monitor = Net(inputs=inputs, inputs_dim=inputs_dim, nodes=nodes)
 monitor.build_graph()
 monitor_fn = theano.function(inputs, [cost, err])
 
 # Define your optimizer: Momentum (Nesterov), RMSProp, Adam
-optimizer = RMSProp(
-    lr=0.001
+optimizer = Momentum(
+    lr=0.01
 )
 
 extension = [
     GradientClipping(),
-    EpochCount(100),
+    EpochCount(500),
     Monitoring(freq=100,
                ddout=[cost, err],
                data=[Iterator(trdata, batch_size),
                      Iterator(valdata, batch_size)],
                monitor_fn=monitor_fn),
-    Picklize(freq=200,
-             path=savepath)
+    Picklize(freq=1000000,
+             path=savepath),
+    WeightNorm(param_name='W')    
 ]
 
 mainloop = Training(

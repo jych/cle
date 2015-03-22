@@ -111,15 +111,13 @@ class DropoutLayer(StemCell):
     def train_prop(self, z):
         z = unpack(z)
         z = dropout(z, self.p, self.theano_rng)
-        z *= self.train_scale
         z.name = self.name
-        return z       
+        return z * self.train_scale
 
     def test_prop(self, z):
         z = unpack(z)
-        z *= self.test_scale
         z.name = self.name
-        return z
+        return z * self.test_scale
 
     def __getstate__(self):
         dic = self.__dict__.copy()
