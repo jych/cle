@@ -111,7 +111,7 @@ optimizer = RMSProp(
 
 extension = [
     GradientClipping(),
-    EpochCount(40),
+    EpochCount(100),
     Monitoring(freq=100,
                ddout=[cost, err],
                data=[Iterator(trdata, batch_size),
