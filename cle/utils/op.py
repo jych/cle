@@ -6,8 +6,7 @@ import theano.tensor as T
 def dropout(x, p, theano_rng):
     if p < 0 or p > 1:
         raise ValueError("p should be in [0, 1].")
-    mask = theano_rng.binomial(p=p, size=x.shape,
-                               dtype=x.dtype)
+    mask = theano_rng.binomial(p=p, size=x.shape, dtype=x.dtype)
     return x * mask
 
 

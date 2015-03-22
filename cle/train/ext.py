@@ -6,7 +6,7 @@ import sys
 import theano.tensor as T
 
 from cle.cle.graph import TheanoMixin
-from cle.cle.utils import secure_pickle_dump
+from cle.cle.utils import secure_pickle_dump, tolist
 
 
 logger = logging.getLogger(__name__)
@@ -203,9 +203,9 @@ class WeightDecay(Extension):
 
             WRITEME
         """
-        self.name = 'ext_regularize'
+        self.name = 'ext_regularize_pre_grad'
         self.lambd = lambd
-        self.param_name = param_name
+        self.param_name = tolist(param_name)
 
     def exe(self, mainloop):
         """
@@ -217,3 +217,37 @@ class WeightDecay(Extension):
             for pname in self.param_name:
                 if pname in p.name:
                     mainloop.cost += self.lambd * 0.5 * (p**2).sum()
+
+
+class WeightNorm(Extension):
+    def __init__(self, is_vector=1, weight_norm=1.9365, param_name=['W']):
+        """
+        .. todo::
+
+            WRITEME
+        """
+        self.name = 'ext_regularize_post_grad'
+        self.weight_norm = weight_norm
+        self.param_name = tolist(param_name)
+        self.is_vector = is_vector
+
+    def exe(self, mainloop):
+        """
+        .. todo::
+
+            WRITEME
+        """
+        for k, p in mainloop.updates.items():
+            for pname in self.param_name:
+                if pname in str(k):
+                    updated_W = mainloop.updates[k]
+                    if self.is_vector:
+                        col_norms = T.sqrt(T.sqr(updated_W).sum(axis=0))
+                        desired_norms = T.clip(col_norms, 0, self.weight_norm)
+                        ratio = (desired_norms / (1e-7 + col_norms))
+                        mainloop.updates[k] = updated_W * ratio
+                    else:
+                        norm = T.sqrt(T.sqr(updated_W).sum())
+                        desired_norm = T.clip(norm, 0, self.weight_norm)
+                        ratio = (desired_norm / (1e-7 + norm))
+                        mainloop.updates[k] = updated_W * ratio

@@ -43,12 +43,13 @@ class Training(PickleMixin, TheanoMixin):
         self.endloop = 0
 
     def build_training_graph(self):
-        self.run_extension('ext_regularize')
+        self.run_extension('ext_regularize_pre_grad')
         self.grads = OrderedDict(izip(self.params,
                                       T.grad(self.cost, self.params)))
         self.run_extension('ext_grad')
-        updates = self.optimizer.get_updates(self.grads)
-        return self.build_theano_graph(self.inputs, self.outputs, updates)
+        self.updates = self.optimizer.get_updates(self.grads)
+        self.run_extension('ext_regularize_post_grad')
+        return self.build_theano_graph(self.inputs, self.outputs, self.updates)
 
     def run(self):
         logger.info("Entering main loop")

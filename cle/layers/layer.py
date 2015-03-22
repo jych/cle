@@ -78,3 +78,58 @@ class ClockworkLayer(StemCell):
                                  z)
         z.name = self.name
         return z
+
+
+class DropoutLayer(StemCell):
+    """
+    Dropout layer
+
+    Parameters
+    ----------
+    .. todo::
+    """
+    def __init__(self,
+                 p=0.5,
+                 train_scale=2,
+                 test_scale=1,
+                 is_test=0,
+                 **kwargs):
+        super(DropoutLayer, self).__init__(**kwargs)
+        self.p = p
+        self.train_scale = train_scale
+        self.test_scale = test_scale
+        self.is_test = is_test
+        if self.is_test:
+            self.fprop = self.which_prop('test_prop')
+        else:
+            self.fprop = self.which_prop('train_prop')
+
+    def which_prop(self, which):
+        return getattr(self, which)
+    
+    def train_prop(self, z):
+        z = dropout(z, self.p, self.theano_rng)
+        z *= self.train_scale
+        z.name = self.name
+        return z       
+
+    def test_prop(self, z):
+        z *= self.test_scale
+        z.name = self.name
+        return z
+
+    def __getstate__(self):
+        dic = self.__dict__.copy()
+        dic.pop('fprop')
+        return dic
+    
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        if self.is_test:
+            
+            self.fprop = self.which_prop('test_prop')
+        else:
+            self.fprop = self.which_prop('train_prop')
+  
+    def initialize(self):
+        pass
