@@ -19,11 +19,13 @@ class RecurrentLayer(StemCell):
     def __init__(self,
                  batch_size,
                  recurrent=[],
+                 self_recurrent=1,
                  init_U=InitCell('ortho'),
                  **kwargs):
         super(RecurrentLayer, self).__init__(**kwargs)
         self.recurrent = OrderedDict()
-        self.recurrent[self.name] = self.nout
+        if self_recurrent:
+            self.recurrent[self.name] = self.nout
         for rec in tolist(recurrent):
             self.recurrent[rec] = None
         self.batch_size = batch_size

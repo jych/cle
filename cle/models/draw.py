@@ -1,9 +1,11 @@
 import ipdb
 import numpy as np
+import theano.tensor as T
 
 from cle.cle.layers import InitCell, StemCell
 from cle.cle.layers.feedforward import FullyConnectedLayer
 from cle.cle.layers.recurrent import RecurrentLayer
+from itertools import izip
 
 
 class ReadLayer(RecurrentLayer):
@@ -19,13 +21,19 @@ class ReadLayer(RecurrentLayer):
     def __init__(self,
                  N,
                  width=0,
-                 hegiht=0,
-                 init_U=InitCell('randn'),
+                 height=0,
                  **kwargs):
-        super(ReadLayer, self).__init__(init_U, **kwargs)
+        super(ReadLayer, self).__init__(**kwargs)
         self.N = N
         self.width = width
         self.height = height
+
+    def tensor_dot(self, X, Y):
+        if Y.ndim == 4:
+            Z = (X.dimshuffle(0, 1, 2, 'x') * Y).sum(axis=-2)
+        else:
+            Z = (X.dimshuffle(0, 1, 2, 'x') * Y.dimshuffle(0, 'x', 1, 2)).sum(axis=-2)
+        return Z
 
     def fprop(self, XH):
         X, H = XH
@@ -49,39 +57,38 @@ class ReadLayer(RecurrentLayer):
         delta = T.exp(logdel)
         delta = (max(self.width, self.height) - 1) * delta / (self.N - 1)
 
-        Fx, Fy = self.filterbank(centx, centy, delta, sigma)
-        x_ = gamma *\
-            T.tensordot(Fx, T.tensordot(x, Fy, [[3], [0]]), [[1], [2]])
-        x_hat_ = gamma *\
-            T.tensordot(Fx, T.tensordot(x_hat, Fy, [[3], [0]]), [[1], [2]])
+        Fx, Fy = self.filter_bank(centx, centy, delta, sigma)
+        ipdb.set_trace()
+        #x_ = gamma *\
+        #    T.tensordot(Fy, T.tensordot(x, Fx.dimshuffle(0, 2, 1), [[3], [1]]).sum(axis=3), [[2], [2]])
+        #x_hat_ = gamma *\
+        #    T.tensordot(Fy, T.tensordot(x_hat, Fx.dimshuffle(0, 2, 1), [[3], [0]]).sum(axis=3), [[2], [2]])
+        #x = self.tensor_dot(self.tensor_dot(Fy, x), Fx.transpose(0, 2, 1))
+        #x_hat = self.tensor_dot(self.tensor_dot(Fy, x_hat), Fx.transpose(0, 2, 1))
+        ipdb.set_trace()
         return T.concatenate([x, x_hat], axis=2)
 
     def filter_bank(self, c_x, c_y, delta, sigma):
         tol = 1e-4
-        mesh = T.arange(N) - (N/2) - 0.5
+        mesh = T.arange(self.N) - (0.5 * self.N) - 0.5
 
-        a = T.arange(self.width).dimshuffle(0, 'x')
-        b = T.arange(self.height).dimshuffle(0, 'x')
-        mu_x = (c_x + delta).dimshuffle('x', 0) * mesh
-        mu_y = (c_y + delta).dimshuffle('x', 0) * mesh
+        a = T.arange(self.width)
+        b = T.arange(self.height)
+        mu_x = c_x.dimshuffle(0, 'x') + delta.dimshuffle(0, 'x') * mesh
+        mu_y = c_y.dimshuffle(0, 'x') + delta.dimshuffle(0, 'x') * mesh
 
-        #mu_x = (c_x + delta) * mesh
-        #mu_y = (c_y + delta) * mesh
-        #a = T.arange(self.width)
-        #b = T.arange(self.height)
-        #Fx = T.exp(-(a - mu_x.T)**2) / (2. * (sigma + tol)**2)
-        #Fy = T.exp(-(b - mu_y.T)**2) / (2. * (sigma + tol)**2)
-        Fx = T.exp(-(a - mu_x)**2) / (2. * (sigma + tol)**2)
-        Fy = T.exp(-(b - mu_y)**2) / (2. * (sigma + tol)**2)
-        Fx = Fx / Fx.sum(axis=0)
-        Fy = Fy / Fy.sum(axis=0)
+        Fx = T.exp(-(a - mu_x.dimshuffle(0, 1, 'x'))**2) / (2. * (sigma.dimshuffle(0, 'x', 'x') + tol)**2)
+        Fy = T.exp(-(b - mu_y.dimshuffle(0, 1, 'x'))**2) / (2. * (sigma.dimshuffle(0, 'x', 'x') + tol)**2)
+
+        Fx = Fx / Fx.sum(axis=-1).dimshuffle(0, 1, 'x')
+        Fy = Fy / Fy.sum(axis=-1).dimshuffle(0, 1, 'x')
         return Fx, Fy
 
     def initialize(self):
         for recname, recout in self.recurrent.items():
             U_shape = (recout, 5)
             U_name = 'U_'+recname+self.name
-            sel.alloc(self.init_U.get(U_shape, U_name))
+            self.alloc(self.init_U.get(U_shape, U_name))
         self.alloc(self.init_b.get(5, 'b_'+self.name))
 
 
@@ -117,7 +124,7 @@ class WriteLayer(ReadLayer):
         delta = T.exp(logdel)
         delta = (max(self.width, self.height) - 1) * delta / (self.N - 1)
 
-        Fx, Fy = self.filterbank(centx, centy, delta, sigma)
+        Fx, Fy = self.filter_bank(centx, centy, delta, sigma)
         x_ = gamma *\
             T.tensordot(Fy.T, T.tensordot(x, Fx, [[3], [0]]), [[1], [2]])
         return x_
@@ -130,7 +137,7 @@ class WriteLayer(ReadLayer):
         for recname, recout in self.recurrent.items():
             U_shape = (recout, self.nout)
             U_name = 'U_'+recname+self.name
-            sel.alloc(self.init_U.get(U_shape, U_name))
+            self.alloc(self.init_U.get(U_shape, U_name))
         self.alloc(self.init_b.get(self.nout, 'b_'+self.name))
 
 
@@ -147,8 +154,11 @@ class CanvasLayer(RecurrentLayer):
                  is_binary=0,
                  is_gaussian=0,
                  is_gaussian_mixture=0,
+                 outshape=0,
                  **kwargs):
-        super(CanvasLayer, self).__init__(**kwargs)
+        super(CanvasLayer, self).__init__(batch_size=None,
+                                          self_recurrent=0,
+                                          **kwargs)
         self.is_write = is_write
         if self.is_write:
             self.fprop = self.which_method('write')
@@ -163,6 +173,12 @@ class CanvasLayer(RecurrentLayer):
             self.sample = self.which_method('gaussian')
         elif self.is_gaussian_mixture:
             self.sample = self.which_method('gaussian_mixture')
+        self.outshape = outshape
+
+    def get_init_state(self):
+        state = T.zeros(self.outshape)
+        state = T.unbroadcast(state, *range(state.ndim))
+        return state
 
     def which_method(self, which):
         return getattr(self, which)

@@ -91,11 +91,15 @@ class Net(object):
         self.output_args = kwargs.pop('output_args', None)
         self.context_args = kwargs.pop('context_args', None)
         self.iterators = kwargs.pop('iterators', None)
+        self.nonseq_inputs = kwargs.pop('nonseq_inputs', None)
         self.nNone = 0
         inputs = self.inputs.values()
         seqs = []
         outputs = []
         nonseqs = []
+        if self.nonseq_inputs is not None:
+            for i in self.nonseq_inputs:
+                nonseqs.append(inputs.pop(i))
         self.input_args = OrderedDict()
         self.recur_args = OrderedDict()
         for name, node in self.nodes.items():
@@ -132,6 +136,7 @@ class Net(object):
             n_steps=n_steps,
             go_backwards=reverse)
         result = tolist(result)
+        ipdb.set_trace()
         if self.output_args is None and self.iterators is None:
             return result
         if len(updates) == 0:

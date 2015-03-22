@@ -131,7 +131,7 @@ class ConvertLayer(StemCell):
         for axis in self.axes:
             newaxes += (refaxes.index(axis),)
         x = x.dimshuffle(newaxes)
-        z = x.reshape((x.shape[0], -1))
+        z = x.reshape((x.shape[0], T.prod(x.shape[1:])))
         z.name = self.name
         return z
 
