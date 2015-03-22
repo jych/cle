@@ -91,14 +91,18 @@ class DropoutLayer(StemCell):
     """
     def __init__(self,
                  p=0.5,
-                 train_scale=2,
-                 test_scale=1,
+                 train_scale=2.,
+                 test_scale=1.,
                  is_test=0,
                  **kwargs):
         super(DropoutLayer, self).__init__(**kwargs)
         self.p = p
         self.train_scale = train_scale
         self.test_scale = test_scale
+        self.is_test = is_test
+        self.set_mode(self.is_test)
+
+    def set_mode(self, is_test=0):
         self.is_test = is_test
         if self.is_test:
             self.fprop = self.which_prop('test_prop')
@@ -126,11 +130,7 @@ class DropoutLayer(StemCell):
     
     def __setstate__(self, state):
         self.__dict__.update(state)
-        if self.is_test:
-            
-            self.fprop = self.which_prop('test_prop')
-        else:
-            self.fprop = self.which_prop('train_prop')
+        self.set_mode(self.is_test)
   
     def initialize(self):
         pass
