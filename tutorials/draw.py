@@ -48,20 +48,18 @@ init_W = InitCell('rand')
 init_U = InitCell('ortho')
 init_b = InitCell('zeros')
 
-model.inputs = data.theano_vars()
-x, _ = model.inputs
+x, _ = data.theano_vars()
 y = x.copy()
+y.name = 'y'
 if debug:
     x.tag.test_value = np.zeros((batch_size, 784), dtype=np.float32)
     y.tag.test_value = np.zeros((batch_size, 784), dtype=np.float32)
 
-inputs = [x]
-inputs_dim = {'x':inpsz}
 read = ReadLayer(name='read',
                  parent=['x', 'error'],
                  parent_dim=[784, 784],
-                 recurrent=['dec'],
-                 recurrent_dim=[500],
+                 recurrent=['enc', 'dec'],
+                 recurrent_dim=[500, 500],
                  nout=288,
                  N=12,
                  img_shape=(batch_size, 1, 28, 28),
@@ -133,12 +131,10 @@ canvas = CanvasLayer(name='canvas',
                      parent_dim=[784],
                      nout=inpsz,
                      batch_size=batch_size)
-
-nodes = [read, enc, phi_mu, phi_var, prior, kl, dec, w1, write, error, canvas]
+nodes = [read, enc, phi_mu, phi_var, prior, kl, dec, w1, write, error, canvas, phi_var]
 for node in nodes:
     node.initialize()
 params = flatten([node.get_params().values() for node in nodes])
-
 def inner_fn(enc_h_tm1, dec_h_tm1, canvas_h_tm1, x, phi_var_out):
     err_out = error.fprop([[x], [canvas_h_tm1]])
     read_out = read.fprop([[x, err_out], [enc_h_tm1, dec_h_tm1]])
@@ -162,6 +158,8 @@ phi_var_out = phi_var.fprop()
                                                                   None],
                                                     non_sequences=[x, phi_var_out],
                                                     n_steps=20)
+for k, v in updates.iteritems():
+    k.default_update = v
 recon_term = NllBin(y, T.nnet.sigmoid(canvas_[-1])).sum()
 kl_term = (kl_.sum(axis=2).sum(axis=0)).sum()
 cost = recon_term + kl_term
@@ -172,6 +170,7 @@ recon_err = ((y - T.nnet.sigmoid(canvas_[-1]))**2).mean() / y.std()
 recon_err.name = 'recon_err'
 model.inputs = [x, y]
 model._params = params
+model.nodes =nodes
 
 optimizer = Adam(
     lr=0.001
@@ -185,7 +184,7 @@ extension = [
                data=[Iterator(data, batch_size)]),
     Picklize(freq=200,
              path=savepath),
-    EarlyStopping(path=savepath)
+    EarlyStopping(freq=200, path=savepath)
 ]
 
 mainloop = Training(
