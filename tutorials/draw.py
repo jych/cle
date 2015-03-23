@@ -42,6 +42,7 @@ debug = 1
 
 model = Model()
 data = MNIST(name='train',
+             unsupervised=1,
              path=datapath)
 
 init_W = InitCell('rand')
@@ -49,36 +50,33 @@ init_U = InitCell('ortho')
 init_b = InitCell('zeros')
 
 x, _ = data.theano_vars()
-y = x.copy()
-y.name = 'y'
 if debug:
     x.tag.test_value = np.zeros((batch_size, 784), dtype=np.float32)
-    y.tag.test_value = np.zeros((batch_size, 784), dtype=np.float32)
 
 read = ReadLayer(name='read',
                  parent=['x', 'error'],
                  parent_dim=[784, 784],
                  recurrent=['enc', 'dec'],
-                 recurrent_dim=[500, 500],
-                 nout=288,
-                 N=12,
-                 img_shape=(batch_size, 1, 28, 28),
+                 recurrent_dim=[256, 256],
+                 nout=8,
+                 N=2,
+                 input_shape=(batch_size, 1, 28, 28),
                  batch_size=batch_size,
                  init_U=InitCell('rand'))
 enc = LSTM(name='enc',
            parent=['read'],
-           parent_dim=[288],
+           parent_dim=[8],
            recurrent=['dec'],
-           recurrent_dim=[500],
+           recurrent_dim=[256],
            batch_size=batch_size,
-           nout=500,
+           nout=256,
            unit='tanh',
            init_W=init_W,
            init_U=init_U,
            init_b=init_b)
 phi_mu = FullyConnectedLayer(name='phi_mu',
                              parent=['enc'],
-                             parent_dim=[500],
+                             parent_dim=[256],
                              nout=latsz,
                              unit='linear',
                              init_W=init_W,
@@ -95,29 +93,30 @@ kl = PriorLayer(name='kl',
                 parent=['phi_mu', 'phi_var'],
                    parent_dim=[latsz, latsz],
                 use_sample=0,
+                tol=1e-4,
                 nout=latsz)
 dec = LSTM(name='dec',
            parent=['prior'],
            parent_dim=[latsz],
            batch_size=batch_size,
-           nout=500,
+           nout=256,
            unit='tanh',
            init_W=init_W,
            init_U=init_U,
            init_b=init_b)
 w1 = FullyConnectedLayer(name='w1',
                          parent=['dec'],
-                         parent_dim=[500],
-                         nout=144,
+                         parent_dim=[256],
+                         nout=4,
                          unit='linear',
                          init_W=init_W,
                          init_b=init_b)
 write= WriteLayer(name='write',
                   parent=['w1', 'dec'],
-                  parent_dim=[144, 500],
+                  parent_dim=[4, 256],
                   nout=784,
                   N=28,
-                  img_shape=(batch_size, 1, 12, 12))
+                  input_shape=(batch_size, 1, 2, 2))
 error = ErrorLayer(name='error',
                    parent=['x'],
                    parent_dim=[784],
@@ -160,15 +159,15 @@ phi_var_out = phi_var.fprop()
                                                     n_steps=20)
 for k, v in updates.iteritems():
     k.default_update = v
-recon_term = NllBin(y, T.nnet.sigmoid(canvas_[-1])).sum()
+recon_term = NllBin(x, T.nnet.sigmoid(canvas_[-1])).sum()
 kl_term = (kl_.sum(axis=2).sum(axis=0)).sum()
 cost = recon_term + kl_term
 cost.name = 'cost'
 recon_term.name = 'recon_term'
 kl_term.name = 'kl_term'
-recon_err = ((y - T.nnet.sigmoid(canvas_[-1]))**2).mean() / y.std()
+recon_err = ((x - T.nnet.sigmoid(canvas_[-1]))**2).mean() / x.std()
 recon_err.name = 'recon_err'
-model.inputs = [x, y]
+model.inputs = [x]
 model._params = params
 model.nodes =nodes
 
@@ -179,10 +178,10 @@ optimizer = Adam(
 extension = [
     GradientClipping(),
     EpochCount(10000),
-    Monitoring(freq=50,
+    Monitoring(freq=10,
                ddout=[cost, recon_term, kl_term, recon_err],
                data=[Iterator(data, batch_size)]),
-    Picklize(freq=200,
+    Picklize(freq=1000,
              path=savepath),
     EarlyStopping(freq=200, path=savepath)
 ]

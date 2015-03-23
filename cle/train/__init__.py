@@ -49,7 +49,6 @@ class Training(PickleMixin, TheanoMixin):
         self.run_extension('ext_grad')
         self.updates = self.optimizer.get_updates(self.grads)
         self.run_extension('ext_regularize_post_grad')
-        ipdb.set_trace()
         return self.build_theano_graph(self.inputs, self.outputs, self.updates)
 
     def run(self):

@@ -13,6 +13,11 @@ class MNIST(DesignMatrix):
     ----------
     .. todo::
     """
+    def __init__(self, unsupervised=0, **kwargs):
+        super(MNIST, self).__init__(**kwargs)
+        if unsupervised:
+            self.data = [self.data[0]]
+
     def load(self, path):
         data = np.load(path)
         if self.name == 'train':
