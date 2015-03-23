@@ -37,7 +37,8 @@ savepath = '/home/junyoung/repos/cle/saved/'
 
 batch_size = 128
 inpsz = 784
-latsz = 50
+latsz = 10
+n_steps = 10
 debug = 1
 
 model = Model()
@@ -59,7 +60,7 @@ read = ReadLayer(name='read',
                  recurrent=['enc', 'dec'],
                  recurrent_dim=[256, 256],
                  nout=8,
-                 N=2,
+                 glimpse_shape=(batch_size, 1, 2, 2),
                  input_shape=(batch_size, 1, 28, 28),
                  batch_size=batch_size,
                  init_U=InitCell('rand'))
@@ -115,8 +116,8 @@ write= WriteLayer(name='write',
                   parent=['w1', 'dec'],
                   parent_dim=[4, 256],
                   nout=784,
-                  N=28,
-                  input_shape=(batch_size, 1, 2, 2))
+                  glimpse_shape=(batch_size, 1, 2, 2),
+                  input_shape=(batch_size, 1, 28, 28))
 error = ErrorLayer(name='error',
                    parent=['x'],
                    parent_dim=[784],
@@ -156,7 +157,7 @@ phi_var_out = phi_var.fprop()
                                                                   canvas.get_init_state(),
                                                                   None],
                                                     non_sequences=[x, phi_var_out],
-                                                    n_steps=20)
+                                                    n_steps=n_steps)
 for k, v in updates.iteritems():
     k.default_update = v
 recon_term = NllBin(x, T.nnet.sigmoid(canvas_[-1])).sum()

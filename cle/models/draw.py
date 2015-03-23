@@ -21,7 +21,6 @@ def batched_dot(A, B):
     -------        
         C : shape (dim_1 \times dim_2 \times dim_4)        
     """
-    ipdb.set_trace()
     C = A.dimshuffle([0,1,2,'x']) * B.dimshuffle([0,'x',1,2])      
     return C.sum(axis=-2)
 
@@ -37,12 +36,12 @@ class ReadLayer(RecurrentLayer):
     \hat{x} : Transformed TensorVariable
     """
     def __init__(self,
-                 N,
+                 glimpse_shape=None,
                  input_shape=None,
                  **kwargs):
         super(ReadLayer, self).__init__(self_recurrent=0,
                                         **kwargs)
-        self.N = N
+        self.glimpse_shape = glimpse_shape
         self.input_shape = input_shape
 
     def fprop(self, XH):
@@ -64,29 +63,30 @@ class ReadLayer(RecurrentLayer):
         logdel = z[:, 3]
         loggam = z[:, 4]
 
-        centx = (width + 1) * (centex + 1) / 2.
-        centy = (height + 1) * (centey + 1) / 2.
+        centy = (self.input_shape[2] + 1) * (centey + 1) / 2.
+        centx = (self.input_shape[3] + 1) * (centex + 1) / 2.
         sigma = T.exp(0.5 * logvar)
         gamma = T.exp(loggam).dimshuffle(0, 'x', 'x')
         delta = T.exp(logdel)
-        delta = (max(width, height) - 1) * delta / (self.N - 1)
+        delta = (max(self.input_shape[2], self.input_shape[3]) - 1) * delta / (max(self.glimpse_shape[2], self.glimpse_shape[3]) - 1)
 
         Fx, Fy = self.filter_bank(centx, centy, delta, sigma)
         x = batched_dot(batched_dot(Fy, x), Fx.transpose(0, 2, 1))
         x_hat = batched_dot(batched_dot(Fy, x_hat), Fx.transpose(0, 2, 1))
         x = x * gamma
         x_hat = x_hat * gamma
-        reshape_shape = (batch_size, num_channel*self.N**2)
+        reshape_shape = (batch_size, num_channel*self.glimpse_shape[2]*self.glimpse_shape[3])
         return T.concatenate([x.reshape(reshape_shape), x_hat.reshape(reshape_shape)], axis=1)
 
     def filter_bank(self, c_x, c_y, delta, sigma):
         tol = 1e-4
-        mesh = T.arange(self.N) - (0.5 * self.N) - 0.5
+        y_mesh = T.arange(self.glimpse_shape[2]) - (0.5 * self.glimpse_shape[2]) - 0.5
+        x_mesh = T.arange(self.glimpse_shape[3]) - (0.5 * self.glimpse_shape[3]) - 0.5
 
         a = T.arange(self.input_shape[2])
         b = T.arange(self.input_shape[3])
-        mu_x = c_x.dimshuffle(0, 'x') + delta.dimshuffle(0, 'x') * mesh
-        mu_y = c_y.dimshuffle(0, 'x') + delta.dimshuffle(0, 'x') * mesh
+        mu_x = c_x.dimshuffle(0, 'x') + delta.dimshuffle(0, 'x') * x_mesh
+        mu_y = c_y.dimshuffle(0, 'x') + delta.dimshuffle(0, 'x') * y_mesh
 
         Fy = T.exp(-(a - mu_y.dimshuffle(0, 1, 'x'))**2) / (2. * (sigma.dimshuffle(0, 'x', 'x') + tol)**2)
         Fx = T.exp(-(b - mu_x.dimshuffle(0, 1, 'x'))**2) / (2. * (sigma.dimshuffle(0, 'x', 'x') + tol)**2)
@@ -112,11 +112,11 @@ class WriteLayer(StemCell):
     .. todo::
     """
     def __init__(self,
-                 N,
+                 glimpse_shape=None,
                  input_shape=None,
                  **kwargs):
         super(WriteLayer, self).__init__(**kwargs)
-        self.N = N
+        self.glimpse_shape = glimpse_shape
         self.input_shape = input_shape
 
     def fprop(self, X):
@@ -126,7 +126,7 @@ class WriteLayer(StemCell):
             W = self.params['W_'+parname+self.name]
             z += T.dot(x[:, :parout], W)
         z += self.params['b_'+self.name]
-        batch_size, num_channel, height, width = self.input_shape
+        batch_size, num_channel, height, width = self.glimpse_shape
         w = w.reshape((batch_size*num_channel, height, width))
        
         centex = z[:, 0]
@@ -135,27 +135,28 @@ class WriteLayer(StemCell):
         logdel = z[:, 3]
         loggam = z[:, 4]
 
-        centx = (width + 1) * (centex + 1) / 2.
-        centy = (height + 1) * (centey + 1) / 2.
+        centx = (self.input_shape[3] + 1) * (centex + 1) / 2.
+        centy = (self.input_shape[2] + 1) * (centey + 1) / 2.
         sigma = T.exp(0.5 * logvar)
         gamma = T.exp(loggam).dimshuffle(0, 'x', 'x')
         delta = T.exp(logdel)
-        delta = (max(width, height) - 1) * delta / (self.N - 1)
+        delta = (max(self.input_shape[2], self.input_shape[3]) - 1) * delta / (max(self.glimpse_shape[2], self.glimpse_shape[3]) - 1)
 
         Fx, Fy = self.filter_bank(centx, centy, delta, sigma)
         w = batched_dot(batched_dot(Fy.transpose(0, 2, 1), w), Fx)
         w = w / gamma
-        reshape_shape = (batch_size, num_channel*self.N**2)
+        reshape_shape = (batch_size, num_channel*self.input_shape[2]*self.input_shape[3])
         return w.reshape((reshape_shape))
 
     def filter_bank(self, c_x, c_y, delta, sigma):
         tol = 1e-4
-        mesh = T.arange(self.N) - (0.5 * self.N) - 0.5
+        y_mesh = T.arange(self.glimpse_shape[2]) - (0.5 * self.glimpse_shape[2]) - 0.5
+        x_mesh = T.arange(self.glimpse_shape[3]) - (0.5 * self.glimpse_shape[3]) - 0.5
 
         a = T.arange(self.input_shape[2])
         b = T.arange(self.input_shape[3])
-        mu_x = c_x.dimshuffle(0, 'x') + delta.dimshuffle(0, 'x') * mesh
-        mu_y = c_y.dimshuffle(0, 'x') + delta.dimshuffle(0, 'x') * mesh
+        mu_x = c_x.dimshuffle(0, 'x') + delta.dimshuffle(0, 'x') * x_mesh
+        mu_y = c_y.dimshuffle(0, 'x') + delta.dimshuffle(0, 'x') * y_mesh
 
         Fy = T.exp(-(a - mu_y.dimshuffle(0, 1, 'x'))**2) / (2. * (sigma.dimshuffle(0, 'x', 'x') + tol)**2)
         Fx = T.exp(-(b - mu_x.dimshuffle(0, 1, 'x'))**2) / (2. * (sigma.dimshuffle(0, 'x', 'x') + tol)**2)
@@ -211,11 +212,11 @@ class ErrorLayer(RecurrentLayer):
         self.is_gaussian = is_gaussian
         self.is_gaussian_mixture = is_gaussian_mixture
         if self.is_binary:
-            self.sample = self.which_method('binary')
+            self.dist = self.which_method('binary')
         elif self.is_gaussian:
-            self.sample = self.which_method('gaussian')
+            self.dist = self.which_method('gaussian')
         elif self.is_gaussian_mixture:
-            self.sample = self.which_method('gaussian_mixture')
+            self.dist = self.which_method('gaussian_mixture')
 
     def which_method(self, which):
         return getattr(self, which)
@@ -223,13 +224,12 @@ class ErrorLayer(RecurrentLayer):
     def fprop(self, XH):
         X, H = XH
         x = X[0]
-        z = x - self.sample(H)
+        z = x - self.dist(H)
         z.name = self.name
         return z
 
     def binary(self, X):
         x = X[0]
-        #z = self.theano_rng.binomial(p=x, size=x.shape, dtype=x.dtype)
         z = T.nnet.sigmoid(x)
         return z
 
@@ -274,11 +274,11 @@ class ErrorLayer(RecurrentLayer):
     def __setstate__(self, state):
         self.__dict__.update(state)
         if self.is_binary:
-            self.sample = self.which_method('binary')
+            self.dist = self.which_method('binary')
         elif self.is_gaussian:
-            self.sample = self.which_method('gaussian')
+            self.dist = self.which_method('gaussian')
         elif self.is_gmm:
-            self.sample = self.which_method('gaussian_mixture')
+            self.dist = self.which_method('gaussian_mixture')
 
     def initialize(self):
         pass       
