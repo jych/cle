@@ -178,7 +178,7 @@ model._params = params
 model.nodes =nodes
 
 optimizer = Adam(
-    lr=0.00001
+    lr=0.001
 )
 
 extension = [
