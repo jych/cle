@@ -32,14 +32,14 @@ from cle.cle.utils.compat import OrderedDict
 from cle.datasets.mnist import MNIST
 
 
-datapath = '/home/junyoung/data/mnist/mnist.pkl'
+datapath = '/home/junyoung/data/mnist/mnist_binarized_salakhutdinov.pkl'
 savepath = '/home/junyoung/repos/cle/saved/'
 
 batch_size = 128
 inpsz = 784
-latsz = 10
+latsz = 100
 n_steps = 10
-debug = 1
+debug = 0
 
 model = Model()
 data = MNIST(name='train',
@@ -94,7 +94,6 @@ kl = PriorLayer(name='kl',
                 parent=['phi_mu', 'phi_var'],
                 parent_dim=[latsz, latsz],
                 use_sample=0,
-                #tol=1e-4,
                 nout=latsz)
 dec = LSTM(name='dec',
            parent=['prior'],
@@ -108,15 +107,15 @@ dec = LSTM(name='dec',
 w1 = FullyConnectedLayer(name='w1',
                          parent=['dec'],
                          parent_dim=[256],
-                         nout=4,
+                         nout=25,
                          unit='linear',
                          init_W=init_W,
                          init_b=init_b)
 write= WriteLayer(name='write',
                   parent=['w1', 'dec'],
-                  parent_dim=[4, 256],
+                  parent_dim=[25, 256],
                   nout=784,
-                  glimpse_shape=(batch_size, 1, 2, 2),
+                  glimpse_shape=(batch_size, 1, 5, 5),
                   input_shape=(batch_size, 1, 28, 28),
                   init_W=init_W)
 error = ErrorLayer(name='error',
@@ -161,12 +160,8 @@ phi_var_out = phi_var.fprop()
                                                     n_steps=n_steps)
 for k, v in updates.iteritems():
     k.default_update = v
-#ipdb.set_trace()
 recon_term = NllBin(x, T.nnet.sigmoid(canvas_[-1])).mean()
-#recon_term = T.nnet.sigmoid(canvas_[-1]).mean()
-#recon_term = canvas_[-1].sum(axis=1).mean()
-kl_term = (kl_.sum(axis=0)).mean()
-#kl_term = T.ones((1,)).mean()
+kl_term = kl_.sum(axis=0).mean()
 cost = recon_term + kl_term
 cost.name = 'cost'
 recon_term.name = 'recon_term'
@@ -178,7 +173,7 @@ model._params = params
 model.nodes =nodes
 
 optimizer = Adam(
-    lr=0.001
+    lr=0.01
 )
 
 extension = [
