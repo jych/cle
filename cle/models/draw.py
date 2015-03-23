@@ -20,13 +20,12 @@ class ReadLayer(RecurrentLayer):
     """
     def __init__(self,
                  N,
-                 width=0,
-                 height=0,
+                 img_shape=None,
                  **kwargs):
-        super(ReadLayer, self).__init__(**kwargs)
+        super(ReadLayer, self).__init__(self_recurrent=0,
+                                        **kwargs)
         self.N = N
-        self.width = width
-        self.height = height
+        self.img_shape = img_shape
 
     def tensor_dot(self, X, Y):
         if Y.ndim == 4:
@@ -39,41 +38,42 @@ class ReadLayer(RecurrentLayer):
         X, H = XH
         x = X[0]
         x_hat = X[1]
-        z = T.zeros((self.batch_size, self.nout))
+        z = T.zeros((self.batch_size, 5))
         for h, (recname, recout) in izip(H, self.recurrent.items()):
             U = self.params['U_'+recname+self.name]
             z += T.dot(h[:, :recout], U)
         z += self.params['b_'+self.name]
+        batch_size, num_channel, width, height = self.img_shape
+        x = x.reshape(self.img_shape)
+        x_hat = x_hat.reshape(self.img_shape)
+
         centex = z[:, 0]
         centey = z[:, 1]
         logvar = z[:, 2]
         logdel = z[:, 3]
         loggam = z[:, 4]
 
-        centx = (self.width + 1) * (centex + 1) / 2.
-        centy = (self.height + 1) * (centey + 1) / 2.
-        sigma = T.exp(0.5*logvar)
-        gamma = T.exp(loggam).dimshuffle(0, 'x')
+        centx = (width + 1) * (centex + 1) / 2.
+        centy = (height + 1) * (centey + 1) / 2.
+        sigma = T.exp(0.5 * logvar)
+        gamma = T.exp(loggam).dimshuffle(0, 'x', 'x', 'x')
         delta = T.exp(logdel)
-        delta = (max(self.width, self.height) - 1) * delta / (self.N - 1)
+        delta = (max(width, height) - 1) * delta / (self.N - 1)
 
         Fx, Fy = self.filter_bank(centx, centy, delta, sigma)
-        ipdb.set_trace()
-        #x_ = gamma *\
-        #    T.tensordot(Fy, T.tensordot(x, Fx.dimshuffle(0, 2, 1), [[3], [1]]).sum(axis=3), [[2], [2]])
-        #x_hat_ = gamma *\
-        #    T.tensordot(Fy, T.tensordot(x_hat, Fx.dimshuffle(0, 2, 1), [[3], [0]]).sum(axis=3), [[2], [2]])
-        #x = self.tensor_dot(self.tensor_dot(Fy, x), Fx.transpose(0, 2, 1))
-        #x_hat = self.tensor_dot(self.tensor_dot(Fy, x_hat), Fx.transpose(0, 2, 1))
-        ipdb.set_trace()
-        return T.concatenate([x, x_hat], axis=2)
+        x = (T.tensordot(Fy, T.tensordot(x, Fx.dimshuffle(0, 2, 1), [[3], [1]]).sum(axis=3), [[2], [2]]).sum(axis=2)).dimshuffle(0, 2, 1, 3)
+        x_hat = (T.tensordot(Fy, T.tensordot(x_hat, Fx.dimshuffle(0, 2, 1), [[3], [1]]).sum(axis=3), [[2], [2]]).sum(axis=2)).dimshuffle(0, 2, 1, 3)
+        x = x * gamma
+        x_hat = x_hat * gamma
+        reshape_shape = (batch_size, num_channel*self.N**2)
+        return T.concatenate([x.reshape(reshape_shape), x_hat.reshape(reshape_shape)], axis=1)
 
     def filter_bank(self, c_x, c_y, delta, sigma):
         tol = 1e-4
         mesh = T.arange(self.N) - (0.5 * self.N) - 0.5
 
-        a = T.arange(self.width)
-        b = T.arange(self.height)
+        a = T.arange(self.img_shape[3])
+        b = T.arange(self.img_shape[2])
         mu_x = c_x.dimshuffle(0, 'x') + delta.dimshuffle(0, 'x') * mesh
         mu_y = c_y.dimshuffle(0, 'x') + delta.dimshuffle(0, 'x') * mesh
 
@@ -92,7 +92,7 @@ class ReadLayer(RecurrentLayer):
         self.alloc(self.init_b.get(5, 'b_'+self.name))
 
 
-class WriteLayer(ReadLayer):
+class WriteLayer(StemCell):
     """
     Draw write layer
 
@@ -100,45 +100,65 @@ class WriteLayer(ReadLayer):
     ----------
     .. todo::
     """
-    def fprop(self, XH):
-        X, H = XH
-        x = X[0]
-        z = T.zeros((self.batch_size, self.nout))
+    def __init__(self,
+                 N,
+                 img_shape=None,
+                 **kwargs):
+        super(WriteLayer, self).__init__(**kwargs)
+        self.N = N
+        self.img_shape = img_shape
+
+    def fprop(self, X):
+        w, X = X[0], X[1:] 
+        z = T.zeros((w.shape[0], 5))
         for x, (parname, parout) in izip(X, self.parent.items()):
             W = self.params['W_'+parname+self.name]
             z += T.dot(x[:, :parout], W)
-        for h, (recname, recout) in izip(H, self.recurrent.items()):
-            U = self.params['U_'+recname+self.name]
-            z += T.dot(h[:, :recout], U)
         z += self.params['b_'+self.name]
+        batch_size, num_channel, width, height = self.img_shape
+        w = w.reshape(self.img_shape)
+       
         centex = z[:, 0]
         centey = z[:, 1]
         logvar = z[:, 2]
         logdel = z[:, 3]
         loggam = z[:, 4]
 
-        centx = (self.width + 1) * (centex + 1) / 2.
-        centy = (self.height + 1) * (centey + 1) / 2.
-        sigma = T.exp(0.5*logvar)
-        gamma = T.exp(loggam).dimshuffle(0, 'x')
+        centx = (width + 1) * (centex + 1) / 2.
+        centy = (height + 1) * (centey + 1) / 2.
+        sigma = T.exp(0.5 * logvar)
+        gamma = T.exp(loggam).dimshuffle(0, 'x', 'x', 'x')
         delta = T.exp(logdel)
-        delta = (max(self.width, self.height) - 1) * delta / (self.N - 1)
+        delta = (max(width, height) - 1) * delta / (self.N - 1)
 
         Fx, Fy = self.filter_bank(centx, centy, delta, sigma)
-        x_ = gamma *\
-            T.tensordot(Fy.T, T.tensordot(x, Fx, [[3], [0]]), [[1], [2]])
-        return x_
+        w = (T.tensordot(Fy, T.tensordot(w, Fx.dimshuffle(0, 2, 1), [[3], [1]]).sum(axis=3), [[2], [2]]).sum(axis=2)).dimshuffle(0, 2, 1, 3)
+        w = w * gamma 
+        reshape_shape = (batch_size, num_channel*self.N**2)
+        return w.reshape((reshape_shape))
+
+    def filter_bank(self, c_x, c_y, delta, sigma):
+        tol = 1e-4
+        mesh = T.arange(self.N) - (0.5 * self.N) - 0.5
+
+        a = T.arange(self.img_shape[3])
+        b = T.arange(self.img_shape[2])
+        mu_x = c_x.dimshuffle(0, 'x') + delta.dimshuffle(0, 'x') * mesh
+        mu_y = c_y.dimshuffle(0, 'x') + delta.dimshuffle(0, 'x') * mesh
+
+        Fx = T.exp(-(a - mu_x.dimshuffle(0, 1, 'x'))**2) / (2. * (sigma.dimshuffle(0, 'x', 'x') + tol)**2)
+        Fy = T.exp(-(b - mu_y.dimshuffle(0, 1, 'x'))**2) / (2. * (sigma.dimshuffle(0, 'x', 'x') + tol)**2)
+
+        Fx = Fx / Fx.sum(axis=-1).dimshuffle(0, 1, 'x')
+        Fy = Fy / Fy.sum(axis=-1).dimshuffle(0, 1, 'x')
+        return Fx, Fy
 
     def initialize(self):
         for parname, parout in self.parent.items():
-            W_shape = (parout, self.nout)
+            W_shape = (parout, 5)
             W_name = 'W_'+parname+self.name
             self.alloc(self.init_W.get(W_shape, W_name))
-        for recname, recout in self.recurrent.items():
-            U_shape = (recout, self.nout)
-            U_name = 'U_'+recname+self.name
-            self.alloc(self.init_U.get(U_shape, U_name))
-        self.alloc(self.init_b.get(self.nout, 'b_'+self.name))
+        self.alloc(self.init_b.get(5, 'b_'+self.name))
 
 
 class CanvasLayer(RecurrentLayer):
@@ -149,21 +169,33 @@ class CanvasLayer(RecurrentLayer):
     ----------
     .. todo::
     """
+    def fprop(self, XH):
+        X, H = XH
+        c_t = X[0]
+        c_tm1 = H[0]
+        z = c_tm1 + c_t
+        z.name = self.name
+        return z
+
+    def initialize(self):
+        pass
+
+
+class ErrorLayer(RecurrentLayer):
+    """
+    Error layer
+
+    Parameters
+    ----------
+    .. todo::
+    """
     def __init__(self,
-                 is_write=0,
                  is_binary=0,
                  is_gaussian=0,
                  is_gaussian_mixture=0,
-                 outshape=0,
                  **kwargs):
-        super(CanvasLayer, self).__init__(batch_size=None,
-                                          self_recurrent=0,
-                                          **kwargs)
-        self.is_write = is_write
-        if self.is_write:
-            self.fprop = self.which_method('write')
-        else:
-            self.fprop = self.which_method('error')
+        super(ErrorLayer, self).__init__(self_recurrent=0,
+                                         **kwargs)
         self.is_binary = is_binary
         self.is_gaussian = is_gaussian
         self.is_gaussian_mixture = is_gaussian_mixture
@@ -173,25 +205,11 @@ class CanvasLayer(RecurrentLayer):
             self.sample = self.which_method('gaussian')
         elif self.is_gaussian_mixture:
             self.sample = self.which_method('gaussian_mixture')
-        self.outshape = outshape
-
-    def get_init_state(self):
-        state = T.zeros(self.outshape)
-        state = T.unbroadcast(state, *range(state.ndim))
-        return state
 
     def which_method(self, which):
         return getattr(self, which)
 
-    def write(self, XH):
-        X, H = XH
-        c_t = X[0]
-        c_tm1 = H[0]
-        z = c_tm1 + c_t
-        z.name = self.name
-        return z
-
-    def error(self, XH):
+    def fprop(self, XH):
         X, H = XH
         x = X[0]
         z = x - self.sample(H)
@@ -238,16 +256,11 @@ class CanvasLayer(RecurrentLayer):
 
     def __getstate__(self):
         dic = self.__dict__.copy()
-        dic.pop('fprop')
         dic.pop('sample')
         return dic
     
     def __setstate__(self, state):
         self.__dict__.update(state)
-        if self.is_write:
-            self.fprop = self.which_method('write')
-        else:
-            self.fprop = self.which_method('error')
         if self.is_binary:
             self.sample = self.which_method('binary')
         elif self.is_gaussian:
@@ -256,4 +269,4 @@ class CanvasLayer(RecurrentLayer):
             self.sample = self.which_method('gaussian_mixture')
 
     def initialize(self):
-        pass
+        pass       

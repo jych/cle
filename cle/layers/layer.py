@@ -1,5 +1,6 @@
 import ipdb
 import theano
+import theano.tensor as T
 
 from cle.cle.cost import KLGaussianStdGaussian, KLGaussianGaussian
 from cle.cle.layers import StemCell

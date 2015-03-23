@@ -1,5 +1,6 @@
 import ipdb
 import numpy as np
+import theano
 import theano.tensor as T
 
 from cle.cle.data import Iterator
@@ -7,9 +8,10 @@ from cle.cle.cost import Gaussian
 from cle.cle.graph.net import Net
 from cle.cle.models import Model
 from cle.cle.models.draw import (
+    CanvasLayer,
+    ErrorLayer,
     ReadLayer,
-    WriteLayer,
-    CanvasLayer
+    WriteLayer
 )
 from cle.cle.layers import InitCell, RealVectorLayer
 from cle.cle.layers.conv import ConvertLayer
@@ -25,7 +27,8 @@ from cle.cle.train.ext import (
     EarlyStopping
 )
 from cle.cle.train.opt import Adam
-from cle.cle.utils import OrderedDict
+#from cle.cle.utils.compat import OrderedDict
+from theano.compat.python2x import OrderedDict
 from cle.datasets.mnist import MNIST
 
 
@@ -52,26 +55,21 @@ if debug:
 
 inputs = [x]
 inputs_dim = {'x':inpsz}
-c1 = ConvertLayer(name='c1',
-                  parent=['x'],
-                  nout=784,
-                  outshape=(batch_size, 1, 28, 28))
 read = ReadLayer(name='read',
-                 parent=['c1', 'error'],
+                 parent=['x', 'error'],
+                 parent_dim=[784, 784],
                  recurrent=['dec'],
-                 nout=5,
+                 recurrent_dim=[500],
+                 nout=288,
                  N=12,
-                 width=28,
-                 height=28,
+                 img_shape=(batch_size, 1, 28, 28),
                  batch_size=batch_size,
                  init_U=InitCell('rand'))
-c2 = ConvertLayer(name='c2',
-                  parent=['read'],
-                  nout=784,
-                  outshape=(batch_size, 784))
 enc = LSTM(name='enc',
-           parent=['c2'],
+           parent=['read'],
+           parent_dim=[288],
            recurrent=['dec'],
+           recurrent_dim=[500],
            batch_size=batch_size,
            nout=500,
            unit='tanh',
@@ -80,6 +78,7 @@ enc = LSTM(name='enc',
            init_b=init_b)
 phi_mu = FullyConnectedLayer(name='phi_mu',
                              parent=['enc'],
+                             parent_dim=[500],
                              nout=latsz,
                              unit='linear',
                              init_W=init_W,
@@ -89,14 +88,17 @@ phi_var = RealVectorLayer(name='phi_var',
                           init_b=init_b)
 prior = PriorLayer(name='prior',
                    parent=['phi_mu', 'phi_var'],
+                   parent_dim=[latsz, latsz],
                    use_sample=1,
                    nout=latsz)
 kl = PriorLayer(name='kl',
                 parent=['phi_mu', 'phi_var'],
+                   parent_dim=[latsz, latsz],
                 use_sample=0,
                 nout=latsz)
 dec = LSTM(name='dec',
            parent=['prior'],
+           parent_dim=[latsz],
            batch_size=batch_size,
            nout=500,
            unit='tanh',
@@ -105,36 +107,58 @@ dec = LSTM(name='dec',
            init_b=init_b)
 w1 = FullyConnectedLayer(name='w1',
                          parent=['dec'],
-                         nout=inpsz,
+                         parent_dim=[500],
+                         nout=144,
                          unit='linear',
                          init_W=init_W,
                          init_b=init_b)
-c3 = ConvertLayer(name='c3',
-                  parent=['w1'],
-                  nout=784,
-                  outshape=(batch_size, 1, 28, 28))
 write= WriteLayer(name='write',
-                  parent=['dec'],
-                  nout=5,
-                  N=12,
-                  width=28,
-                  height=28,
-                  batch_size=batch_size,
-                  init_U=init_U)
-error = CanvasLayer(name='error',
-                    parent=['c1'],
-                    recurrent=['canvas'],
-                    is_write=0,
-                    is_binary=1)
+                  parent=['w1', 'dec'],
+                  parent_dim=[144, 500],
+                  nout=784,
+                  N=28,
+                  img_shape=(batch_size, 1, 12, 12))
+error = ErrorLayer(name='error',
+                   parent=['x'],
+                   parent_dim=[784],
+                   recurrent=['canvas'],
+                   recurrent_dim=[784],
+                   is_binary=1,
+                   nout=inpsz,
+                   batch_size=batch_size)
 canvas = CanvasLayer(name='canvas',
-                     parent=['c3'],
-                     is_write=1,
-                     is_binary=1,
-                     outshape=(batch_size, 1, 28, 28))
-nodes = [enc, dec, phi_mu, phi_var, prior, kl, read, write, error, canvas, c1, c2, c3, w1]
-draw = Net(inputs=inputs, inputs_dim=inputs_dim, nodes=nodes)
-(kl_, canvas_), updates =\
-    draw.build_recurrent_graph(output_args=[kl, canvas], nonseq_inputs=[0], n_steps=20)
+                     parent=['write'],
+                     parent_dim=[784],
+                     nout=inpsz,
+                     batch_size=batch_size)
+
+nodes = [read, enc, phi_mu, phi_var, prior, kl, dec, w1, write, error, canvas]
+for node in nodes:
+    node.initialize()
+
+def inner_fn(enc_h_tm1, dec_h_tm1, canvas_h_tm1, x, phi_var_out):
+    err_out = error.fprop([[x], [canvas_h_tm1]])
+    read_out = read.fprop([[x, err_out], [enc_h_tm1, dec_h_tm1]])
+    enc_out = enc.fprop([[read_out], [enc_h_tm1, dec_h_tm1]])
+    phi_mu_out = phi_mu.fprop([enc_out])
+    prior_out = prior.fprop([phi_mu_out, phi_var_out])
+    kl_out = kl.fprop([phi_mu_out, phi_var_out])
+    dec_out = dec.fprop([[prior_out], [dec_h_tm1]])
+    w1_out = w1.fprop([dec_out])
+    write_out = write.fprop([w1_out, dec_out])
+    canvas_out = canvas.fprop([[write_out], [canvas_h_tm1]])
+    error_out = error.fprop([[x], [canvas_out]])
+
+    return enc_out, dec_out, canvas_out, kl_out
+
+phi_var_out = phi_var.fprop()
+((enc_, dec_, canvas_, kl_), updates) = theano.scan(fn=inner_fn,
+                                                    outputs_info=[enc.get_init_state(),
+                                                                  dec.get_init_state(),
+                                                                  canvas.get_init_state(),
+                                                                  None],
+                                                    non_sequences=[x, phi_var_out],
+                                                    n_steps=20)
 ipdb.set_trace()
 
 # Dimshuffle to (example, time_step, dimension) or (bs, ts, fd)

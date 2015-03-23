@@ -19,6 +19,7 @@ class RecurrentLayer(StemCell):
     def __init__(self,
                  batch_size,
                  recurrent=[],
+                 recurrent_dim=[],
                  self_recurrent=1,
                  init_U=InitCell('ortho'),
                  **kwargs):
@@ -26,8 +27,12 @@ class RecurrentLayer(StemCell):
         self.recurrent = OrderedDict()
         if self_recurrent:
             self.recurrent[self.name] = self.nout
-        for rec in tolist(recurrent):
-            self.recurrent[rec] = None
+        recurrennt_dim = tolist(recurrent_dim)
+        for i, rec in enumerate(tolist(recurrent)):
+            if len(recurrent_dim) != 0:
+                self.recurrent[rec] = recurrent_dim[i]
+            else:
+                self.recurrent[rec] = None
         self.batch_size = batch_size
         self.init_U = init_U
         self.init_states = OrderedDict()
