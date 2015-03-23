@@ -57,8 +57,8 @@ if debug:
 read = ReadLayer(name='read',
                  parent=['x', 'error'],
                  parent_dim=[784, 784],
-                 recurrent=['enc', 'dec'],
-                 recurrent_dim=[256, 256],
+                 recurrent=['dec'],
+                 recurrent_dim=[256],
                  nout=8,
                  glimpse_shape=(batch_size, 1, 2, 2),
                  input_shape=(batch_size, 1, 28, 28),
@@ -92,9 +92,9 @@ prior = PriorLayer(name='prior',
                    nout=latsz)
 kl = PriorLayer(name='kl',
                 parent=['phi_mu', 'phi_var'],
-                   parent_dim=[latsz, latsz],
+                parent_dim=[latsz, latsz],
                 use_sample=0,
-                tol=1e-4,
+                #tol=1e-4,
                 nout=latsz)
 dec = LSTM(name='dec',
            parent=['prior'],
@@ -117,7 +117,8 @@ write= WriteLayer(name='write',
                   parent_dim=[4, 256],
                   nout=784,
                   glimpse_shape=(batch_size, 1, 2, 2),
-                  input_shape=(batch_size, 1, 28, 28))
+                  input_shape=(batch_size, 1, 28, 28),
+                  init_W=init_W)
 error = ErrorLayer(name='error',
                    parent=['x'],
                    parent_dim=[784],
@@ -160,8 +161,12 @@ phi_var_out = phi_var.fprop()
                                                     n_steps=n_steps)
 for k, v in updates.iteritems():
     k.default_update = v
-recon_term = NllBin(x, T.nnet.sigmoid(canvas_[-1])).sum()
-kl_term = (kl_.sum(axis=2).sum(axis=0)).sum()
+#ipdb.set_trace()
+recon_term = NllBin(x, T.nnet.sigmoid(canvas_[-1])).mean()
+#recon_term = T.nnet.sigmoid(canvas_[-1]).mean()
+#recon_term = canvas_[-1].sum(axis=1).mean()
+kl_term = (kl_.sum(axis=0)).mean()
+#kl_term = T.ones((1,)).mean()
 cost = recon_term + kl_term
 cost.name = 'cost'
 recon_term.name = 'recon_term'
@@ -173,11 +178,11 @@ model._params = params
 model.nodes =nodes
 
 optimizer = Adam(
-    lr=0.001
+    lr=0.00001
 )
 
 extension = [
-    GradientClipping(),
+    GradientClipping(batch_size=batch_size),
     EpochCount(10000),
     Monitoring(freq=10,
                ddout=[cost, recon_term, kl_term, recon_err],

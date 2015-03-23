@@ -15,6 +15,7 @@ def NllBin(y, y_hat):
     """
     nll = -T.sum(y * T.log(y_hat) + (1 - y) * T.log(1 - y_hat),
                  axis=-1)
+    #nll = T.nnet.binary_crossentropy(y_hat, y).sum(axis=1)
     return nll
 
 
@@ -94,7 +95,7 @@ def KLGaussianStdGaussian(mu, logvar, tol=0.):
     logvar : FullyConnected (Linear)
     """
     logvar = T.log(T.exp(logvar) + tol)
-    kl = -0.5 * (1 + logvar - mu**2 - T.exp(logvar))
+    kl = T.sum(-0.5 * (1 + logvar - mu**2 - T.exp(logvar)), axis=-1)
     return kl
 
 
@@ -112,6 +113,6 @@ def KLGaussianGaussian(mu1, logvar1, mu2, logvar2, tol=0.):
     """
     logvar1 = T.log(T.exp(logvar1) + tol)
     logvar2 = T.log(T.exp(logvar2) + tol)
-    kl = 0.5 * (logvar2 - logvar1 + (T.exp(logvar1) + (mu1 - mu2)**2) /
-                T.exp(logvar2) - 1)
+    kl = T.sum(0.5 * (logvar2 - logvar1 + (T.exp(logvar1) + (mu1 - mu2)**2) /
+               T.exp(logvar2) - 1), axis=-1)
     return kl

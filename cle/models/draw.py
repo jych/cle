@@ -21,7 +21,7 @@ def batched_dot(A, B):
     -------        
         C : shape (dim_1 \times dim_2 \times dim_4)        
     """
-    C = A.dimshuffle([0,1,2,'x']) * B.dimshuffle([0,'x',1,2])      
+    C = A.dimshuffle(0, 1, 2, 'x') * B.dimshuffle(0, 'x', 1, 2)      
     return C.sum(axis=-2)
 
 
@@ -66,17 +66,16 @@ class ReadLayer(RecurrentLayer):
         centy = (self.input_shape[2] + 1) * (centey + 1) / 2.
         centx = (self.input_shape[3] + 1) * (centex + 1) / 2.
         sigma = T.exp(0.5 * logvar)
-        gamma = T.exp(loggam).dimshuffle(0, 'x', 'x')
+        gamma = T.exp(loggam).dimshuffle(0, 'x')
         delta = T.exp(logdel)
         delta = (max(self.input_shape[2], self.input_shape[3]) - 1) * delta / (max(self.glimpse_shape[2], self.glimpse_shape[3]) - 1)
 
         Fx, Fy = self.filter_bank(centx, centy, delta, sigma)
         x = batched_dot(batched_dot(Fy, x), Fx.transpose(0, 2, 1))
         x_hat = batched_dot(batched_dot(Fy, x_hat), Fx.transpose(0, 2, 1))
-        x = x * gamma
-        x_hat = x_hat * gamma
-        reshape_shape = (batch_size, num_channel*self.glimpse_shape[2]*self.glimpse_shape[3])
-        return T.concatenate([x.reshape(reshape_shape), x_hat.reshape(reshape_shape)], axis=1)
+        reshape_shape = (batch_size,
+                         num_channel*self.glimpse_shape[2]*self.glimpse_shape[3])
+        return gamma * T.concatenate([x.reshape(reshape_shape), x_hat.reshape(reshape_shape)], axis=1)
 
     def filter_bank(self, c_x, c_y, delta, sigma):
         tol = 1e-4
@@ -88,11 +87,11 @@ class ReadLayer(RecurrentLayer):
         mu_x = c_x.dimshuffle(0, 'x') + delta.dimshuffle(0, 'x') * x_mesh
         mu_y = c_y.dimshuffle(0, 'x') + delta.dimshuffle(0, 'x') * y_mesh
 
-        Fy = T.exp(-(a - mu_y.dimshuffle(0, 1, 'x'))**2) / (2. * (sigma.dimshuffle(0, 'x', 'x') + tol)**2)
-        Fx = T.exp(-(b - mu_x.dimshuffle(0, 1, 'x'))**2) / (2. * (sigma.dimshuffle(0, 'x', 'x') + tol)**2)
+        Fy = T.exp(-(a - mu_y.dimshuffle(0, 1, 'x'))**2) / (2. * sigma.dimshuffle(0, 'x', 'x')**2)
+        Fx = T.exp(-(b - mu_x.dimshuffle(0, 1, 'x'))**2) / (2. * sigma.dimshuffle(0, 'x', 'x')**2)
 
-        Fy = Fy / Fy.sum(axis=-1).dimshuffle(0, 1, 'x')
-        Fx = Fx / Fx.sum(axis=-1).dimshuffle(0, 1, 'x')
+        Fy = Fy / (Fy.sum(axis=-1).dimshuffle(0, 1, 'x') + tol)
+        Fx = Fx / (Fx.sum(axis=-1).dimshuffle(0, 1, 'x') + tol)
         return Fx, Fy
 
     def initialize(self):
@@ -138,15 +137,14 @@ class WriteLayer(StemCell):
         centx = (self.input_shape[3] + 1) * (centex + 1) / 2.
         centy = (self.input_shape[2] + 1) * (centey + 1) / 2.
         sigma = T.exp(0.5 * logvar)
-        gamma = T.exp(loggam).dimshuffle(0, 'x', 'x')
+        gamma = T.exp(loggam).dimshuffle(0, 'x')
         delta = T.exp(logdel)
         delta = (max(self.input_shape[2], self.input_shape[3]) - 1) * delta / (max(self.glimpse_shape[2], self.glimpse_shape[3]) - 1)
 
         Fx, Fy = self.filter_bank(centx, centy, delta, sigma)
         w = batched_dot(batched_dot(Fy.transpose(0, 2, 1), w), Fx)
-        w = w / gamma
         reshape_shape = (batch_size, num_channel*self.input_shape[2]*self.input_shape[3])
-        return w.reshape((reshape_shape))
+        return w.reshape((reshape_shape)) / gamma
 
     def filter_bank(self, c_x, c_y, delta, sigma):
         tol = 1e-4
@@ -158,11 +156,11 @@ class WriteLayer(StemCell):
         mu_x = c_x.dimshuffle(0, 'x') + delta.dimshuffle(0, 'x') * x_mesh
         mu_y = c_y.dimshuffle(0, 'x') + delta.dimshuffle(0, 'x') * y_mesh
 
-        Fy = T.exp(-(a - mu_y.dimshuffle(0, 1, 'x'))**2) / (2. * (sigma.dimshuffle(0, 'x', 'x') + tol)**2)
-        Fx = T.exp(-(b - mu_x.dimshuffle(0, 1, 'x'))**2) / (2. * (sigma.dimshuffle(0, 'x', 'x') + tol)**2)
+        Fy = T.exp(-(a - mu_y.dimshuffle(0, 1, 'x'))**2) / (2. * sigma.dimshuffle(0, 'x', 'x')**2)
+        Fx = T.exp(-(b - mu_x.dimshuffle(0, 1, 'x'))**2) / (2. * sigma.dimshuffle(0, 'x', 'x')**2)
 
-        Fy = Fy / Fy.sum(axis=-1).dimshuffle(0, 1, 'x')
-        Fx = Fx / Fx.sum(axis=-1).dimshuffle(0, 1, 'x')
+        Fy = Fy / (Fy.sum(axis=-1).dimshuffle(0, 1, 'x') + tol)
+        Fx = Fx / (Fx.sum(axis=-1).dimshuffle(0, 1, 'x') + tol)
         return Fx, Fy
 
     def initialize(self):
