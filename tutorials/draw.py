@@ -4,7 +4,7 @@ import theano
 import theano.tensor as T
 
 from cle.cle.data import Iterator
-from cle.cle.cost import Gaussian
+from cle.cle.cost import NllBin
 from cle.cle.graph.net import Net
 from cle.cle.models import Model
 from cle.cle.models.draw import (
@@ -27,8 +27,8 @@ from cle.cle.train.ext import (
     EarlyStopping
 )
 from cle.cle.train.opt import Adam
-#from cle.cle.utils.compat import OrderedDict
-from theano.compat.python2x import OrderedDict
+from cle.cle.utils import flatten
+from cle.cle.utils.compat import OrderedDict
 from cle.datasets.mnist import MNIST
 
 
@@ -49,9 +49,11 @@ init_U = InitCell('ortho')
 init_b = InitCell('zeros')
 
 model.inputs = data.theano_vars()
-x, y = model.inputs
+x, _ = model.inputs
+y = x.copy()
 if debug:
     x.tag.test_value = np.zeros((batch_size, 784), dtype=np.float32)
+    y.tag.test_value = np.zeros((batch_size, 784), dtype=np.float32)
 
 inputs = [x]
 inputs_dim = {'x':inpsz}
@@ -135,6 +137,7 @@ canvas = CanvasLayer(name='canvas',
 nodes = [read, enc, phi_mu, phi_var, prior, kl, dec, w1, write, error, canvas]
 for node in nodes:
     node.initialize()
+params = flatten([node.get_params().values() for node in nodes])
 
 def inner_fn(enc_h_tm1, dec_h_tm1, canvas_h_tm1, x, phi_var_out):
     err_out = error.fprop([[x], [canvas_h_tm1]])
@@ -159,50 +162,16 @@ phi_var_out = phi_var.fprop()
                                                                   None],
                                                     non_sequences=[x, phi_var_out],
                                                     n_steps=20)
-ipdb.set_trace()
-
-# Dimshuffle to (example, time_step, dimension) or (bs, ts, fd)
-ty = y.dimshuffle(1, 0, 2)
-dy = T.extra_ops.repeat(ty, num_sample, axis=0)
-ry = dy.reshape((dy.shape[0]*dy.shape[1], -1))
-
-tmu = mu.dimshuffle(1, 0, 2)
-rmu = tmu.reshape((tmu.shape[0]*tmu.shape[1], -1))    
-
-tkl = kl_.dimshuffle(1, 0, 2)
-rkl = tkl.reshape((tkl.shape[0]*tkl.shape[1], -1))
-kl_term = rkl.sum(axis=1)[rkl.sum(axis=1).nonzero()]
-
-var = theta_var.fprop()
-max_theta_var = T.exp(var).max()
-mean_theta_var = T.exp(var).mean()
-min_theta_var = T.exp(var).min()
-max_theta_var.name = 'max_theta_var'
-mean_theta_var.name = 'mean_theta_var'
-min_theta_var.name = 'min_theta_var'
-
-max_phi_var = T.exp(phi_var).max()
-mean_phi_var = T.exp(phi_var).mean()
-min_phi_var = T.exp(phi_var).min()
-max_phi_var.name = 'max_phi_var'
-mean_phi_var.name = 'mean_phi_var'
-min_phi_var.name = 'min_phi_var'
-
-recon = Gaussian(ry, rmu, var, tol=1e-8)
-recon = recon.reshape((tmu.shape[0], tmu.shape[1]))
-recon = recon.mean(axis=0)
-recon_term = recon.mean()
-kl_term = kl_term.mean()
-recon_err = T.sqrt(T.sqr(ry - rmu).mean()) / ry.std()
-
+recon_term = NllBin(y, T.nnet.sigmoid(canvas_[-1])).sum()
+kl_term = (kl_.sum(axis=2).sum(axis=0)).sum()
 cost = recon_term + kl_term
 cost.name = 'cost'
 recon_term.name = 'recon_term'
 kl_term.name = 'kl_term'
+recon_err = ((y - T.nnet.sigmoid(canvas_[-1]))**2).mean() / y.std()
 recon_err.name = 'recon_err'
-vae.add_input([y, mask])
-vae.add_node(theta_var)
-model.graphs = [vae]
+model.inputs = [x, y]
+model._params = params
 
 optimizer = Adam(
     lr=0.001
@@ -212,10 +181,8 @@ extension = [
     GradientClipping(),
     EpochCount(10000),
     Monitoring(freq=50,
-               ddout=[cost, recon_term, kl_term, recon_err,
-                      max_phi_var, mean_phi_var, min_phi_var,
-                      max_theta_var, mean_theta_var, min_theta_var],
-               data=[Iterator(data, batch_size_enc)]),
+               ddout=[cost, recon_term, kl_term, recon_err],
+               data=[Iterator(data, batch_size)]),
     Picklize(freq=200,
              path=savepath),
     EarlyStopping(path=savepath)
@@ -223,7 +190,7 @@ extension = [
 
 mainloop = Training(
     name='draw',
-    data=Iterator(data, batch_size_enc),
+    data=Iterator(data, batch_size),
     model=model,
     optimizer=optimizer,
     cost=cost,

@@ -111,7 +111,7 @@ class WriteLayer(StemCell):
     def fprop(self, X):
         w, X = X[0], X[1:] 
         z = T.zeros((w.shape[0], 5))
-        for x, (parname, parout) in izip(X, self.parent.items()):
+        for x, (parname, parout) in izip(X, self.parent.items()[1:]):
             W = self.params['W_'+parname+self.name]
             z += T.dot(x[:, :parout], W)
         z += self.params['b_'+self.name]
@@ -154,7 +154,7 @@ class WriteLayer(StemCell):
         return Fx, Fy
 
     def initialize(self):
-        for parname, parout in self.parent.items():
+        for parname, parout in self.parent.items()[1:]:
             W_shape = (parout, 5)
             W_name = 'W_'+parname+self.name
             self.alloc(self.init_W.get(W_shape, W_name))

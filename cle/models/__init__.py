@@ -18,9 +18,18 @@ class Model(object):
     ----------
     .. todo::
     """
-    def __init__(self, inputs=None, graphs=None):
+    def __init__(self, inputs=None, graphs=None, nodes=None, params=None):
         self.inputs = inputs
         self.graphs = graphs
+        self._params = params
+        # used in manual mode
+        self.nodes = nodes
+
+    @property
+    def params(self):
+        if getattr(self, '_params', None) is None:
+            self._params = self.get_params()
+        return self._params
 
     def get_params(self):
         params = []

@@ -33,7 +33,7 @@ class Training(PickleMixin, TheanoMixin):
         self.model = model
         self.optimizer = optimizer
         self.inputs = model.inputs
-        self.params = model.get_params()
+        self.params = model.params
         self.cost = cost
         self.outputs = tolist(outputs)
         self.extension = extension
