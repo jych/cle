@@ -35,11 +35,11 @@ from cle.datasets.mnist import MNIST
 datapath = '/home/junyoung/data/mnist/mnist_binarized_salakhutdinov.pkl'
 savepath = '/home/junyoung/repos/cle/saved/'
 
-batch_size = 128
+batch_size = 100
 inpsz = 784
 latsz = 100
-n_steps = 10
-debug = 0
+n_steps = 64
+debug = 1
 
 model = Model()
 data = MNIST(name='train',
@@ -151,40 +151,41 @@ def inner_fn(enc_h_tm1, dec_h_tm1, canvas_h_tm1, x, phi_var_out):
     return enc_out, dec_out, canvas_out, kl_out
 
 phi_var_out = phi_var.fprop()
-((enc_, dec_, canvas_, kl_), updates) = theano.scan(fn=inner_fn,
-                                                    outputs_info=[enc.get_init_state(),
-                                                                  dec.get_init_state(),
-                                                                  canvas.get_init_state(),
-                                                                  None],
-                                                    non_sequences=[x, phi_var_out],
-                                                    n_steps=n_steps)
+((enc_out, dec_out, canvas_out, kl_out), updates) = theano.scan(fn=inner_fn,
+                                                                outputs_info=[enc.get_init_state(),
+                                                                              dec.get_init_state(),
+                                                                              canvas.get_init_state(),
+                                                                              None],
+                                                                non_sequences=[x, phi_var_out],
+                                                                n_steps=n_steps)
 for k, v in updates.iteritems():
     k.default_update = v
-recon_term = NllBin(x, T.nnet.sigmoid(canvas_[-1])).mean()
-kl_term = kl_.sum(axis=0).mean()
+recon_term = NllBin(x, T.nnet.sigmoid(canvas_out[-1])).mean()
+kl_term = kl_out.sum(axis=0).mean()
 cost = recon_term + kl_term
 cost.name = 'cost'
 recon_term.name = 'recon_term'
 kl_term.name = 'kl_term'
-recon_err = ((x - T.nnet.sigmoid(canvas_[-1]))**2).mean() / x.std()
+recon_err = ((x - T.nnet.sigmoid(canvas_out[-1]))**2).mean() / x.std()
 recon_err.name = 'recon_err'
 model.inputs = [x]
 model._params = params
-model.nodes =nodes
+model.nodes = nodes
 
 optimizer = Adam(
-    lr=0.01
+    lr=0.01,
+    b1=0.01
 )
 
 extension = [
     GradientClipping(batch_size=batch_size),
     EpochCount(10000),
-    Monitoring(freq=10,
+    Monitoring(freq=100,
                ddout=[cost, recon_term, kl_term, recon_err],
                data=[Iterator(data, batch_size)]),
-    Picklize(freq=1000,
+    Picklize(freq=2000,
              path=savepath),
-    EarlyStopping(freq=200, path=savepath)
+    EarlyStopping(freq=500, path=savepath)
 ]
 
 mainloop = Training(
