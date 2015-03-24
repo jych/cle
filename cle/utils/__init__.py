@@ -116,7 +116,7 @@ def unpack(arg):
 
 
 def tolist(arg):
-    if isinstance(arg, (list, tuple)):
+    if not isinstance(arg, list)):
         return list(arg)
     elif type(arg) is not list:
         arg = [arg]
@@ -124,10 +124,10 @@ def tolist(arg):
 
 
 def totuple(arg):
-    if isinstance(arg, (list, tuple)):
+    if not isinstance(arg, tuple)):
         return tuple(arg)
     elif type(arg) is not tuple:
-        arg = (arg)
+        arg = (arg,)
     return arg
 
 
