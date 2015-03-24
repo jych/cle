@@ -5,7 +5,6 @@ import theano.tensor as T
 
 from cle.cle.data import Iterator
 from cle.cle.cost import NllBin
-from cle.cle.graph.net import Net
 from cle.cle.models import Model
 from cle.cle.models.draw import (
     CanvasLayer,
@@ -14,7 +13,6 @@ from cle.cle.models.draw import (
     WriteLayer
 )
 from cle.cle.layers import InitCell, RealVectorLayer
-from cle.cle.layers.conv import ConvertLayer
 from cle.cle.layers.feedforward import FullyConnectedLayer
 from cle.cle.layers.layer import PriorLayer
 from cle.cle.layers.recurrent import LSTM
@@ -130,15 +128,17 @@ error = ErrorLayer(name='error',
                    batch_size=batch_size)
 canvas = CanvasLayer(name='canvas',
                      parent=['write'],
+                     nout=784,
                      batch_size=batch_size)
 nodes = [read_param, read, enc, phi_mu, phi_var, prior, kl, dec, w, write_param, write, error, canvas, phi_var]
 for node in nodes:
     node.initialize()
 params = flatten([node.get_params().values() for node in nodes])
 def inner_fn(enc_h_tm1, dec_h_tm1, canvas_h_tm1, x, phi_var_out):
+
     err_out = error.fprop([[x], [canvas_h_tm1]])
     read_param_out = read_param.fprop([dec_h_tm1])
-    read_out = read.fprop([[x, err_out, read_param_out]])
+    read_out = read.fprop([x, err_out, read_param_out])
     enc_out = enc.fprop([[read_out], [enc_h_tm1, dec_h_tm1]])
     phi_mu_out = phi_mu.fprop([enc_out])
     prior_out = prior.fprop([phi_mu_out, phi_var_out])
@@ -152,13 +152,14 @@ def inner_fn(enc_h_tm1, dec_h_tm1, canvas_h_tm1, x, phi_var_out):
     return enc_out, dec_out, canvas_out, kl_out
 
 phi_var_out = phi_var.fprop()
-((enc_out, dec_out, canvas_out, kl_out), updates) = theano.scan(fn=inner_fn,
-                                                                outputs_info=[enc.get_init_state(),
-                                                                              dec.get_init_state(),
-                                                                              canvas.get_init_state(),
-                                                                              None],
-                                                                non_sequences=[x, phi_var_out],
-                                                                n_steps=n_steps)
+((enc_out, dec_out, canvas_out, kl_out), updates) =\
+    theano.scan(fn=inner_fn,
+                outputs_info=[enc.get_init_state(),
+                              dec.get_init_state(),
+                              canvas.get_init_state(),
+                              None],
+                non_sequences=[x, phi_var_out],
+                n_steps=n_steps)
 for k, v in updates.iteritems():
     k.default_update = v
 recon_term = NllBin(x, T.nnet.sigmoid(canvas_out[-1])).mean()
