@@ -12,7 +12,7 @@ from cle.cle.models.draw import (
     ReadLayer,
     WriteLayer
 )
-from cle.cle.layers import InitCell, RealVectorLayer
+from cle.cle.layers import InitCell
 from cle.cle.layers.feedforward import FullyConnectedLayer
 from cle.cle.layers.layer import PriorLayer
 from cle.cle.layers.recurrent import LSTM
@@ -81,9 +81,13 @@ phi_mu = FullyConnectedLayer(name='phi_mu',
                              unit='linear',
                              init_W=init_W,
                              init_b=init_b)
-phi_var = RealVectorLayer(name='phi_var',
-                          nout=latsz,
-                          init_b=init_b)
+phi_var = FullyConnectedLayer(name='phi_var',
+                              parent=['enc'],
+                              parent_dim=[256],
+                              nout=latsz,
+                              unit='linear',
+                              init_W=init_W,
+                              init_b=init_b)
 prior = PriorLayer(name='prior',
                    parent=['phi_mu', 'phi_var'],
                    parent_dim=[latsz, latsz],
@@ -134,13 +138,14 @@ nodes = [read_param, read, enc, phi_mu, phi_var, prior, kl, dec, w, write_param,
 for node in nodes:
     node.initialize()
 params = flatten([node.get_params().values() for node in nodes])
-def inner_fn(enc_h_tm1, dec_h_tm1, canvas_h_tm1, x, phi_var_out):
+def inner_fn(enc_h_tm1, dec_h_tm1, canvas_h_tm1, x):
 
     err_out = error.fprop([[x], [canvas_h_tm1]])
     read_param_out = read_param.fprop([dec_h_tm1])
     read_out = read.fprop([x, err_out, read_param_out])
     enc_out = enc.fprop([[read_out], [enc_h_tm1, dec_h_tm1]])
     phi_mu_out = phi_mu.fprop([enc_out])
+    phi_var_out = phi_var.fprop([enc_out])
     prior_out = prior.fprop([phi_mu_out, phi_var_out])
     kl_out = kl.fprop([phi_mu_out, phi_var_out])
     dec_out = dec.fprop([[prior_out], [dec_h_tm1]])
@@ -151,14 +156,13 @@ def inner_fn(enc_h_tm1, dec_h_tm1, canvas_h_tm1, x, phi_var_out):
 
     return enc_out, dec_out, canvas_out, kl_out
 
-phi_var_out = phi_var.fprop()
 ((enc_out, dec_out, canvas_out, kl_out), updates) =\
     theano.scan(fn=inner_fn,
                 outputs_info=[enc.get_init_state(),
                               dec.get_init_state(),
                               canvas.get_init_state(),
                               None],
-                non_sequences=[x, phi_var_out],
+                non_sequences=[x],
                 n_steps=n_steps)
 for k, v in updates.iteritems():
     k.default_update = v
@@ -175,8 +179,7 @@ model._params = params
 model.nodes = nodes
 
 optimizer = Adam(
-    lr=0.01,
-    b1=0.01
+    lr=0.001
 )
 
 extension = [
