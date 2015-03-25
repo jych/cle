@@ -185,7 +185,7 @@ class SequentialPrepMixin(object):
                          chosen left space and right space
         """
         if pad_len == 0:
-            X_max = np.array([x.max() for x in X]).max()
+            X_max = np.array([len(x) for x in X]).max()
             new_X = np.zeros((len(X), X_max))
             for i, x in enumerate(X):
                 free_ = X_max - len(x)
