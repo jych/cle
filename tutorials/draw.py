@@ -121,10 +121,10 @@ write_param = FullyConnectedLayer(name='write_param',
                                   unit='linear',
                                   init_W=init_W,
                                   init_b=init_b)
-write= WriteLayer(name='write',
-                  parent=['w', 'write_param'],
-                  glimpse_shape=(batch_size, 1, 5, 5),
-                  input_shape=(batch_size, 1, 28, 28))
+write = WriteLayer(name='write',
+                   parent=['w', 'write_param'],
+                   glimpse_shape=(batch_size, 1, 5, 5),
+                   input_shape=(batch_size, 1, 28, 28))
 error = ErrorLayer(name='error',
                    parent=['x'],
                    recurrent=['canvas'],
@@ -134,25 +134,25 @@ canvas = CanvasLayer(name='canvas',
                      parent=['write'],
                      nout=784,
                      batch_size=batch_size)
-nodes = [read_param, read, enc, phi_mu, phi_var, prior, kl, dec, w, write_param, write, error, canvas, phi_var]
+nodes = [read_param, read, enc, phi_mu, phi_var, prior, kl, dec, w, write_param, write, error, canvas]
 for node in nodes:
     node.initialize()
 params = flatten([node.get_params().values() for node in nodes])
-def inner_fn(enc_h_tm1, dec_h_tm1, canvas_h_tm1, x):
+def inner_fn(enc_tm1, dec_tm1, canvas_tm1, x):
 
-    err_out = error.fprop([[x], [canvas_h_tm1]])
-    read_param_out = read_param.fprop([dec_h_tm1])
+    err_out = error.fprop([[x], [canvas_tm1]])
+    read_param_out = read_param.fprop([dec_tm1])
     read_out = read.fprop([x, err_out, read_param_out])
-    enc_out = enc.fprop([[read_out], [enc_h_tm1, dec_h_tm1]])
+    enc_out = enc.fprop([[read_out], [enc_tm1, dec_tm1]])
     phi_mu_out = phi_mu.fprop([enc_out])
     phi_var_out = phi_var.fprop([enc_out])
     prior_out = prior.fprop([phi_mu_out, phi_var_out])
     kl_out = kl.fprop([phi_mu_out, phi_var_out])
-    dec_out = dec.fprop([[prior_out], [dec_h_tm1]])
+    dec_out = dec.fprop([[prior_out], [dec_tm1]])
     w_out = w.fprop([dec_out])
     write_param_out = write_param.fprop([dec_out])
     write_out = write.fprop([w_out, write_param_out])
-    canvas_out = canvas.fprop([[write_out], [canvas_h_tm1]])
+    canvas_out = canvas.fprop([[write_out], [canvas_tm1]])
 
     return enc_out, dec_out, canvas_out, kl_out
 

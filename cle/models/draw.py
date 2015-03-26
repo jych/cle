@@ -215,13 +215,10 @@ class ErrorLayer(RecurrentLayer):
     def gaussian(self, X):
         mu = X[0]
         logvar = X[1]
-        if self.use_sample:
-            epsilon = self.theano_rng.normal(size=mu.shape,
-                                             avg=0., std=1.,
-                                             dtype=mu.dtype)
-            z = mu + T.sqrt(T.exp(logvar)) * epsilon
-        else:
-            z = mu
+        epsilon = self.theano_rng.normal(size=mu.shape,
+                                         avg=0., std=1.,
+                                         dtype=mu.dtype)
+        z = mu + T.sqrt(T.exp(logvar)) * epsilon
         return z
 
     def gaussian_mixture(self, X):
