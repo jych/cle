@@ -51,7 +51,7 @@ def Gaussian(y, mu, sig):
     mu     : FullyConnected (Linear)
     sig : FullyConnected (Softplus)
     """
-    nll = 0.5 * T.sum(T.sqr(y - mu) / sig**2 + T.log(sig) +
+    nll = 0.5 * T.sum(T.sqr(y - mu) / sig**2 + 2 * T.log(sig) +
                       T.log(2 * np.pi), axis=1)
     return nll
 
@@ -74,7 +74,7 @@ def GMM(y, mu, sig, coeff):
     sig = sig.reshape((sig.shape[0],
                        sig.shape[1]/coeff.shape[-1],
                        coeff.shape[-1]))
-    inner = -0.5 * T.sum(T.sqr(y - mu) / sig**2 + T.log(sig) +
+    inner = -0.5 * T.sum(T.sqr(y - mu) / sig**2 + 2 * T.log(sig) +
                          T.log(2 * np.pi), axis=1)
     nll = -logsumexp(T.log(coeff) + inner, axis=1)
     return nll
