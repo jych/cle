@@ -140,7 +140,7 @@ class GMMLayer(GaussianLayer):
     def cost(self, X):
         if len(X) != 4:
             raise ValueError("The number of inputs does not match.")
-        cost = GMM(X[0], X[1], X[2], X[3], self.tol)
+        cost = GMM(X[0], X[1], X[2], X[3])
         if self.use_sum:
             return cost.sum()
         else:
