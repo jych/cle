@@ -60,7 +60,7 @@ class ReadLayer(StemCell):
         delta = T.exp(logdel)
         delta = (max(self.input_shape[2], self.input_shape[3]) - 1) * delta / (max(self.glimpse_shape[2], self.glimpse_shape[3]) - 1)
 
-        Fy, Fx = self.filter_bank(centx, centy, delta, sig)
+        Fy, Fx = self.filter_bank(centx, centy, delta, sig.flatten())
         x = batched_dot(batched_dot(Fy, x), Fx.transpose(0, 2, 1))
         x_hat = batched_dot(batched_dot(Fy, x_hat), Fx.transpose(0, 2, 1))
         reshape_shape = (batch_size,
@@ -120,7 +120,7 @@ class WriteLayer(StemCell):
         delta = T.exp(logdel)
         delta = (max(self.input_shape[2], self.input_shape[3]) - 1) * delta / (max(self.glimpse_shape[2], self.glimpse_shape[3]) - 1)
 
-        Fy, Fx = self.filter_bank(centx, centy, delta, sig)
+        Fy, Fx = self.filter_bank(centx, centy, delta, sig.flatten())
         I = batched_dot(batched_dot(Fy.transpose(0, 2, 1), w), Fx)
         reshape_shape = (batch_size, num_channel*self.input_shape[2]*self.input_shape[3])
         return I.reshape((reshape_shape)) / gamma
