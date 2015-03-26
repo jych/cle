@@ -180,15 +180,15 @@ class PriorLayer(StemCell):
         if len(X) != 2 and len(X) != 4:
             raise ValueError("The number of inputs does not match.")
         mu = X[0]
-        logvar = X[1]
+        sig = X[1]
         mu = mu.dimshuffle(0, 'x', 1)
-        logvar = logvar.dimshuffle(0, 'x', 1)
+        sig = sig.dimshuffle(0, 'x', 1)
         epsilon = self.theano_rng.normal(size=(mu.shape[0],
                                                self.num_sample,
                                                mu.shape[-1]),
                                          avg=0., std=1.,
                                          dtype=mu.dtype)
-        z = mu + T.sqrt(T.exp(logvar)) * epsilon
+        z = mu + sig * epsilon
         z = z.reshape((z.shape[0] * z.shape[1], -1))
         return z
 
