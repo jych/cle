@@ -21,6 +21,6 @@ class FullyConnectedLayer(StemCell):
             W = self.params['W_'+parname+self.name]
             z += T.dot(x[:, :parout], W)
         z += self.params['b_'+self.name]
-        z = self.nonlin(z)
+        z = self.nonlin(z) + self.cons
         z.name = self.name
         return z

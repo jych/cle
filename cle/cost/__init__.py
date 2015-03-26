@@ -13,8 +13,6 @@ def NllBin(y, y_hat):
     ----------
     .. todo::
     """
-    #nll = -T.sum(y * T.log(y_hat) + (1 - y) * T.log(1 - y_hat),
-    #             axis=-1)
     nll = T.nnet.binary_crossentropy(y_hat, y).sum(axis=1)
     return nll
 
@@ -43,7 +41,7 @@ def MSE(y, y_hat):
     return mse
 
 
-def Gaussian(y, mu, logvar, tol=0.):
+def Gaussian(y, mu, sig):
     """
     Gaussian negative log-likelihood
 
@@ -51,15 +49,14 @@ def Gaussian(y, mu, logvar, tol=0.):
     ----------
     y      : TensorVariable
     mu     : FullyConnected (Linear)
-    logvar : FullyConnected (Linear)
+    sig : FullyConnected (Softplus)
     """
-    logvar = T.log(T.exp(logvar) + tol)
-    nll = 0.5 * T.sum(T.sqr(y - mu) * T.exp(-logvar) + logvar +
+    nll = 0.5 * T.sum(T.sqr(y - mu) / sig**2 + T.log(sig) +
                       T.log(2 * np.pi), axis=1)
     return nll
 
 
-def GMM(y, mu, logvar, coeff, tol=0.):
+def GMM(y, mu, sig, coeff):
     """
     Gaussian mixture model negative log-likelihood
 
@@ -67,24 +64,23 @@ def GMM(y, mu, logvar, coeff, tol=0.):
     ----------
     y      : TensorVariable
     mu     : FullyConnected (Linear)
-    logvar : FullyConnected (Linear)
+    sig : FullyConnected (Softplus)
     coeff  : FullyConnected (Softmax)
     """
     y = y.dimshuffle(0, 1, 'x')
     mu = mu.reshape((mu.shape[0],
                      mu.shape[1]/coeff.shape[-1],
                      coeff.shape[-1]))
-    logvar = logvar.reshape((logvar.shape[0],
-                             logvar.shape[1]/coeff.shape[-1],
-                             coeff.shape[-1]))
-    logvar = T.log(T.exp(logvar) + tol)
-    inner = -0.5 * T.sum(T.sqr(y - mu) * T.exp(-logvar) + logvar +
+    sig = sig.reshape((sig.shape[0],
+                       sig.shape[1]/coeff.shape[-1],
+                       coeff.shape[-1]))
+    inner = -0.5 * T.sum(T.sqr(y - mu) / sig**2 + T.log(sig) +
                          T.log(2 * np.pi), axis=1)
     nll = -logsumexp(T.log(coeff) + inner, axis=1)
     return nll
 
 
-def KLGaussianStdGaussian(mu, logvar, tol=0.):
+def KLGaussianStdGaussian(mu, sig):
     """
     Re-parameterized formula for KL
     between Gaussian predicted by encoder and standardized Gaussian dist.
@@ -92,14 +88,13 @@ def KLGaussianStdGaussian(mu, logvar, tol=0.):
     Parameters
     ----------
     mu     : FullyConnected (Linear)
-    logvar : FullyConnected (Linear)
+    sig : FullyConnected (Softplus)
     """
-    logvar = T.log(T.exp(logvar) + tol)
-    kl = T.sum(-0.5 * (1 + logvar - mu**2 - T.exp(logvar)), axis=-1)
+    kl = T.sum(-0.5 * (1 + T.log(sig**2) - mu**2 - sig**2), axis=-1)
     return kl
 
 
-def KLGaussianGaussian(mu1, logvar1, mu2, logvar2, tol=0.):
+def KLGaussianGaussian(mu1, sig1, mu2, sig2):
     """
     Re-parameterized formula for KL
     between Gaussian predicted by encoder and Gaussian dist.
@@ -107,12 +102,10 @@ def KLGaussianGaussian(mu1, logvar1, mu2, logvar2, tol=0.):
     Parameters
     ----------
     mu1     : FullyConnected (Linear)
-    logvar1 : FullyConnected (Linear)
+    sig1 : FullyConnected (Softplus)
     mu2     : FullyConnected (Linear)
-    logvar2 : FullyConnected (Linear)
+    sig2 : FullyConnected (Softplus)
     """
-    logvar1 = T.log(T.exp(logvar1) + tol)
-    logvar2 = T.log(T.exp(logvar2) + tol)
-    kl = T.sum(0.5 * (logvar2 - logvar1 + (T.exp(logvar1) + (mu1 - mu2)**2) /
-               T.exp(logvar2) - 1), axis=-1)
+    kl = T.sum(0.5 * (T.log(sig**2) - T.log(sig**2) + (sig**2 + (mu1 - mu2)**2) /
+               sig**2 - 1), axis=-1)
     return kl

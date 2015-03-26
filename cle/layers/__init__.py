@@ -137,6 +137,9 @@ class NonlinCell(RandomCell):
     def softmax(self, z):
         return T.nnet.softmax(z)
 
+    def softplus(self, z):
+        return T.nnet.softplus(z)
+
     def tanh(self, z):
         return T.tanh(z)
 
@@ -183,7 +186,7 @@ class StemCell(NonlinCell):
     .. todo::
     """
     def __init__(self, parent=[], parent_dim=[], nout=None, init_W=InitCell('randn'),
-                 init_b=InitCell('zeros'), name=None, **kwargs):
+                 init_b=InitCell('zeros'), cons=0., name=None, **kwargs):
         super(StemCell, self).__init__(**kwargs)
         if name is None:
             name = self.__class__.name__.lower()
@@ -191,6 +194,7 @@ class StemCell(NonlinCell):
         self.nout = nout
         self.init_W = init_W
         self.init_b = init_b
+        self.cons = cons
         self.parent = OrderedDict()
         parent_dim = tolist(parent_dim)
         for i, par in enumerate(tolist(parent)):

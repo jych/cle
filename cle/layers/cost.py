@@ -16,7 +16,7 @@ class CostLayer(StemCell):
 
     Parameters
     ----------
-    ..todo::
+    .. todo::
     """
     def __init__(self, use_sum=False, **kwargs):
         super(CostLayer, self).__init__(**kwargs)
@@ -36,7 +36,7 @@ class BinCrossEntropyLayer(CostLayer):
 
     Parameters
     ----------
-    ..todo::
+    .. todo::
     """
     def fprop(self, X):
         cost = NllBin(X[0], X[1])
@@ -52,7 +52,7 @@ class MulCrossEntropyLayer(CostLayer):
 
     Parameters
     ----------
-    ..todo::
+    .. todo::
     """
     def fprop(self, X):
         cost = NllMul(X[0], X[1])
@@ -68,7 +68,7 @@ class MSELayer(CostLayer):
 
     Parameters
     ----------
-    ..todo::
+    .. todo::
     """
     def fprop(self, X):
         cost = MSE(X[0], X[1])
@@ -84,11 +84,10 @@ class GaussianLayer(CostLayer):
 
     Parameters
     ----------
-    ..todo::
+    .. todo::
     """
     def __init__(self,
                  use_sample=False,
-                 tol=0.,
                  **kwargs):
         super(GaussianLayer, self).__init__(**kwargs)
         self.use_sample = use_sample
@@ -96,7 +95,6 @@ class GaussianLayer(CostLayer):
             self.fprop = self.which_method('sample')
         else:
             self.fprop = self.which_method('cost')
-        self.tol = tol
 
     def which_method(self, which):
         return getattr(self, which)
@@ -104,7 +102,7 @@ class GaussianLayer(CostLayer):
     def cost(self, X):
         if len(X) != 3:
             raise ValueError("The number of inputs does not match.")
-        cost = Gaussian(X[0], X[1], X[2], self.tol)
+        cost = Gaussian(X[0], X[1], X[2])
         if self.use_sum:
             return cost.sum()
         else:
@@ -112,8 +110,7 @@ class GaussianLayer(CostLayer):
 
     def sample(self, X):
         mu = X[0]
-        logvar = X[1]
-        sig = T.sqrt(T.exp(logvar))
+        sig= X[1]
         sample = self.theano_rng.normal(size=mu.shape,
                                         avg=mu, std=sig,
                                         dtype=mu.dtype)
@@ -138,7 +135,7 @@ class GMMLayer(GaussianLayer):
 
     Parameters
     ----------
-    todo..
+    .. todo::
     """
     def cost(self, X):
         if len(X) != 4:
@@ -151,14 +148,14 @@ class GMMLayer(GaussianLayer):
 
     def sample(self, X):
         mu = X[0]
-        logvar = X[1]
+        sig = X[1]
         coeff = X[2]
         mu = mu.reshape((mu.shape[0],
                          mu.shape[1]/coeff.shape[-1],
                          coeff.shape[-1]))
-        logvar = logvar.reshape((logvar.shape[0],
-                                 logvar.shape[1]/coeff.shape[-1],
-                                 coeff.shape[-1]))
+        sig = sig.reshape((sig.shape[0],
+                           sig.shape[1]/coeff.shape[-1],
+                           coeff.shape[-1]))
         idx = predict(
             self.theano_rng.multinomial(
                 pvals=coeff,
@@ -167,7 +164,7 @@ class GMMLayer(GaussianLayer):
             axis=1
         )
         mu = mu[T.arange(mu.shape[0]), :, idx]
-        sig = T.sqrt(T.exp(logvar[T.arange(logvar.shape[0]), :, idx]))
+        sig = T.sqrt(T.exp(sig[T.arange(sig.shape[0]), :, idx]))
         sample = self.theano_rng.normal(size=mu.shape,
                                         avg=mu, std=sig,
                                         dtype=mu.dtype)
