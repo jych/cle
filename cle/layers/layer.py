@@ -151,7 +151,6 @@ class PriorLayer(StemCell):
     """
     def __init__(self,
                  use_sample=False,
-                 tol=0.,
                  num_sample=1,
                  **kwargs):
         super(PriorLayer, self).__init__(**kwargs)
@@ -160,7 +159,6 @@ class PriorLayer(StemCell):
             self.fprop = self.which_method('sample')
         else:
             self.fprop = self.which_method('cost')
-        self.tol = tol
         if use_sample:
             if num_sample is None:
                 raise ValueError("If you are going to use sampling,\
