@@ -44,25 +44,23 @@ class ReadLayer(StemCell):
         self.input_shape = input_shape
 
     def fprop(self, X):
-        x, x_hat, z = X
+        x, x_hat, z, sig = X
         batch_size, num_channel, height, width = self.input_shape
         x = x.reshape((batch_size*num_channel, height, width))
         x_hat = x_hat.reshape((batch_size*num_channel, height, width))
 
         centey = z[:, 0]
         centex = z[:, 1]
-        logvar = z[:, 2]
-        logdel = z[:, 3]
-        loggam = z[:, 4]
+        logdel = z[:, 2]
+        loggam = z[:, 3]
 
         centy = 0.5 * (self.input_shape[2] + 1) * (centey + 1)
         centx = 0.5 * (self.input_shape[3] + 1) * (centex + 1)
-        sigma = T.exp(0.5 * logvar)
         gamma = T.exp(loggam).dimshuffle(0, 'x')
         delta = T.exp(logdel)
         delta = (max(self.input_shape[2], self.input_shape[3]) - 1) * delta / (max(self.glimpse_shape[2], self.glimpse_shape[3]) - 1)
 
-        Fy, Fx = self.filter_bank(centx, centy, delta, sigma)
+        Fy, Fx = self.filter_bank(centx, centy, delta, sig)
         x = batched_dot(batched_dot(Fy, x), Fx.transpose(0, 2, 1))
         x_hat = batched_dot(batched_dot(Fy, x_hat), Fx.transpose(0, 2, 1))
         reshape_shape = (batch_size,
@@ -107,24 +105,22 @@ class WriteLayer(StemCell):
         self.input_shape = input_shape
 
     def fprop(self, X):
-        w, z = X 
+        w, z, sig = X 
         batch_size, num_channel, height, width = self.glimpse_shape
         w = w.reshape((batch_size*num_channel, height, width))
        
         centey = z[:, 0]
         centex = z[:, 1]
-        logvar = z[:, 2]
-        logdel = z[:, 3]
-        loggam = z[:, 4]
+        logdel = z[:, 2]
+        loggam = z[:, 3]
 
         centy = 0.5 * (self.input_shape[2] + 1) * (centey + 1)
         centx = 0.5 * (self.input_shape[3] + 1) * (centex + 1)
-        sigma = T.exp(0.5 * logvar)
         gamma = T.exp(loggam).dimshuffle(0, 'x')
         delta = T.exp(logdel)
         delta = (max(self.input_shape[2], self.input_shape[3]) - 1) * delta / (max(self.glimpse_shape[2], self.glimpse_shape[3]) - 1)
 
-        Fy, Fx = self.filter_bank(centx, centy, delta, sigma)
+        Fy, Fx = self.filter_bank(centx, centy, delta, sig)
         I = batched_dot(batched_dot(Fy.transpose(0, 2, 1), w), Fx)
         reshape_shape = (batch_size, num_channel*self.input_shape[2]*self.input_shape[3])
         return I.reshape((reshape_shape)) / gamma
@@ -182,7 +178,6 @@ class ErrorLayer(RecurrentLayer):
                  is_binary=0,
                  is_gaussian=0,
                  is_gaussian_mixture=0,
-                 use_sample=0,
                  **kwargs):
         super(ErrorLayer, self).__init__(self_recurrent=0,
                                          **kwargs)
@@ -195,7 +190,6 @@ class ErrorLayer(RecurrentLayer):
             self.dist = self.which_method('gaussian')
         elif self.is_gaussian_mixture:
             self.dist = self.which_method('gaussian_mixture')
-        self.use_sample = use_sample
 
     def which_method(self, which):
         return getattr(self, which)
@@ -214,26 +208,23 @@ class ErrorLayer(RecurrentLayer):
 
     def gaussian(self, X):
         mu = X[0]
-        logvar = X[1]
-        if self.use_sample:
-            epsilon = self.theano_rng.normal(size=mu.shape,
-                                             avg=0., std=1.,
-                                             dtype=mu.dtype)
-            z = mu + T.sqrt(T.exp(logvar)) * epsilon
-        else:
-            z = mu
+        sig = X[1]
+        epsilon = self.theano_rng.normal(size=mu.shape,
+                                         avg=0., std=1.,
+                                         dtype=mu.dtype)
+        z = mu + sig * epsilon
         return z
 
     def gaussian_mixture(self, X):
         mu = X[0]
-        logvar = X[1]
+        sig = X[1]
         coeff = X[2]
         mu = mu.reshape((mu.shape[0],
                          mu.shape[1]/coeff.shape[-1],
                          coeff.shape[-1]))
-        logvar = logvar.reshape((logvar.shape[0],
-                                 logvar.shape[1]/coeff.shape[-1],
-                                 coeff.shape[-1]))
+        sig = sig.reshape((sig.shape[0],
+                           sig.shape[1]/coeff.shape[-1],
+                           coeff.shape[-1]))
         idx = predict(
             self.theano_rng.multinomial(
                 pvals=coeff,
@@ -242,7 +233,7 @@ class ErrorLayer(RecurrentLayer):
             axis=1
         )
         mu = mu[T.arange(mu.shape[0]), :, idx]
-        sig = T.sqrt(T.exp(logvar[T.arange(logvar.shape[0]), :, idx]))
+        sig = sig[T.arange(sig.shape[0]), :, idx]
         sample = self.theano_rng.normal(size=mu.shape,
                                         avg=mu, std=sig,
                                         dtype=mu.dtype)
