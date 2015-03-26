@@ -106,6 +106,6 @@ def KLGaussianGaussian(mu1, sig1, mu2, sig2):
     mu2     : FullyConnected (Linear)
     sig2 : FullyConnected (Softplus)
     """
-    kl = T.sum(0.5 * (T.log(sig**2) - T.log(sig**2) + (sig**2 + (mu1 - mu2)**2) /
-               sig**2 - 1), axis=-1)
+    kl = T.sum(0.5 * (T.log(sig2**2) - T.log(sig1**2) + (sig1**2 + (mu1 - mu2)**2) /
+               sig2**2 - 1), axis=-1)
     return kl
