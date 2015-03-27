@@ -1,3 +1,4 @@
+import ipdb
 import theano.tensor as T
 
 from theano.compat.python2x import OrderedDict
@@ -5,14 +6,17 @@ from cle.cle.utils import sharedX
 
 
 class Optimizer(object):
-    def __init__(self, lr):
+    def __init__(self, lr, lr_scalers=None):
         """
         .. todo::
 
             WRITEME
         """
         self.lr = sharedX(lr)
-        self.updates = []
+        if lr_scalers is not None:
+            self.lr_scalers = lr_scalers
+        else:
+            self.lr_scalers = OrderedDict()
 
     def get_updates(self):
         """
@@ -45,10 +49,11 @@ class Momentum(Optimizer):
         """
         updates = OrderedDict()
         for p, g in grads.items():
+            lr_scaler = self.lr_scalers.get(str(p), 1.)
             u = sharedX(p.get_value() * 0.)
             u_t = self.mom * u - self.lr * g
             if self.nesterov:
-                u_t = self.mom * u_t - self.lr * g
+                u_t = self.mom * u_t - lr_scaler * self.lr * g
             p_t = p + u_t
             updates[u] = u_t
             updates[p] = p_t
@@ -74,13 +79,14 @@ class RMSProp(Optimizer):
         """
         updates = OrderedDict()
         for p, g in grads.items():
+            lr_scaler = self.lr_scalers.get(str(p), 1.)
             u = sharedX(p.get_value() * 0.)
             avg_grad = sharedX(p.get_value() * 0.)
             sqr_grad = sharedX(p.get_value() * 0.)
             avg_grad_t = self.coeff * avg_grad + (1 - self.coeff) * g
             sqr_grad_t = self.coeff * sqr_grad + (1 - self.coeff) * g**2
             g_t = g / T.sqrt(sqr_grad_t - avg_grad_t**2 + self.e)
-            u_t = self.mom * u - self.lr * g_t
+            u_t = self.mom * u - lr_scaler * self.lr * g_t
             p_t = p + u_t
             updates[avg_grad] = avg_grad_t
             updates[sqr_grad] = sqr_grad_t
@@ -111,6 +117,7 @@ class Adam(Optimizer):
         v = OrderedDict()
         cnt = sharedX(0, 'counter')
         for p, g in grads.items():
+            lr_scaler = self.lr_scalers.get(str(p), 1.)
             m = sharedX(p.get_value() * 0.)
             v = sharedX(p.get_value() * 0.)
             m_t = (1. - self.b1) * m + self.b1 * g
@@ -118,7 +125,7 @@ class Adam(Optimizer):
             m_t_hat = m_t / (1. - (1. - self.b1)**(cnt + 1))
             v_t_hat = v_t / (1. - (1. - self.b2)**(cnt + 1))
             g_t = m_t_hat / (T.sqrt(v_t_hat) + self.e)
-            p_t = p - self.lr * g_t
+            p_t = p - lr_scaler * self.lr * g_t
             updates[m] = m_t
             updates[v] = v_t
             updates[p] = p_t

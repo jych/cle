@@ -186,7 +186,7 @@ class StemCell(NonlinCell):
     .. todo::
     """
     def __init__(self, parent=[], parent_dim=[], nout=None, init_W=InitCell('randn'),
-                 init_b=InitCell('zeros'), cons=0., name=None, **kwargs):
+                 init_b=InitCell('zeros'), cons=0., name=None, lr_scaler=None, **kwargs):
         super(StemCell, self).__init__(**kwargs)
         if name is None:
             name = self.__class__.name__.lower()
@@ -203,6 +203,7 @@ class StemCell(NonlinCell):
             else:
                 self.parent[par] = None
         self.params = OrderedDict()
+        self.lr_scaler = lr_scaler
 
     def get_params(self):
         return self.params
