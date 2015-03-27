@@ -46,7 +46,7 @@ class RecurrentLayer(StemCell):
         super(RecurrentLayer, self).initialize()
         for recname, recout in self.recurrent.items():
             U_shape = (recout, self.nout)
-            U_name = 'U_'+recname+self.name
+            U_name = 'U_'+recname+'__'+self.name
             self.alloc(self.init_U.get(U_shape, U_name))
 
 
@@ -63,10 +63,10 @@ class SimpleRecurrent(RecurrentLayer):
         X, H = XH
         z = T.zeros((self.batch_size, self.nout))
         for x, (parname, parout) in izip(X, self.parent.items()):
-            W = self.params['W_'+parname+self.name]
+            W = self.params['W_'+parname+'__'+self.name]
             z += T.dot(x[:, :parout], W)
         for h, (recname, recout) in izip(H, self.recurrent.items()):
-            U = self.params['U_'+recname+self.name]
+            U = self.params['U_'+recname+'__'+self.name]
             z += T.dot(h[:, :recout], U)
         z += self.params['b_'+self.name]
         z = self.nonlin(z)
@@ -96,10 +96,10 @@ class LSTM(RecurrentLayer):
         z_t = H[0]
         z = T.zeros((self.batch_size, 4*self.nout))
         for x, (parname, parout) in izip(X, self.parent.items()):
-            W = self.params['W_'+parname+self.name]
+            W = self.params['W_'+parname+'__'+self.name]
             z += T.dot(x[:, :parout], W)
         for h, (recname, recout) in izip(H, self.recurrent.items()):
-            U = self.params['U_'+recname+self.name]
+            U = self.params['U_'+recname+'__'+self.name]
             z += T.dot(h[:, :recout], U)
         z += self.params['b_'+self.name]
         # Compute activations of gating units
@@ -123,14 +123,14 @@ class LSTM(RecurrentLayer):
         N = self.nout
         for parname, parout in self.parent.items():
             W_shape = (parout, 4*N)
-            W_name = 'W_'+parname+self.name
+            W_name = 'W_'+parname+'__'+self.name
             self.alloc(self.init_W.get(W_shape, W_name))
         for recname, recout in self.recurrent.items():
             M = recout
             U = self.init_U.ortho((M, N))
             for j in xrange(3):
                 U = np.concatenate([U, self.init_U.ortho((M, N))], axis=-1)
-            U_name = 'U_'+recname+self.name
+            U_name = 'U_'+recname+'__'+self.name
             U = self.init_U.setX(U, U_name)
             self.alloc(U)
         self.alloc(self.init_b.get(4*N, 'b_'+self.name))
@@ -154,10 +154,10 @@ class GFLSTM(LSTM):
         Nm = len(self.recurrent)
         z = T.zeros((self.batch_size, 4*self.nout+Nm))
         for x, (parname, parout) in izip(X, self.parent.items()):
-            W = self.params['W_'+parname+self.name]
+            W = self.params['W_'+parname+'__'+self.name]
             z += T.dot(x[:, :parout], W)
         for h, (recname, recout) in izip(H, self.recurrent.items()):
-            U = self.params['U_'+recname+self.name]
+            U = self.params['U_'+recname+'__'+self.name]
             z = T.inc_subtensor(
                 z[:, self.nout:],
                 T.dot(h[:, :recout], U[:, self.nout:])
@@ -172,7 +172,7 @@ class GFLSTM(LSTM):
         for i, (h, (recname, recout)) in\
             enumerate(izip(H, self.recurrent.items())):
             gated_h = h[:, :recout] * gron[:, i].dimshuffle(0, 'x')
-            U = self.params['U_'+recname+self.name]
+            U = self.params['U_'+recname+'__'+self.name]
             c_t += T.dot(gated_h, U[:, :self.nout])
         # Update hidden & cell states
         z_t = T.set_subtensor(
@@ -192,7 +192,7 @@ class GFLSTM(LSTM):
         Nm = len(self.recurrent)
         for parname, parout in self.parent.items():
             W_shape = (parout, 4*N+Nm)
-            W_name = 'W_'+parname+self.name
+            W_name = 'W_'+parname+'__'+self.name
             self.alloc(self.init_W.get(W_shape, W_name))
         for recname, recout in self.recurrent.items():
             M = recout
@@ -200,7 +200,7 @@ class GFLSTM(LSTM):
             for j in xrange(3):
                 U = np.concatenate([U, self.init_U.ortho((M, N))], axis=-1)
             U = np.concatenate([U, self.init_U.rand((M, Nm))], axis=-1)
-            U_name = 'U_'+recname+self.name
+            U_name = 'U_'+recname+'__'+self.name
             U = self.init_U.setX(U, U_name)
             self.alloc(U)
         self.alloc(self.init_b.get(4*N+Nm, 'b_'+self.name))
@@ -223,10 +223,10 @@ class GRU(RecurrentLayer):
         z_tm1 = H[0]
         z = T.zeros((self.batch_size, 3*self.nout))
         for x, (parname, parout) in izip(X, self.parent.items()):
-            W = self.params['W_'+parname+self.name]
+            W = self.params['W_'+parname+'__'+self.name]
             z += T.dot(x[:, :parout], W)
         for h, (recname, recout) in izip(H, self.recurrent.items()):
-            U = self.params['U_'+recname+self.name]
+            U = self.params['U_'+recname+'__'+self.name]
             z = T.inc_subtensor(
                 z[:, self.nout:],
                 T.dot(h[:, :recout], U[:, self.nout:])
@@ -238,7 +238,7 @@ class GRU(RecurrentLayer):
         # Update hidden & cell states
         c_t = T.zeros_like(z_tm1)
         for h, (recname, recout) in izip(H, self.recurrent.items()):
-            U = self.params['U_'+recname+self.name]
+            U = self.params['U_'+recname+'__'+self.name]
             c_t += T.dot(h[:, :recout], U[:, :self.nout])
         z_t = T.tanh(z[:, :self.nout] + r_on * c_t)
         z_t = u_on * z_tm1 + (1. - u_on) * z_t
@@ -249,14 +249,14 @@ class GRU(RecurrentLayer):
         N = self.nout
         for parname, parout in self.parent.items():
             W_shape = (parout, 3*N)
-            W_name = 'W_'+parname+self.name
+            W_name = 'W_'+parname+'__'+self.name
             self.alloc(self.init_W.get(W_shape, W_name))
         for recname, recout in self.recurrent.items():
             M = recout
             U = self.init_U.ortho((M, N))
             for j in xrange(2):
                 U = np.concatenate([U, self.init_U.ortho((M, N))], axis=-1)
-            U_name = 'U_'+recname+self.name
+            U_name = 'U_'+recname+'__'+self.name
             U = self.init_U.setX(U, U_name)
             self.alloc(U)
         self.alloc(self.init_b.get(3*N, 'b_'+self.name))
@@ -280,10 +280,10 @@ class GFGRU(GRU):
         Nm = len(self.recurrent)
         z = T.zeros((self.batch_size, 3*self.nout+Nm))
         for x, (parname, parout) in izip(X, self.parent.items()):
-            W = self.params['W_'+parname+self.name]
+            W = self.params['W_'+parname+'__'+self.name]
             z += T.dot(x[:, :parout], W)
         for h, (recname, recout) in izip(H, self.recurrent.items()):
-            U = self.params['U_'+recname+self.name]
+            U = self.params['U_'+recname+'__'+self.name]
             z = T.inc_subtensor(
                 z[:, self.nout:],
                 T.dot(h[:, :recout], U[:, self.nout:])
@@ -298,7 +298,7 @@ class GFGRU(GRU):
         for i, (h, (recname, recout)) in\
             enumerate(izip(H, self.recurrent.items())):
             gated_h = h[:, :recout] * gron[:, i].dimshuffle(0, 'x')
-            U = self.params['U_'+recname+self.name]
+            U = self.params['U_'+recname+'__'+self.name]
             c_t += T.dot(gated_h, U[:, :self.nout])
         z_t = T.tanh(z[:, :self.nout] + r_on * c_t)
         z_t = u_on * z_tm1 + (1. - u_on) * z_t
@@ -310,7 +310,7 @@ class GFGRU(GRU):
         Nm = len(self.recurrent)
         for parname, parout in self.parent.items():
             W_shape = (parout, 3*N+Nm)
-            W_name = 'W_'+parname+self.name
+            W_name = 'W_'+parname+'__'+self.name
             self.alloc(self.init_W.get(W_shape, W_name))
         for recname, recout in self.recurrent.items():
             M = recout
@@ -318,7 +318,7 @@ class GFGRU(GRU):
             for j in xrange(2):
                 U = np.concatenate([U, self.init_U.ortho((M, N))], axis=-1)
             U = np.concatenate([U, self.init_U.rand((M, Nm))], axis=-1)
-            U_name = 'U_'+recname+self.name
+            U_name = 'U_'+recname+'__'+self.name
             U = self.init_U.setX(U, U_name)
             self.alloc(U)
         self.alloc(self.init_b.get(3*N+Nm, 'b_'+self.name))

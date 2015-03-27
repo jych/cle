@@ -44,7 +44,7 @@ class Conv2DLayer(StemCell):
         x = unpack(x)
         parname, parshape = unpack(self.parent.items())
         z = T.zeros(self.outshape)
-        W = self.params['W_'+parname+self.name]
+        W = self.params['W_'+parname+'__'+self.name]
         z += conv2d(
             x, W,
             image_shape=parshape,
@@ -85,7 +85,7 @@ class Conv2DLayer(StemCell):
                 y = outshape[3] - parshape[3] + 1
             W_shape = (nfilters, nchannels, x, y)
             self.filtershape = W_shape
-        W_name = 'W_'+parname+self.name
+        W_name = 'W_'+parname+'__'+self.name
         self.alloc(self.init_W.get(self.filtershape, W_name))
         b_name = 'b_'+self.name
         if self.tiedbias:

@@ -218,7 +218,7 @@ class StemCell(NonlinCell):
     def initialize(self):
         for parname, parout in self.parent.items():
             W_shape = (parout, self.nout)
-            W_name = 'W_'+parname+self.name
+            W_name = 'W_'+parname+'__'+self.name
             self.alloc(self.init_W.get(W_shape, W_name))
         self.alloc(self.init_b.get(self.nout, 'b_'+self.name))
 
@@ -256,7 +256,7 @@ class ProjectionLayer(StemCell):
         x = unpack(x)
         z = T.zeros((x.shape[0], self.nout))
         for x, (parname, parout) in izip(X, self.parent.items()):
-            W = self.params['W_'+parname+self.name]
+            W = self.params['W_'+parname+'__'+self.name]
             z += T.dot(x[:, :parout], W)
         z.name = self.name
         return z
@@ -264,7 +264,7 @@ class ProjectionLayer(StemCell):
     def initialize(self):
         for parname, parout in self.parent.items():
             W_shape = (parout, self.nout)
-            W_name = 'W_'+parname+self.name
+            W_name = 'W_'+parname+'__'+self.name
             self.alloc(self.init_W.get(W_shape, W_name))
 
 
