@@ -18,7 +18,7 @@ class FullyConnectedLayer(StemCell):
         # depending the number of parents.
         z = T.zeros((X[0].shape[0], self.nout))
         for x, (parname, parout) in izip(X, self.parent.items()):
-            W = self.params['W_'+parname+self.name]
+            W = self.params['W_'+parname+'__'+self.name]
             z += T.dot(x[:, :parout], W)
         z += self.params['b_'+self.name]
         z = self.nonlin(z) + self.cons
