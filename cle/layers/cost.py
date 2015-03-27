@@ -111,10 +111,11 @@ class GaussianLayer(CostLayer):
     def sample(self, X):
         mu = X[0]
         sig= X[1]
-        sample = self.theano_rng.normal(size=mu.shape,
-                                        avg=mu, std=sig,
-                                        dtype=mu.dtype)
-        return sample
+        epsilon = self.theano_rng.normal(size=mu.shape,
+                                         avg=0., std=1.,
+                                         dtype=mu.dtype)
+        z = mu + sig * epsilon
+        return z
 
     def __getstate__(self):
         dic = self.__dict__.copy()
@@ -165,7 +166,8 @@ class GMMLayer(GaussianLayer):
         )
         mu = mu[T.arange(mu.shape[0]), :, idx]
         sig = sig[T.arange(sig.shape[0]), :, idx]
-        sample = self.theano_rng.normal(size=mu.shape,
-                                        avg=mu, std=sig,
-                                        dtype=mu.dtype)
-        return sample
+        epsilon = self.theano_rng.normal(size=mu.shape,
+                                         avg=0., std=1.,
+                                         dtype=mu.dtype)
+        z = mu + sig * epsilon
+        return z

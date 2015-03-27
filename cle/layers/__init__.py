@@ -304,6 +304,7 @@ class RealVectorLayer(StemCell):
         z = self.params['b_'+self.name]
         if z.ndim == 1:
             z = z.dimshuffle('x', 0)
+        z = self.nonlin(z) + self.cons
         z.name = self.name
         return z
 
