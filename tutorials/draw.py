@@ -184,6 +184,7 @@ def inner_fn(enc_tm1, dec_tm1, canvas_tm1, x):
                 n_steps=n_steps)
 for k, v in updates.iteritems():
     k.default_update = v
+
 recon_term = NllBin(x, T.nnet.sigmoid(canvas_out[-1])).mean()
 kl_term = kl_out.sum(axis=0).mean()
 cost = recon_term + kl_term
