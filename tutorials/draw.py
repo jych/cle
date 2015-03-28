@@ -37,7 +37,7 @@ batch_size = 100
 inpsz = 784
 latsz = 100
 n_steps = 64
-debug = 1
+debug = 0
 
 model = Model()
 data = MNIST(name='train',
@@ -47,7 +47,7 @@ data = MNIST(name='train',
 init_W = InitCell('rand')
 init_U = InitCell('ortho')
 init_b = InitCell('zeros')
-init_b_sig = InitCell('const', mean=1.2)
+init_b_sig = InitCell('const', mean=0.)
 
 x, _ = data.theano_vars()
 if debug:

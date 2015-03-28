@@ -47,8 +47,8 @@ def Gaussian(y, mu, sig):
 
     Parameters
     ----------
-    y      : TensorVariable
-    mu     : FullyConnected (Linear)
+    y   : TensorVariable
+    mu  : FullyConnected (Linear)
     sig : FullyConnected (Softplus)
     """
     nll = 0.5 * T.sum(T.sqr(y - mu) / sig**2 + 2 * T.log(sig) +
@@ -62,10 +62,10 @@ def GMM(y, mu, sig, coeff):
 
     Parameters
     ----------
-    y      : TensorVariable
-    mu     : FullyConnected (Linear)
-    sig : FullyConnected (Softplus)
-    coeff  : FullyConnected (Softmax)
+    y     : TensorVariable
+    mu    : FullyConnected (Linear)
+    sig   : FullyConnected (Softplus)
+    coeff : FullyConnected (Softmax)
     """
     y = y.dimshuffle(0, 1, 'x')
     mu = mu.reshape((mu.shape[0],
@@ -87,7 +87,7 @@ def KLGaussianStdGaussian(mu, sig):
 
     Parameters
     ----------
-    mu     : FullyConnected (Linear)
+    mu  : FullyConnected (Linear)
     sig : FullyConnected (Softplus)
     """
     kl = T.sum(0.5 * (-2 * T.log(sig) + mu**2 + sig**2 - 1), axis=-1)
@@ -101,9 +101,9 @@ def KLGaussianGaussian(mu1, sig1, mu2, sig2):
 
     Parameters
     ----------
-    mu1     : FullyConnected (Linear)
+    mu1  : FullyConnected (Linear)
     sig1 : FullyConnected (Softplus)
-    mu2     : FullyConnected (Linear)
+    mu2  : FullyConnected (Linear)
     sig2 : FullyConnected (Softplus)
     """
     kl = T.sum(0.5 * (2 * T.log(sig2) - 2 * T.log(sig1) + (sig1**2 + (mu1 - mu2)**2) /
