@@ -115,7 +115,7 @@ extension = [
     Monitoring(freq=100,
                ddout=[cost, err],
                data=[Iterator(testdata, batch_size)]),
-    Picklize(freq=100,
+    Picklize(freq=10000,
              path=savepath)
 ]
 
