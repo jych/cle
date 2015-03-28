@@ -178,6 +178,7 @@ class ErrorLayer(RecurrentLayer):
                  is_binary=0,
                  is_gaussian=0,
                  is_gaussian_mixture=0,
+                 use_sample=0,
                  **kwargs):
         super(ErrorLayer, self).__init__(self_recurrent=0,
                                          **kwargs)
@@ -190,6 +191,7 @@ class ErrorLayer(RecurrentLayer):
             self.dist = self.which_method('gaussian')
         elif self.is_gaussian_mixture:
             self.dist = self.which_method('gaussian_mixture')
+        self.use_sample = use_sample
 
     def which_method(self, which):
         return getattr(self, which)
@@ -208,11 +210,15 @@ class ErrorLayer(RecurrentLayer):
 
     def gaussian(self, X):
         mu = X[0]
-        sig = X[1]
-        epsilon = self.theano_rng.normal(size=mu.shape,
-                                         avg=0., std=1.,
-                                         dtype=mu.dtype)
-        z = mu + sig * epsilon
+        #sig = X[1]
+        #if self.use_sample:
+        #    epsilon = self.theano_rng.normal(size=mu.shape,
+        #                                     avg=0., std=1.,
+        #                                     dtype=mu.dtype)
+        #    z = mu + sig * epsilon
+        #else:
+        #    z = mu
+        z = mu
         return z
 
     def gaussian_mixture(self, X):

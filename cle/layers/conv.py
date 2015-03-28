@@ -15,7 +15,6 @@ class Conv2DLayer(StemCell):
     .. todo::
     """
     def __init__(self,
-                 unit,
                  outshape=None,
                  filtershape=None,
                  tiedbias=True,
@@ -23,7 +22,6 @@ class Conv2DLayer(StemCell):
                  bordermode='valid',
                  **kwargs):
         super(Conv2DLayer, self).__init__(**kwargs)
-        self.nonlin = self.which_nonlin(unit)
         # Shape should be (batch_size, num_channels, x, y)
         if (outshape is None and filtershape is None) or\
                 (outshape is not None and filtershape is not None):

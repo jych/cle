@@ -105,7 +105,8 @@ model.graphs = [cnn]
 
 # Define your optimizer: Momentum (Nesterov), RMSProp, Adam
 optimizer = Adam(
-    lr=0.00005
+    #lr=0.00005
+    lr=0.0005
 )
 
 extension = [
@@ -114,7 +115,7 @@ extension = [
     Monitoring(freq=100,
                ddout=[cost, err],
                data=[Iterator(testdata, batch_size)]),
-    Picklize(freq=10,
+    Picklize(freq=100,
              path=savepath)
 ]
 

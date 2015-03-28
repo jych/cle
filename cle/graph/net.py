@@ -24,6 +24,7 @@ class Net(object):
         self.inputs = todict(inputs)
         self.inputs_dim = inputs_dim
         self.set_nodes(nodes)
+        self.sorted_nodes = []
         self.set_graph()
         self.initialize()
         self.params = self.get_params()
@@ -47,20 +48,6 @@ class Net(object):
         for nname, node in self.nodes.items():
             parent = node.parent
             for par in tolist(parent.keys()):
-                try:
-                    node.parent[par] = self.inputs_dim[par]
-                except:
-                    if self.nodes[par].nout is not None:
-                        # Assume this is FullyConnectedLayer
-                        node.parent[par] = self.nodes[par].nout
-                    else:
-                        # Assume this is ConvLayer
-                        try:
-                            node.parent[par] = self.nodes[par].outshape
-                        except:
-                            # Assume this is MaxPool2D
-                            self.nodes[par].initialize()
-                            node.parent[par] = self.nodes[par].outshape
                 if par in self.inputs.keys():
                     continue
                 if par in self.graph.keys():
@@ -68,15 +55,33 @@ class Net(object):
                         tolist(self.graph[par]) + [node.name]
                 else:
                     self.graph[par] = node.name
+        sorted_nodes = topological_sort(self.graph)
+        for i in xrange(len(self.nodes)):
+            self.sorted_nodes.append(sorted_nodes.popleft())
+        for node in self.nodes:
+            parent = self.nodes[node].parent
+            for par in tolist(parent.keys()):
+                try:
+                    self.nodes[node].parent[par] = self.inputs_dim[par]
+                except:
+                    if self.nodes[par].nout is not None:
+                        # Assume this is FullyConnectedLayer
+                        self.nodes[node].parent[par] = self.nodes[par].nout
+                    else:
+                        # Assume this is ConvLayer
+                        try:
+                            self.nodes[node].parent[par] = self.nodes[par].outshape
+                        except:
+                            # Assume this is MaxPool2D
+                            self.nodes[par].initialize()
+                            self.nodes[node].parent[par] = self.nodes[par].outshape
             if hasattr(node, 'recurrent'):
-                recurrent = node.recurrent
+                recurrent = self.nodes[node].recurrent
                 for rec in tolist(recurrent.keys()):
-                    node.recurrent[rec] = self.nodes[rec].nout
+                    self.nodes[node].recurrent[rec] = self.nodes[rec].nout
 
     def build_graph(self):
-        sorted_nodes = topological_sort(self.graph)
-        while sorted_nodes:
-            node = sorted_nodes.popleft()
+        for node in self.sorted_nodes:
             inp = []
             parent = self.nodes[node].parent
             for par in parent:
@@ -157,8 +162,7 @@ class Net(object):
                 if node is arg:
                     node.rec_out = recurrence[i]
         if len(sorted_nodes) != 0:
-            while sorted_nodes:
-                node = sorted_nodes.popleft()
+            for node in self.sorted_nodes:
                 inp = []
                 parent = self.nodes[node].parent
                 for par in parent:
