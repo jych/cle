@@ -117,9 +117,10 @@ class NonlinCell(RandomCell):
     ----------
     .. todo::
     """
-    def __init__(self, unit='linear'):
+    def __init__(self, unit=None):
         self.unit = unit
-        self.nonlin = self.which_nonlin(unit)
+        if unit is not None:
+            self.nonlin = self.which_nonlin(unit)
 
     def which_nonlin(self, which):
         return getattr(self, which)
@@ -166,12 +167,15 @@ class NonlinCell(RandomCell):
 
     def __getstate__(self):
         dic = self.__dict__.copy()
-        dic.pop('nonlin')
+        if self.unit is not None:
+            dic.pop('nonlin')
+        return dic
         return dic
 
     def __setstate__(self, state):
         self.__dict__.update(state)
-        self.nonlin = self.which_nonlin(self.unit)
+        if self.unit is not None:
+            self.nonlin = self.which_nonlin(self.unit)
 
 
 class StemCell(NonlinCell):
