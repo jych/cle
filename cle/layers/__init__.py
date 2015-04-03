@@ -120,9 +120,9 @@ class NonlinCell(RandomCell):
     def __init__(self, unit=None):
         self.unit = unit
         if unit is not None:
-            self.nonlin = self.which_nonlin(unit)
+            self.nonlin = self.which_fcn(unit)
 
-    def which_nonlin(self, which):
+    def which_fcn(self, which):
         return getattr(self, which)
 
     def linear(self, z):
@@ -175,7 +175,7 @@ class NonlinCell(RandomCell):
     def __setstate__(self, state):
         self.__dict__.update(state)
         if self.unit is not None:
-            self.nonlin = self.which_nonlin(self.unit)
+            self.nonlin = self.which_fcn(self.unit)
 
 
 class StemCell(NonlinCell):

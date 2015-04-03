@@ -15,11 +15,12 @@ class Conv2DLayer(StemCell):
     .. todo::
     """
     def __init__(self,
+                 parshape=[],
                  outshape=None,
                  filtershape=None,
-                 tiedbias=True,
-                 stepsize=(1, 1),
-                 bordermode='valid',
+                 tied_bias=True,
+                 step_size=(1, 1),
+                 border_mode='valid',
                  **kwargs):
         super(Conv2DLayer, self).__init__(**kwargs)
         # Shape should be (batch_size, num_channels, x, y)
@@ -29,10 +30,13 @@ class Conv2DLayer(StemCell):
                              but don't provide both of them.")
         self.outshape = outshape
         self.filtershape = filtershape
-        self.tiedbias = tiedbias
-        self.stepsize = totuple(stepsize)
-        self.bordermode = bordermode
-
+        self.tied_bias = tied_bias
+        self.step_size = totuple(step_size)
+        self.border_mode = border_mode
+        for i, par in enumerate(tolist(self.parent.keys())):
+             if len(parshape) != 0:
+                self.parent[par] = parshape[i]
+           
     def fprop(self, x):
         # Conv layer can have only one parent.
         # Later, we will extend to generalize this.
@@ -46,11 +50,11 @@ class Conv2DLayer(StemCell):
         z += conv2d(
             x, W,
             image_shape=parshape,
-            subsample=self.stepsize,
-            border_mode=self.bordermode,
+            subsample=self.step_size,
+            border_mode=self.border_mode,
             filter_shape=self.filtershape
         )
-        if self.tiedbias:
+        if self.tied_bias:
             z += self.params['b_'+self.name].dimshuffle('x', 0, 'x', 'x')
         else:
             z += self.params['b_'+self.name].dimshuffle('x', 0, 1, 2)
@@ -66,7 +70,7 @@ class Conv2DLayer(StemCell):
         nchannels = parshape[1]
         if filtershape is not None:
             nfilters = filtershape[1]
-            if self.bordermode == 'valid':
+            if self.border_mode == 'valid':
                 x = parshape[2] - filtershape[2] + 1
                 y = parshape[3] - filtershape[3] + 1
             else:
@@ -75,10 +79,10 @@ class Conv2DLayer(StemCell):
             self.outshape = (batch_size, nfilters, x, y)
         else:
             nfilters = outshape[1]
-            if self.bordermode == 'valid':
+            if self.border_mode == 'valid':
                 x = parshape[2] - outshape[2] + 1
                 y = parshape[3] - outshape[3] + 1
-            elif self.bordermode == 'full':
+            elif self.border_mode == 'full':
                 x = outshape[2] - parshape[2] + 1
                 y = outshape[3] - parshape[3] + 1
             W_shape = (nfilters, nchannels, x, y)
@@ -86,7 +90,7 @@ class Conv2DLayer(StemCell):
         W_name = 'W_'+parname+'__'+self.name
         self.alloc(self.init_W.get(self.filtershape, W_name))
         b_name = 'b_'+self.name
-        if self.tiedbias:
+        if self.tied_bias:
             b_shape = nfilters
             self.alloc(self.init_b.get(b_shape, b_name))
         else:
@@ -114,12 +118,9 @@ class ConvertLayer(StemCell):
             self.nout = outshape[1]
         elif len(outshape) == 4:
             convert_type = 'convert2tensor4'
-        self.fprop = self.which_convert(convert_type)
+        self.fprop = self.which_fcn(convert_type)
         self.convert_type = convert_type
         self.axes = axes
-
-    def which_convert(self, which):
-        return getattr(self, which)
 
     def convert2matrix(self, x):
         x = unpack(x)

@@ -20,46 +20,63 @@ class MaxPool2D(StemCell):
     .. todo::
     """
     def __init__(self,
-                 poolsize=(2, 2),
-                 poolstride=(2, 2),
-                 ignoreborder=False,
+                 pool_size=(2, 2),
+                 pool_stride=(2, 2),
+                 ignore_border=False,
+                 set_shape=1,
                  **kwargs):
         super(MaxPool2D, self).__init__(**kwargs)
-        self.poolsize = poolsize
-        self.poolstride = poolstride
-        self.ignoreborder = ignoreborder
+        self.pool_size = pool_size
+        self.pool_stride = pool_stride
+        self.ignore_border = ignore_border
+        self.set_shape = set_shape
+        if self.set_shape:
+            self.initialize = self.which_fcn('initialize_set_shape')
+        else:
+            self.initialize = self.which_fcn('initialize_default')
 
-    def set_shape(self):
+    def initialize_set_shape(self):
         parname, parshape = unpack(self.parent.items())
         # Shape should be (batch_size, num_channels, x, y)
-        poolsize = totuple(self.poolsize)
-        poolstride = totuple(self.poolstride)
-        if self.ignoreborder:
-            newx = (parshape[2] - poolsize[0]) // poolstride[0] + 1
-            newy = (parshape[3] - poolsize[1]) // poolstride[1] + 1
+        pool_size = totuple(self.pool_size)
+        pool_stride = totuple(self.pool_stride)
+        if self.ignore_border:
+            newx = (parshape[2] - pool_size[0]) // pool_stride[0] + 1
+            newy = (parshape[3] - pool_size[1]) // pool_stride[1] + 1
         else:
-            if poolstride[0] > poolsize[0]:
-                newx = (parshape[2] - 1) // poolstride[0] + 1
+            if pool_stride[0] > pool_size[0]:
+                newx = (parshape[2] - 1) // pool_stride[0] + 1
             else:
-                newx = max(0, (parshape[2] - 1 - poolsize[0]) //
-                           poolstride[0] + 1) + 1
-            if poolstride[1] > poolsize[1]:
-                newy = (parshape[3] - 1) // poolstride[1] + 1
+                newx = max(0, (parshape[2] - 1 - pool_size[0]) //
+                           pool_stride[0] + 1) + 1
+            if pool_stride[1] > pool_size[1]:
+                newy = (parshape[3] - 1) // pool_stride[1] + 1
             else:
-                newy = max(0, (parshape[3] - 1 - poolsize[1]) //
-                           poolstride[1] + 1) + 1
+                newy = max(0, (parshape[3] - 1 - pool_size[1]) //
+                           pool_stride[1] + 1) + 1
         outshape = (parshape[0], parshape[1], newx, newy)
         self.outshape = outshape
 
     def fprop(self, x):
         x = unpack(x)
-        z = max_pool_2d(x, self.poolsize, st=self.poolstride)
+        z = max_pool_2d(x, self.pool_size, st=self.pool_stride)
         z.name = self.name
         return z
 
-    def initialize(self):
-        self.set_shape()
+    def initialize_default(self):
         pass
+
+    def __getstate__(self):
+        dic = self.__dict__.copy()
+        dic.pop('initialize')
+        return dic
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        if self.set_shape:
+            self.initialize = self.which_fcn('initialize_set_shape')
+        else:
+            self.initialize = self.which_fcn('initialize_default')
 
 
 class ClockworkLayer(StemCell):
