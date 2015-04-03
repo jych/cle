@@ -56,8 +56,9 @@ class Net(object):
                 else:
                     self.graph[par] = node.name
         sorted_nodes = topological_sort(self.graph)
-        for i in xrange(len(self.nodes)):
-            self.sorted_nodes.append(sorted_nodes.popleft())
+        if len(self.graph) > 0:
+            for i in xrange(len(self.nodes)):
+                self.sorted_nodes.append(sorted_nodes.popleft())
         for node in self.nodes:
             parent = self.nodes[node].parent
             for par in tolist(parent.keys()):
@@ -141,7 +142,6 @@ class Net(object):
             n_steps=n_steps,
             go_backwards=reverse)
         result = tolist(result)
-        ipdb.set_trace()
         if self.output_args is None and self.iterators is None:
             return result
         if len(updates) == 0:

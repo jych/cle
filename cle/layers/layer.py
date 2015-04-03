@@ -31,9 +31,9 @@ class MaxPool2D(StemCell):
         self.ignore_border = ignore_border
         self.set_shape = set_shape
         if self.set_shape:
-            self.initialize = self.which_fcn('initialize_set_shape')
+            self.initialize = self.which_fn('initialize_set_shape')
         else:
-            self.initialize = self.which_fcn('initialize_default')
+            self.initialize = self.which_fn('initialize_default')
 
     def initialize_set_shape(self):
         parname, parshape = unpack(self.parent.items())
@@ -74,9 +74,9 @@ class MaxPool2D(StemCell):
     def __setstate__(self, state):
         self.__dict__.update(state)
         if self.set_shape:
-            self.initialize = self.which_fcn('initialize_set_shape')
+            self.initialize = self.which_fn('initialize_set_shape')
         else:
-            self.initialize = self.which_fcn('initialize_default')
+            self.initialize = self.which_fn('initialize_default')
 
 
 class ClockworkLayer(StemCell):
@@ -125,13 +125,10 @@ class DropoutLayer(StemCell):
     def set_mode(self, is_test=0):
         self.is_test = is_test
         if self.is_test:
-            self.fprop = self.which_prop('test_prop')
+            self.fprop = self.which_fn('test_prop')
         else:
-            self.fprop = self.which_prop('train_prop')
+            self.fprop = self.which_fn('train_prop')
 
-    def which_prop(self, which):
-        return getattr(self, which)
-    
     def train_prop(self, z):
         z = unpack(z)
         z = dropout(z, self.p, self.theano_rng)
@@ -173,18 +170,15 @@ class PriorLayer(StemCell):
         super(PriorLayer, self).__init__(**kwargs)
         self.use_sample = use_sample
         if self.use_sample:
-            self.fprop = self.which_method('sample')
+            self.fprop = self.which_fn('sample')
         else:
-            self.fprop = self.which_method('cost')
+            self.fprop = self.which_fn('cost')
         if use_sample:
             if num_sample is None:
                 raise ValueError("If you are going to use sampling,\
                                   provide the number of samples.")
         self.num_sample = num_sample
 
-    def which_method(self, which):
-        return getattr(self, which)
- 
     def cost(self, X):
         if len(X) != 2 and len(X) != 4:
             raise ValueError("The number of inputs does not match.")
@@ -217,9 +211,9 @@ class PriorLayer(StemCell):
     def __setstate__(self, state):
         self.__dict__.update(state)
         if self.use_sample:
-            self.fprop = self.which_method('sample')
+            self.fprop = self.which_fn('sample')
         else:
-            self.fprop = self.which_method('cost')
+            self.fprop = self.which_fn('cost')
   
     def initialize(self):
         pass
@@ -246,13 +240,10 @@ class BatchNormalizationLayer(StemCell):
     def set_mode(self, is_test=0):
         self.is_test = is_test
         if self.is_test:
-            self.fprop = self.which_prop('test_prop')
+            self.fprop = self.which_fn('test_prop')
         else:
-            self.fprop = self.which_prop('train_prop')
+            self.fprop = self.which_fn('train_prop')
 
-    def which_prop(self, which):
-        return getattr(self, which)
-    
     def train_prop(self, z):
         z = unpack(z)
 

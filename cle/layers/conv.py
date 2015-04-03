@@ -118,7 +118,7 @@ class ConvertLayer(StemCell):
             self.nout = outshape[1]
         elif len(outshape) == 4:
             convert_type = 'convert2tensor4'
-        self.fprop = self.which_fcn(convert_type)
+        self.fprop = self.which_fn(convert_type)
         self.convert_type = convert_type
         self.axes = axes
 

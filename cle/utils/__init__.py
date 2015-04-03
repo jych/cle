@@ -161,7 +161,7 @@ class PickleMixin(object):
                 except RuntimeError:
                     self._pickle_skip_list.append(k)
             self._pickle_skip_list.append('data')
-            self._pickle_skip_list.append('cost_fn')
+            #self._pickle_skip_list.append('cost_fn')
         state = OrderedDict()
         for k, v in self.__dict__.items():
             if k not in self._pickle_skip_list:
