@@ -36,7 +36,7 @@ class StaticPrepMixin(object):
         X_mean : Scalar
         X_std  : Scalar
         """
-        if (X_mean or X_std) is None:
+        if X_mean is None or X_std is None:
             X_mean = np.array(X).mean()
             X_std = np.array(X).std()
             X = (X - X_mean) / X_std
