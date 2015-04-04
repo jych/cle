@@ -186,15 +186,12 @@ class ErrorLayer(RecurrentLayer):
         self.is_gaussian = is_gaussian
         self.is_gaussian_mixture = is_gaussian_mixture
         if self.is_binary:
-            self.dist = self.which_method('binary')
+            self.dist = self.which_fn('binary')
         elif self.is_gaussian:
-            self.dist = self.which_method('gaussian')
+            self.dist = self.which_fn('gaussian')
         elif self.is_gaussian_mixture:
-            self.dist = self.which_method('gaussian_mixture')
+            self.dist = self.which_fn('gaussian_mixture')
         self.use_sample = use_sample
-
-    def which_method(self, which):
-        return getattr(self, which)
 
     def fprop(self, XH):
         X, H = XH
@@ -210,15 +207,10 @@ class ErrorLayer(RecurrentLayer):
 
     def gaussian(self, X):
         mu = X[0]
-        #sig = X[1]
-        #if self.use_sample:
-        #    epsilon = self.theano_rng.normal(size=mu.shape,
-        #                                     avg=0., std=1.,
-        #                                     dtype=mu.dtype)
-        #    z = mu + sig * epsilon
-        #else:
-        #    z = mu
-        z = mu
+        epsilon = self.theano_rng.normal(size=mu.shape,
+                                         avg=0., std=1.,
+                                         dtype=mu.dtype)
+        z = mu + sig * epsilon
         return z
 
     def gaussian_mixture(self, X):
@@ -253,11 +245,11 @@ class ErrorLayer(RecurrentLayer):
     def __setstate__(self, state):
         self.__dict__.update(state)
         if self.is_binary:
-            self.dist = self.which_method('binary')
+            self.dist = self.which_fn('binary')
         elif self.is_gaussian:
-            self.dist = self.which_method('gaussian')
+            self.dist = self.which_fn('gaussian')
         elif self.is_gmm:
-            self.dist = self.which_method('gaussian_mixture')
+            self.dist = self.which_fn('gaussian_mixture')
 
     def initialize(self):
         pass       
