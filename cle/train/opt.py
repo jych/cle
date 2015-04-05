@@ -1,8 +1,12 @@
 import ipdb
+import logging
 import theano.tensor as T
 
 from theano.compat.python2x import OrderedDict
 from cle.cle.utils import sharedX
+
+
+logger = logging.getLogger(__name__)
 
 
 class Optimizer(object):
@@ -19,6 +23,14 @@ class Optimizer(object):
             self.lr_scalers = OrderedDict()
 
     def get_updates(self):
+        """
+        .. todo::
+
+            WRITEME
+        """
+        pass
+
+    def monitor(self):
         """
         .. todo::
 
@@ -59,6 +71,10 @@ class Momentum(Optimizer):
             updates[p] = p_t
         return updates
 
+    def monitor(self):
+        logger.info("\tLearning rate: %f" % self.lr.get_value())
+        logger.info("\tMomentum: %f" % self.mom)
+
 
 class RMSProp(Optimizer):
     """
@@ -66,7 +82,7 @@ class RMSProp(Optimizer):
 
         WRITEME
     """
-    def __init__(self, mom=0.9, coeff=0.95, e=1e-4, **kwargs):
+    def __init__(self, mom=0.9, sec_mom=0.95, e=1e-4, **kwargs):
         self.__dict__.update(locals())
         del self.self
         super(RMSProp, self).__init__(**kwargs)
@@ -83,8 +99,8 @@ class RMSProp(Optimizer):
             u = sharedX(p.get_value() * 0.)
             avg_grad = sharedX(p.get_value() * 0.)
             sqr_grad = sharedX(p.get_value() * 0.)
-            avg_grad_t = self.coeff * avg_grad + (1 - self.coeff) * g
-            sqr_grad_t = self.coeff * sqr_grad + (1 - self.coeff) * g**2
+            avg_grad_t = self.sec_mom * avg_grad + (1 - self.sec_mom) * g
+            sqr_grad_t = self.sec_mom * sqr_grad + (1 - self.sec_mom) * g**2
             g_t = g / T.sqrt(sqr_grad_t - avg_grad_t**2 + self.e)
             u_t = self.mom * u - lr_scaler * self.lr * g_t
             p_t = p + u_t
@@ -93,6 +109,11 @@ class RMSProp(Optimizer):
             updates[u] = u_t
             updates[p] = p_t
         return updates
+
+    def monitor(self):
+        logger.info("\tLearning rate: %f" % self.lr.get_value())
+        logger.info("\tMomentum: %f" % self.mom)
+        logger.info("\tSecond Momentum: %f" % self.sec_mom)
 
 
 class Adam(Optimizer):
@@ -131,3 +152,8 @@ class Adam(Optimizer):
             updates[p] = p_t
         updates[cnt] = cnt + 1
         return updates
+
+    def monitor(self):
+        logger.info("\tLearning rate: %f" % self.lr.get_value())
+        logger.info("\tBeta_1: %f" % self.b1)
+        logger.info("\tBeta_2: %f" % self.b2)
