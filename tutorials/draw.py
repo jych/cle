@@ -47,30 +47,30 @@ data = MNIST(name='train',
 init_W = InitCell('rand')
 init_U = InitCell('ortho')
 init_b = InitCell('zeros')
-init_b_sig = InitCell('const', mean=0.)
+init_b_sig = InitCell('const', mean=0.6)
 
 x, _ = data.theano_vars()
 if debug:
     x.tag.test_value = np.zeros((batch_size, 784), dtype=np.float32)
 
+error = ErrorLayer(name='error',
+                   parent=['x'],
+                   recurrent=['canvas'],
+                   batch_size=batch_size)
+
 read_param = FullyConnectedLayer(name='read_param',
                                  parent=['dec_tm1'],
                                  parent_dim=[256],
-                                 nout=4,
+                                 nout=5,
                                  unit='linear',
                                  init_W=init_W,
                                  init_b=init_b)
-read_param_sig = FullyConnectedLayer(name='read_sig',
-                                     parent=['dec_tm1'],
-                                     parent_dim=[256],
-                                     nout=1,
-                                     unit='softplus',
-                                     init_W=init_W,
-                                     init_b=init_b_sig)
+
 read = ReadLayer(name='read',
-                 parent=['x', 'error', 'read_param', 'read_param_sig'],
+                 parent=['x', 'error', 'read_param'],
                  glimpse_shape=(batch_size, 1, 2, 2),
                  input_shape=(batch_size, 1, 28, 28))
+
 enc = LSTM(name='enc',
            parent=['read'],
            parent_dim=[8],
@@ -82,6 +82,7 @@ enc = LSTM(name='enc',
            init_W=init_W,
            init_U=init_U,
            init_b=init_b)
+
 phi_mu = FullyConnectedLayer(name='phi_mu',
                              parent=['enc'],
                              parent_dim=[256],
@@ -89,6 +90,7 @@ phi_mu = FullyConnectedLayer(name='phi_mu',
                              unit='linear',
                              init_W=init_W,
                              init_b=init_b)
+
 phi_sig = FullyConnectedLayer(name='phi_sig',
                               parent=['enc'],
                               parent_dim=[256],
@@ -96,16 +98,19 @@ phi_sig = FullyConnectedLayer(name='phi_sig',
                               unit='softplus',
                               init_W=init_W,
                               init_b=init_b_sig)
+
 prior = PriorLayer(name='prior',
                    parent=['phi_mu', 'phi_sig'],
                    parent_dim=[latsz, latsz],
                    use_sample=1,
                    nout=latsz)
+
 kl = PriorLayer(name='kl',
                 parent=['phi_mu', 'phi_sig'],
                 parent_dim=[latsz, latsz],
                 use_sample=0,
                 nout=latsz)
+
 dec = LSTM(name='dec',
            parent=['prior'],
            parent_dim=[latsz],
@@ -115,6 +120,7 @@ dec = LSTM(name='dec',
            init_W=init_W,
            init_U=init_U,
            init_b=init_b)
+
 w = FullyConnectedLayer(name='w',
                         parent=['dec'],
                         parent_dim=[256],
@@ -122,54 +128,51 @@ w = FullyConnectedLayer(name='w',
                         unit='linear',
                         init_W=init_W,
                         init_b=init_b)
+
 write_param = FullyConnectedLayer(name='write_param',
                                   parent=['dec'],
                                   parent_dim=[256],
-                                  nout=4,
+                                  nout=5,
                                   unit='linear',
                                   init_W=init_W,
                                   init_b=init_b)
-write_param_sig = FullyConnectedLayer(name='write_sig',
-                                      parent=['dec_tm1'],
-                                      parent_dim=[256],
-                                      nout=1,
-                                      unit='softplus',
-                                      init_W=init_W,
-                                      init_b=init_b_sig)
+
 write = WriteLayer(name='write',
-                   parent=['w', 'write_param', 'write_param_sig'],
+                   parent=['w', 'write_param'],
                    glimpse_shape=(batch_size, 1, 5, 5),
                    input_shape=(batch_size, 1, 28, 28))
-error = ErrorLayer(name='error',
-                   parent=['x'],
-                   recurrent=['canvas'],
-                   is_binary=1,
-                   batch_size=batch_size)
+
 canvas = CanvasLayer(name='canvas',
                      parent=['write'],
                      nout=784,
                      batch_size=batch_size)
-nodes = [read_param, read_param_sig, read, enc, phi_mu, phi_sig, prior, kl, dec, w, write_param, write_param_sig, write, error, canvas]
+
+nodes = [read_param, read, enc, phi_mu, phi_sig, prior, kl, dec, w, write_param, write, error, canvas]
 for node in nodes:
     node.initialize()
 params = flatten([node.get_params().values() for node in nodes])
 
 def inner_fn(enc_tm1, dec_tm1, canvas_tm1, x):
 
-    err_out = error.fprop([[x], [canvas_tm1]])
+    error_out = error.fprop([[x], [T.nnet.sigmoid(canvas_tm1)]])
+
     read_param_out = read_param.fprop([dec_tm1])
-    read_param_sig_out = read_param_sig.fprop([dec_tm1])
-    read_out = read.fprop([x, err_out, read_param_out, read_param_sig_out])
+    read_out = read.fprop([x, error_out, read_param_out])
+
     enc_out = enc.fprop([[read_out], [enc_tm1, dec_tm1]])
+
     phi_mu_out = phi_mu.fprop([enc_out])
     phi_sig_out = phi_sig.fprop([enc_out])
+
     prior_out = prior.fprop([phi_mu_out, phi_sig_out])
     kl_out = kl.fprop([phi_mu_out, phi_sig_out])
+
     dec_out = dec.fprop([[prior_out], [dec_tm1]])
+
     w_out = w.fprop([dec_out])
     write_param_out = write_param.fprop([dec_out])
-    write_param_sig_out = write_param_sig.fprop([dec_out])
-    write_out = write.fprop([w_out, write_param_out, write_param_sig_out])
+    write_out = write.fprop([w_out, write_param_out])
+
     canvas_out = canvas.fprop([[write_out], [canvas_tm1]])
 
     return enc_out, dec_out, canvas_out, kl_out

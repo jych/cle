@@ -21,6 +21,7 @@ class RecurrentLayer(StemCell):
                  recurrent=[],
                  recurrent_dim=[],
                  self_recurrent=1,
+                 init_state_cons=0.,
                  init_U=InitCell('ortho'),
                  **kwargs):
         super(RecurrentLayer, self).__init__(**kwargs)
@@ -36,9 +37,10 @@ class RecurrentLayer(StemCell):
         self.batch_size = batch_size
         self.init_U = init_U
         self.init_states = OrderedDict()
+        self.init_state_cons = init_state_cons
 
     def get_init_state(self):
-        state = T.zeros((self.batch_size, self.nout))
+        state = T.zeros((self.batch_size, self.nout)) + self.init_state_cons
         state = T.unbroadcast(state, *range(state.ndim))
         return state
 

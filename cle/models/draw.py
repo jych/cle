@@ -44,7 +44,7 @@ class ReadLayer(StemCell):
         self.input_shape = input_shape
 
     def fprop(self, X):
-        x, x_hat, z, sig = X
+        x, x_hat, z = X
         batch_size, num_channel, height, width = self.input_shape
         x = x.reshape((batch_size*num_channel, height, width))
         x_hat = x_hat.reshape((batch_size*num_channel, height, width))
@@ -52,15 +52,22 @@ class ReadLayer(StemCell):
         centey = z[:, 0]
         centex = z[:, 1]
         logdel = z[:, 2]
-        loggam = z[:, 3]
+        logsig = z[:, 3]
+        loggam = z[:, 4]
 
         centy = 0.5 * (self.input_shape[2] + 1) * (centey + 1)
         centx = 0.5 * (self.input_shape[3] + 1) * (centex + 1)
-        gamma = T.exp(loggam).dimshuffle(0, 'x')
         delta = T.exp(logdel)
-        delta = (max(self.input_shape[2], self.input_shape[3]) - 1) * delta / (max(self.glimpse_shape[2], self.glimpse_shape[3]) - 1)
+        delta = (max(self.input_shape[2], self.input_shape[3]) - 1) * delta /\
+                 (max(self.glimpse_shape[2], self.glimpse_shape[3]) - 1)
+        sigma = T.exp(0.5 * logsig)
+        gamma = T.exp(loggam).dimshuffle(0, 'x')
 
-        Fy, Fx = self.filter_bank(centx, centy, delta, sig.flatten())
+        Fy, Fx = self.filter_bank(centx, centy, delta, sigma)
+        if num_channel > 1:
+            Fx = T.repeat(Fx, num_channel, axis=0)
+            Fy = T.repeat(Fy, num_channel, axis=0)
+
         x = batched_dot(batched_dot(Fy, x), Fx.transpose(0, 2, 1))
         x_hat = batched_dot(batched_dot(Fy, x_hat), Fx.transpose(0, 2, 1))
         reshape_shape = (batch_size,
@@ -105,25 +112,32 @@ class WriteLayer(StemCell):
         self.input_shape = input_shape
 
     def fprop(self, X):
-        w, z, sig = X 
+        w, z = X 
         batch_size, num_channel, height, width = self.glimpse_shape
         w = w.reshape((batch_size*num_channel, height, width))
        
         centey = z[:, 0]
         centex = z[:, 1]
         logdel = z[:, 2]
-        loggam = z[:, 3]
+        logsig = z[:, 3]
+        loggam = z[:, 4]
 
         centy = 0.5 * (self.input_shape[2] + 1) * (centey + 1)
         centx = 0.5 * (self.input_shape[3] + 1) * (centex + 1)
-        gamma = T.exp(loggam).dimshuffle(0, 'x')
         delta = T.exp(logdel)
-        delta = (max(self.input_shape[2], self.input_shape[3]) - 1) * delta / (max(self.glimpse_shape[2], self.glimpse_shape[3]) - 1)
+        delta = (max(self.input_shape[2], self.input_shape[3]) - 1) * delta /\
+                 (max(self.glimpse_shape[2], self.glimpse_shape[3]) - 1)
+        sigma = T.exp(0.5 * logsig)
+        gamma = T.exp(loggam).dimshuffle(0, 'x')
 
-        Fy, Fx = self.filter_bank(centx, centy, delta, sig.flatten())
+        Fy, Fx = self.filter_bank(centx, centy, delta, sigma)
+        if num_channel > 1:
+            Fx = T.repeat(Fx, num_channel, axis=0)
+            Fy = T.repeat(Fy, num_channel, axis=0)
+
         I = batched_dot(batched_dot(Fy.transpose(0, 2, 1), w), Fx)
         reshape_shape = (batch_size, num_channel*self.input_shape[2]*self.input_shape[3])
-        return I.reshape((reshape_shape)) / gamma
+        return I.reshape(reshape_shape) / gamma
 
     def filter_bank(self, c_x, c_y, delta, sigma):
         tol = 1e-4
@@ -175,81 +189,17 @@ class ErrorLayer(RecurrentLayer):
     .. todo::
     """
     def __init__(self,
-                 is_binary=0,
-                 is_gaussian=0,
-                 is_gaussian_mixture=0,
-                 use_sample=0,
                  **kwargs):
         super(ErrorLayer, self).__init__(self_recurrent=0,
                                          **kwargs)
-        self.is_binary = is_binary
-        self.is_gaussian = is_gaussian
-        self.is_gaussian_mixture = is_gaussian_mixture
-        if self.is_binary:
-            self.dist = self.which_fn('binary')
-        elif self.is_gaussian:
-            self.dist = self.which_fn('gaussian')
-        elif self.is_gaussian_mixture:
-            self.dist = self.which_fn('gaussian_mixture')
-        self.use_sample = use_sample
 
     def fprop(self, XH):
         X, H = XH
         x = X[0]
-        z = x - self.dist(H)
+        Dc_tm1 = H[0]
+        z = x - Dc_tm1
         z.name = self.name
         return z
-
-    def binary(self, X):
-        x = X[0]
-        z = T.nnet.sigmoid(x)
-        return z
-
-    def gaussian(self, X):
-        mu = X[0]
-        epsilon = self.theano_rng.normal(size=mu.shape,
-                                         avg=0., std=1.,
-                                         dtype=mu.dtype)
-        z = mu + sig * epsilon
-        return z
-
-    def gaussian_mixture(self, X):
-        mu = X[0]
-        sig = X[1]
-        coeff = X[2]
-        mu = mu.reshape((mu.shape[0],
-                         mu.shape[1]/coeff.shape[-1],
-                         coeff.shape[-1]))
-        sig = sig.reshape((sig.shape[0],
-                           sig.shape[1]/coeff.shape[-1],
-                           coeff.shape[-1]))
-        idx = predict(
-            self.theano_rng.multinomial(
-                pvals=coeff,
-                dtype=coeff.dtype
-            ),
-            axis=1
-        )
-        mu = mu[T.arange(mu.shape[0]), :, idx]
-        sig = sig[T.arange(sig.shape[0]), :, idx]
-        sample = self.theano_rng.normal(size=mu.shape,
-                                        avg=mu, std=sig,
-                                        dtype=mu.dtype)
-        return sample
-
-    def __getstate__(self):
-        dic = self.__dict__.copy()
-        dic.pop('dist')
-        return dic
-    
-    def __setstate__(self, state):
-        self.__dict__.update(state)
-        if self.is_binary:
-            self.dist = self.which_fn('binary')
-        elif self.is_gaussian:
-            self.dist = self.which_fn('gaussian')
-        elif self.is_gmm:
-            self.dist = self.which_fn('gaussian_mixture')
 
     def initialize(self):
         pass       
