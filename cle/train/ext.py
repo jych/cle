@@ -126,10 +126,14 @@ class Monitoring(Extension, TheanoMixin):
             logger.info("")
             logger.info("Monitoring step")
             logger.info("***************")
+            logger.info("\tTraininig basics")
+            logger.info("\t----------------")
             logger.info("\tElapsed time: %f" % t)
             logger.info("\tEpochs  seen: %d" % log._epoch_seen)
             logger.info("\tBatches seen: %d" % log._batch_seen)
             mainloop.optimizer.monitor()
+            logger.info("\tForward-prop based")
+            logger.info("\t------------------")
             optch = [out.name for out in mainloop.outputs]
             for i, out in enumerate(optch):
                 this_mean = np.asarray(log._batches)[srt: end, i].mean()
