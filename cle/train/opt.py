@@ -154,8 +154,6 @@ class Adam(Optimizer):
         return updates
 
     def monitor(self):
-        logger.info("\tOptimization parameters")
-        logger.info("\t-----------------------")
         logger.info("\tLearning rate: %f" % self.lr.get_value())
         logger.info("\tBeta_1: %f" % self.b1)
         logger.info("\tBeta_2: %f" % self.b2)

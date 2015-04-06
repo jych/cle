@@ -131,6 +131,8 @@ class Monitoring(Extension, TheanoMixin):
             logger.info("\tElapsed time: %f" % t)
             logger.info("\tEpochs  seen: %d" % log._epoch_seen)
             logger.info("\tBatches seen: %d" % log._batch_seen)
+            logger.info("\tOptimization parameters")
+            logger.info("\t-----------------------")
             mainloop.optimizer.monitor()
             logger.info("\tForward-prop based")
             logger.info("\t------------------")
