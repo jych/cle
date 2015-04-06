@@ -140,7 +140,7 @@ class LSTM(RecurrentLayer):
 
 class GFLSTM(LSTM):
     """
-    Gated feedback long short-term w
+    Gated feedback long short-term memory
 
     Parameters
     ----------
