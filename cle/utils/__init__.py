@@ -221,6 +221,8 @@ def initialize_from_pkl(arg, path):
 def segment_axis(a, length, overlap=0, axis=None, end='cut', endvalue=0):
     """Generate a new array that chops the given array along the given axis
     into overlapping frames.
+    This code has been implemented by Anne Archibald, and has been discussed
+    on the ML."""
 
     Parameters
     ----------
