@@ -16,7 +16,10 @@ def batched_dot(A, B):
                
     for i in range(dim_1):     
         C[i] = tensor.dot(A, B)        
-       
+
+    This code is brought from Jorg Bornschein's github.
+    https://github.com/jbornschein
+
     Returns        
     -------        
         C : shape (dim_1 \times dim_2 \times dim_4)        
@@ -28,6 +31,8 @@ def batched_dot(A, B):
 class ReadLayer(StemCell):
     """
     Draw read layer
+    This code is brought from Jorg Bornschein's github.
+    https://github.com/jbornschein
 
     Parameters
     ----------
@@ -98,6 +103,8 @@ class ReadLayer(StemCell):
 class WriteLayer(StemCell):
     """
     Draw write layer
+    This code is brought from Jorg Bornschein's github.
+    https://github.com/jbornschein
 
     Parameters
     ----------
