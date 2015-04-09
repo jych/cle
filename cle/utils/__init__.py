@@ -145,7 +145,7 @@ def todict(args):
 
 class PickleMixin(object):
     """
-    This code is brought from Kyle Kastner
+    This code is brought from Kyle Kastner.
     """
     def __getstate__(self):
         if not hasattr(self, '_pickle_skip_list'):
@@ -170,7 +170,7 @@ class PickleMixin(object):
 
 def secure_pickle_dump(object_, path):
     """
-    This code is brought from Blocks
+    This code is brought from Blocks.
     Robust serialization - does not corrupt your files when failed.
 
     Parameters
