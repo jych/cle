@@ -92,13 +92,10 @@ class GaussianLayer(CostLayer):
         super(GaussianLayer, self).__init__(**kwargs)
         self.use_sample = use_sample
         if use_sample:
-            self.fprop = self.which_method('sample')
+            self.fprop = self.which_fn('sample')
         else:
-            self.fprop = self.which_method('cost')
+            self.fprop = self.which_fn('cost')
 
-    def which_method(self, which):
-        return getattr(self, which)
- 
     def cost(self, X):
         if len(X) != 3:
             raise ValueError("The number of inputs does not match.")
@@ -125,9 +122,9 @@ class GaussianLayer(CostLayer):
     def __setstate__(self, state):
         self.__dict__.update(state)
         if self.use_sample:
-            self.fprop = which_method('sample')
+            self.fprop = which_fn('sample')
         else:
-            self.fprop = which_method('cost')
+            self.fprop = which_fn('cost')
 
 
 class GMMLayer(GaussianLayer):
