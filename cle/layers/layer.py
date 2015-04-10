@@ -2,7 +2,11 @@ import ipdb
 import theano
 import theano.tensor as T
 
-from cle.cle.cost import KLGaussianStdGaussian, KLGaussianGaussian
+from cle.cle.cost import (
+    KLGaussianStdGaussian,
+    KLGaussianGaussian,
+    KLGaussianGaussianKeepDims
+)
 from cle.cle.layers import StemCell
 from cle.cle.layers.feedforward import FullyConnectedLayer
 from cle.cle.utils import totuple, unpack
@@ -166,9 +170,11 @@ class PriorLayer(StemCell):
     def __init__(self,
                  use_sample=False,
                  num_sample=1,
+                 keep_dims=0,
                  **kwargs):
         super(PriorLayer, self).__init__(**kwargs)
         self.use_sample = use_sample
+        self.keep_dims = keep_dims
         if self.use_sample:
             self.fprop = self.which_fn('sample')
         else:
@@ -185,7 +191,10 @@ class PriorLayer(StemCell):
         if len(X) == 2:
             return KLGaussianStdGaussian(X[0], X[1])
         elif len(X) == 4:
-            return KLGaussianGaussian(X[0], X[1], X[2], X[3])
+            if self.keep_dims:
+                return KLGaussianGaussianKeepDims(X[0], X[1], X[2], X[3])
+            else:
+                return KLGaussianGaussian(X[0], X[1], X[2], X[3])
 
     def sample(self, X):
         if len(X) != 2 and len(X) != 4:
