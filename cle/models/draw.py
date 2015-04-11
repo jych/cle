@@ -199,7 +199,6 @@ class ErrorLayer(RecurrentLayer):
                  **kwargs):
         super(ErrorLayer, self).__init__(self_recurrent=0,
                                          **kwargs)
-
     def fprop(self, XH):
         X, H = XH
         x = X[0]
