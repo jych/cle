@@ -122,7 +122,7 @@ class Adam(Optimizer):
 
         WRITEME
     """
-    def __init__(self, b1=0.1, b2=0.001, e=1e-8, **kwargs):
+    def __init__(self, b1=0.1, b2=0.001, lambd=1 - 1e-8, e=1e-8, **kwargs):
         self.__dict__.update(locals())
         del self.self
         super(Adam, self).__init__(**kwargs)
@@ -141,7 +141,8 @@ class Adam(Optimizer):
             lr_scaler = self.lr_scalers.get(str(p), 1.)
             m = sharedX(p.get_value() * 0.)
             v = sharedX(p.get_value() * 0.)
-            m_t = (1. - self.b1) * m + self.b1 * g
+            b1_t = self.b1 * self.lambd**cnt
+            m_t = (1. - b1_t) * m + b1_t * g
             v_t = (1. - self.b2) * v + self.b2 * T.sqr(g)
             m_t_hat = m_t / (1. - (1. - self.b1)**(cnt + 1))
             v_t_hat = v_t / (1. - (1. - self.b2)**(cnt + 1))
