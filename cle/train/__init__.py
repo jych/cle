@@ -36,6 +36,7 @@ class Training(PickleMixin, TheanoMixin):
         self.params = model.params
         self.cost = cost
         self.outputs = tolist(outputs)
+        self.updates = model.updates
         self.extension = extension
 
         self.cost_fn = self.build_training_graph()
@@ -47,8 +48,10 @@ class Training(PickleMixin, TheanoMixin):
         self.grads = OrderedDict(izip(self.params,
                                       T.grad(self.cost, self.params)))
         self.run_extension('ext_grad')
-        self.updates = self.optimizer.get_updates(self.grads)
+        grads = self.optimizer.get_updates(self.grads)
         self.run_extension('ext_regularize_post_grad')
+        for key, val in grads.items():
+            self.updates[key] = val
         return self.build_theano_graph(self.inputs, self.outputs, self.updates)
 
     def run(self):
