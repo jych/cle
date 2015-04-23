@@ -233,6 +233,7 @@ class OnehotLayer(StemCell):
     """
     def fprop(self, x):
         x = unpack(x)
+        x = T.cast(x, 'int32')
         z = T.zeros((x.shape[0], self.nout))
         z = T.set_subtensor(
             z[T.arange(x.size) % x.shape[0], x.T.flatten()], 1
