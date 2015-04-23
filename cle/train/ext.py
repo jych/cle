@@ -96,8 +96,8 @@ class Monitoring(Extension, TheanoMixin):
             for data in self.data:
                 batch_record = []
                 for batch in data:
-                    this_cost = self.monitor_fn(*batch)
-                    batch_record.append(this_cost)
+                    this_out = self.monitor_fn(*batch)
+                    batch_record.append(this_out)
                 data_record.append(np.asarray(batch_record))
             this_ch = []
             for record, data in zip(data_record, self.data):

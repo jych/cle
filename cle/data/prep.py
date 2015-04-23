@@ -44,7 +44,25 @@ class StaticPrepMixin(object):
             X = (X - X_mean) / X_std
         return (X, X_mean, X_std)
 
+    def standardize(self, X, X_max=None, X_min=None):
+        """
+        Standardize X such that X \in [0, 1]
 
+        Parameters
+        ----------
+        X     : list of lists or ndArrays
+        X_max : Scalar
+        X_min : Scalar
+        """
+        if X_max is None or X_min is None:
+            X_max = np.array(X).max()
+            X_min = np.array(X).min()
+            X = (X - X_min) / (X_max - X_min)
+        else:
+            X = (X - X_min) / (X_max - X_min)
+        return (X, X_max, X_min)
+
+ 
 class SequentialPrepMixin(object):
     """
     Preprocessing mixin for sequential data
