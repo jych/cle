@@ -208,8 +208,8 @@ class StemCell(NonlinCell):
         for i, par in enumerate(tolist(parent)):
             if len(parent_dim) != 0:
                 if len(self.parent) != len(parent_dim):
-                    raise AssertionError("You probably had a mistake providing
-                                          write number of values. It will end
+                    raise AssertionError("You probably had a mistake providing\
+                                          write number of values. It will end\
                                           up with a model containing a bug.")
                 self.parent[par] = parent_dim[i]
             else:
