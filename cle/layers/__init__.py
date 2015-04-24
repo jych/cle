@@ -185,8 +185,16 @@ class StemCell(NonlinCell):
     ----------
     .. todo::
     """
-    def __init__(self, parent=[], parent_dim=[], nout=None, init_W=InitCell('randn'),
-                 init_b=InitCell('zeros'), cons=0., name=None, lr_scaler=None, **kwargs):
+    def __init__(self,
+                 parent=[],
+                 parent_dim=[],
+                 nout=None,
+                 init_W=InitCell('randn'),
+                 init_b=InitCell('zeros'),
+                 cons=0.,
+                 name=None,
+                 lr_scaler=None,
+                 **kwargs):
         super(StemCell, self).__init__(**kwargs)
         if name is None:
             name = self.__class__.name__.lower()
@@ -199,6 +207,10 @@ class StemCell(NonlinCell):
         parent_dim = tolist(parent_dim)
         for i, par in enumerate(tolist(parent)):
             if len(parent_dim) != 0:
+                if len(self.parent) != len(parent_dim):
+                    raise AssertionError("You probably had a mistake providing
+                                          write number of values. It will end
+                                          up with a model containing a bug.")
                 self.parent[par] = parent_dim[i]
             else:
                 self.parent[par] = None
