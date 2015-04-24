@@ -31,6 +31,8 @@ debug = 0
 model = Model()
 trdata = EnWiki(name='train',
                 path=data_path)
+tedata = EnWiki(name='test',
+                path=data_path)
 
 init_W = InitCell('rand')
 init_U = InitCell('ortho')
