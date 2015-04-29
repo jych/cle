@@ -21,19 +21,19 @@ from cle.datasets.mnist import MNIST
 
 
 # Set your dataset
-#datapath = '/data/lisa/data/mnist/mnist.pkl'
-#savepath = '/u/chungjun/repos/cle/saved/'
-datapath = '/home/junyoung/data/mnist/mnist.pkl'
-savepath = '/home/junyoung/repos/cle/saved/'
+#data_path = '/data/lisa/data/mnist/mnist.pkl'
+#save_path = '/u/chungjun/repos/cle/saved/'
+data_path = '/home/junyoung/data/mnist/mnist.pkl'
+save_path = '/home/junyoung/repos/cle/saved/'
 
 batch_size = 128
 debug = 0
 
 model = Model()
 trdata = MNIST(name='train',
-               path=datapath)
+               path=data_path)
 valdata = MNIST(name='valid',
-                path=datapath)
+                path=data_path)
 
 # Choose the random initialization method
 init_W = InitCell('randn')
@@ -49,21 +49,25 @@ if debug:
 
 inputs = [x, y]
 inputs_dim = {'x':784, 'y':1}
+
 onehot = OnehotLayer(name='onehot',
                      parent=['y'],
                      nout=10)
+
 h1 = FullyConnectedLayer(name='h1',
                          parent=['x'],
                          nout=1000,
                          unit='relu',
                          init_W=init_W,
                          init_b=init_b)
+
 h2 = FullyConnectedLayer(name='h2',
                          parent=['h1'],
                          nout=10,
                          unit='softmax',
                          init_W=init_W,
                          init_b=init_b)
+
 cost = MulCrossEntropyLayer(name='cost', parent=['onehot', 'h2'])
 
 # You will fill in a list of nodes and fed them to the model constructor
@@ -93,7 +97,7 @@ extension = [
                data=[Iterator(trdata, batch_size),
                      Iterator(valdata, batch_size)]),
     Picklize(freq=200,
-             path=savepath)
+             path=save_path)
 ]
 
 mainloop = Training(

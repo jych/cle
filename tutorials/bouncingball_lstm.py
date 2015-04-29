@@ -20,10 +20,10 @@ from cle.cle.utils import unpack, OrderedDict
 from cle.datasets.bouncing_balls import BouncingBalls
 
 
-#datapath = '/data/lisatmp3/chungjun/bouncing_balls/bouncing_ball_2balls_16wh_20len_50000cases.npy'
-#savepath = '/u/chungjun/repos/cle/saved/'
-datapath = '/home/junyoung/data/bouncing_balls/bouncing_ball_2balls_16wh_20len_50000cases.npy'
-savepath = '/home/junyoung/repos/cle/saved/'
+#data_path = '/data/lisatmp3/chungjun/bouncing_balls/bouncing_ball_2balls_16wh_20len_50000cases.npy'
+#save_path = '/u/chungjun/repos/cle/saved/'
+data_path = '/home/junyoung/data/bouncing_balls/bouncing_ball_2balls_16wh_20len_50000cases.npy'
+save_path = '/home/junyoung/repos/cle/saved/'
 
 batch_size = 128
 res = 256
@@ -31,7 +31,7 @@ debug = 0
 
 model = Model()
 trdata = BouncingBalls(name='train',
-                       path=datapath)
+                       path=data_path)
 
 init_W = InitCell('randn')
 init_U = InitCell('ortho')
@@ -45,6 +45,7 @@ if debug:
 
 inputs = [x, y]
 inputs_dim = {'x':256, 'y':256}
+
 h1 = LSTM(name='h1',
           parent=['x'],
           batch_size=batch_size,
@@ -53,6 +54,7 @@ h1 = LSTM(name='h1',
           init_W=init_W,
           init_U=init_U,
           init_b=init_b)
+
 h2 = LSTM(name='h2',
           parent=['x', 'h1'],
           batch_size=batch_size,
@@ -61,6 +63,7 @@ h2 = LSTM(name='h2',
           init_W=init_W,
           init_U=init_U,
           init_b=init_b)
+
 h3 = LSTM(name='h3',
           parent=['x', 'h2'],
           batch_size=batch_size,
@@ -69,12 +72,14 @@ h3 = LSTM(name='h3',
           init_W=init_W,
           init_U=init_U,
           init_b=init_b)
+
 h4 = FullyConnectedLayer(name='h4',
                          parent=['h1', 'h2', 'h3'],
                          nout=res,
                          unit='sigmoid',
                          init_W=init_W,
                          init_b=init_b)
+
 cost = MSELayer(name='cost', parent=['h4', 'y'])
 
 nodes = [h1, h2, h3, h4, cost]
@@ -94,7 +99,7 @@ extension = [
     Monitoring(freq=100,
                ddout=[cost]),
     Picklize(freq=200,
-             path=savepath)
+             path=save_path)
 ]
 
 mainloop = Training(

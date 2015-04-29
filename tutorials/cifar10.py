@@ -22,25 +22,25 @@ from cle.datasets.cifar10 import CIFAR10
 
 
 # Set your dataset
-#datapath = ['/data/lisa/data/cifar10/pylearn2_gcn_whitened/train.npy',
+#data_path = ['/data/lisa/data/cifar10/pylearn2_gcn_whitened/train.npy',
 #            '/u/chungjun/repos/cle/labels/trainy.npy']
-#testdatapath = ['/data/lisa/data/cifar10/pylearn2_gcn_whitened/test.npy',
+#testdata_path = ['/data/lisa/data/cifar10/pylearn2_gcn_whitened/test.npy',
 #                '/u/chungjun/repos/cle/labels/testy.npy']
-#savepath = '/u/chungjun/repos/cle/saved/'
-datapath = ['/home/junyoung/data/cifar10/pylearn2_gcn_whitened/train.npy',
+#save_path = '/u/chungjun/repos/cle/saved/'
+data_path = ['/home/junyoung/data/cifar10/pylearn2_gcn_whitened/train.npy',
             '/home/junyoung/data/cifar10/pylearn2_gcn_whitened/trainy.npy']
-testdatapath = ['/home/junyoung/data/cifar10/pylearn2_gcn_whitened/test.npy',
+testdata_path = ['/home/junyoung/data/cifar10/pylearn2_gcn_whitened/test.npy',
                 '/home/junyoung/data/cifar10/pylearn2_gcn_whitened/testy.npy']
-savepath = '/home/junyoung/repos/cle/saved/'
+save_path = '/home/junyoung/repos/cle/saved/'
 
 batch_size = 128
 debug = 0
 
 model = Model()
 trdata = CIFAR10(name='train',
-                 path=datapath)
+                 path=data_path)
 testdata = CIFAR10(name='test',
-                   path=testdatapath)
+                   path=testdata_path)
 
 # Choose the random initialization method
 init_W = InitCell('rand')
@@ -56,30 +56,36 @@ if debug:
 
 inputs = [x, y]
 inputs_dim = {'x':3072, 'y':10}
+
 c1 = ConvertLayer(name='c1',
                   parent=['x'],
                   outshape=(batch_size, 3, 32, 32))
+
 h1 = Conv2DLayer(name='h1',
                  parent=['c1'],
                  outshape=(batch_size, 64, 21, 21),
                  unit='relu',
                  init_W=init_W,
                  init_b=init_b)
+
 h2 = Conv2DLayer(name='h2',
                  parent=['h1'],
                  outshape=(batch_size, 128, 10, 10),
                  unit='relu',
                  init_W=init_W,
                  init_b=init_b)
+
 h3 = Conv2DLayer(name='h3',
                  parent=['h2'],
                  outshape=(batch_size, 128, 1, 1),
                  unit='relu',
                  init_W=init_W,
                  init_b=init_b)
+
 c2 = ConvertLayer(name='c2',
                   parent=['h3'],
                   outshape=(batch_size, 128))
+
 # Global average pooling missing
 h4 = FullyConnectedLayer(name='h4',
                          parent=['c2'],
@@ -87,6 +93,7 @@ h4 = FullyConnectedLayer(name='h4',
                          unit='softmax',
                          init_W=init_W,
                          init_b=init_b)
+
 cost = MulCrossEntropyLayer(name='cost', parent=['y', 'h4'])
 
 # You will fill in a list of nodes and fed them to the model constructor
@@ -116,7 +123,7 @@ extension = [
                ddout=[cost, err],
                data=[Iterator(testdata, batch_size)]),
     Picklize(freq=10000,
-             path=savepath)
+             path=save_path)
 ]
 
 mainloop = Training(
