@@ -1,4 +1,5 @@
 import ipdb
+import cPickle
 import logging
 import numpy as np
 import os
@@ -170,7 +171,9 @@ class Picklize(Extension):
             path = os.path.join(self.path, pklpath)
             logger.info("\tSaving model to: %s" % path)
             try:
-                secure_pickle_dump(mainloop, path)
+                #secure_pickle_dump(mainloop, path)
+                f = open(path, "w")
+                cPickle.dump(mainloop, f)
             except Exception:
                 raise
 
@@ -201,7 +204,9 @@ class EarlyStopping(Extension):
                     path = os.path.join(self.path, pklpath)
                     logger.info("\tSaving best model to: %s" % path)
                     try:
-                        secure_pickle_dump(mainloop, path)
+                        #secure_pickle_dump(mainloop, path)
+                        f = open(path, "w")
+                        cPickle.dump(mainloop, f)
                     except Exception:
                         raise
 
