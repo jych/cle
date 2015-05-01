@@ -150,14 +150,16 @@ class PickleMixin(object):
     def __getstate__(self):
         if not hasattr(self, '_pickle_skip_list'):
             self._pickle_skip_list = []
-            for k, v in self.__dict__.items():
-                try:
-                    f = tempfile.TemporaryFile()
-                    cPickle.dump(v, f)
-                except RuntimeError:
-                    self._pickle_skip_list.append(k)
-            self._pickle_skip_list.append('data')
             self._pickle_skip_list.append('cost_fn')
+            self._pickle_skip_list.append('data')
+            self._pickle_skip_list.append('extension')
+            for k, v in self.__dict__.items():
+                if k not in self._pickle_skip_list:
+                    try:
+                        f = tempfile.TemporaryFile()
+                        cPickle.dump(v, f, protocol=-1)
+                    except RuntimeError:
+                        self._pickle_skip_list.append(k)
         state = OrderedDict()
         for k, v in self.__dict__.items():
             if k not in self._pickle_skip_list:
@@ -183,7 +185,7 @@ def secure_pickle_dump(object_, path):
     try:
         d = os.path.dirname(path)
         with tempfile.NamedTemporaryFile(delete=False, dir=d) as temp:
-            cPickle.dump(object_, temp)
+            cPickle.dump(object_, temp, protocol=-1)
         shutil.move(temp.name, path)
     except:
         if "temp" in locals():
