@@ -153,6 +153,8 @@ class PickleMixin(object):
             self._pickle_skip_list.append('cost_fn')
             self._pickle_skip_list.append('data')
             self._pickle_skip_list.append('extension')
+            self._pickle_skip_list.append('grads')
+            self._pickle_skip_list.append('updates')
             for k, v in self.__dict__.items():
                 if k not in self._pickle_skip_list:
                     try:
