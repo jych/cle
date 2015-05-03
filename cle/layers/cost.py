@@ -168,3 +168,13 @@ class GMMLayer(GaussianLayer):
                                          dtype=mu.dtype)
         z = mu + sig * epsilon
         return z
+
+    def argmax_mean(self, X):
+        mu = X[0]
+        coeff = X[1]
+        mu = mu.reshape((mu.shape[0],
+                         mu.shape[1]/coeff.shape[-1],
+                         coeff.shape[-1]))
+        idx = predict(coeff)
+        mu = mu[T.arange(mu.shape[0]), :, idx]
+        return mu
