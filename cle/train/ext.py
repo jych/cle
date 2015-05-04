@@ -41,11 +41,12 @@ class GradientClipping(Extension):
             WRITEME
         """
         grads = mainloop.grads
+        g_norm = sum([T.sqr(x/self.batch_size).sum()
+                      for x in grads.values()])
+        not_finite = T.or_(T.isnan(g_norm), T.isinf(g_norm))
+        g_norm = T.sqrt(g_norm)
+        scaler = self.scaler / T.maximum(self.scaler, g_norm)
         for p, g in grads.items():
-            g /= self.batch_size
-            g_norm = T.sqrt((g**2).sum())
-            not_finite = T.or_(T.isnan(g_norm), T.isinf(g_norm))
-            scaler = self.scaler / T.maximum(self.scaler, g_norm)
             grads[p] = T.switch(not_finite, 0.1 * p, g * scaler)
         mainloop.grads = grads
 
