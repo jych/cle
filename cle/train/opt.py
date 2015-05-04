@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class Optimizer(object):
-    def __init__(self, lr, lr_scalers=None, do_clip=0,
+    def __init__(self, lr, lr_scalers=None, post_clip=0,
                  scaler=5, batch_size=1):
         """
         .. todo::
@@ -22,7 +22,7 @@ class Optimizer(object):
             self.lr_scalers = lr_scalers
         else:
             self.lr_scalers = OrderedDict()
-        self.do_clip = do_clip
+        self.post_clip = post_clip
         self.scaler = scaler
         self.batch_size = batch_size
 
@@ -155,15 +155,15 @@ class Adam(Optimizer):
             updates[m] = m_t
             updates[v] = v_t
             updates[p] = p_t
-        """
-        if self.do_clip:
-            for p, g in g_tt.items():
-                g /= self.batch_size
-                g_norm = T.sqrt((g**2).sum())
-                not_finite = T.or_(T.isnan(g_norm), T.isinf(g_norm))
-                scaler = self.scaler / T.maximum(self.scaler, g_norm)
-                g_tt[p] = T.switch(not_finite, 0.1 * p, g * scaler)
-        """
+        if self.post_clip:
+            g_norm = sum([T.sqr(x/self.batch_size).sum()
+                          for x in g_tt.values()])
+            not_finite = T.or_(T.isnan(g_norm), T.isinf(g_norm))
+            g_norm = T.sqrt(g_norm)
+            for p, g in grads.items():
+                lr_scaler = self.lr_scalers.get(str(p), 1.)
+                p_t = p - lr_scaler * self.lr * g_t * scaler
+                updates[p] = p_t
         updates[cnt] = cnt + 1
         return updates
 
