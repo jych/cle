@@ -94,7 +94,7 @@ def KLGaussianStdGaussian(mu, sig):
     return kl
 
 
-def KLGaussianGaussian(mu1, sig1, mu2, sig2):
+def KLGaussianGaussian(mu1, sig1, mu2, sig2, keep_dims=0):
     """
     Re-parameterized formula for KL
     between Gaussian predicted by encoder and Gaussian dist.
@@ -106,22 +106,11 @@ def KLGaussianGaussian(mu1, sig1, mu2, sig2):
     mu2  : FullyConnected (Linear)
     sig2 : FullyConnected (Softplus)
     """
-    kl = T.sum(0.5 * (2 * T.log(sig2) - 2 * T.log(sig1) + (sig1**2 + (mu1 - mu2)**2) /
-               sig2**2 - 1), axis=-1)
+    if keep_dims:
+        kl = 0.5 * (2 * T.log(sig2) - 2 * T.log(sig1) +\
+             (sig1**2 + (mu1 - mu2)**2) / sig2**2 - 1)
+    else:
+        kl = T.sum(0.5 * (2 * T.log(sig2) - 2 * T.log(sig1) + 
+                   (sig1**2 + (mu1 - mu2)**2) /
+                   sig2**2 - 1), axis=-1)
     return kl
-
-
-def KLGaussianGaussianKeepDims(mu1, sig1, mu2, sig2):
-    """
-    Re-parameterized formula for KL
-    between Gaussian predicted by encoder and Gaussian dist.
-
-    Parameters
-    ----------
-    mu1  : FullyConnected (Linear)
-    sig1 : FullyConnected (Softplus)
-    mu2  : FullyConnected (Linear)
-    sig2 : FullyConnected (Softplus)
-    """
-    kl = 0.5 * (2 * T.log(sig2) - 2 * T.log(sig1) + (sig1**2 + (mu1 - mu2)**2) / sig2**2 - 1)
-    return kl   

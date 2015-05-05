@@ -39,8 +39,10 @@ class RecurrentLayer(StemCell):
         self.init_states = OrderedDict()
         self.init_state_cons = init_state_cons
 
-    def get_init_state(self):
-        state = T.zeros((self.batch_size, self.nout)) + self.init_state_cons
+    def get_init_state(self, batch_size=None):
+        if batch_size is None:
+            batch_size = self.batch_size
+        state = T.zeros((batch_size, self.nout)) + self.init_state_cons
         state = T.unbroadcast(state, *range(state.ndim))
         return state
 
@@ -63,7 +65,7 @@ class SimpleRecurrent(RecurrentLayer):
     def fprop(self, XH):
         # XH is a list of inputs: [state_belows, state_befores]
         X, H = XH
-        z = T.zeros((self.batch_size, self.nout))
+        z = T.zeros((X[0].shape[0], self.nout))
         for x, (parname, parout) in izip(X, self.parent.items()):
             W = self.params['W_'+parname+'__'+self.name]
             z += T.dot(x[:, :parout], W)
@@ -84,8 +86,10 @@ class LSTM(RecurrentLayer):
     ----------
     .. todo::
     """
-    def get_init_state(self):
-        state = T.zeros((self.batch_size, 2*self.nout))
+    def get_init_state(self, batch_size=None):
+        if batch_size is None:
+            batch_size = self.batch_size
+        state = T.zeros((batch_size, 2*self.nout))
         state = T.unbroadcast(state, *range(state.ndim))
         return state
 
@@ -96,7 +100,7 @@ class LSTM(RecurrentLayer):
         X, H = XH
         # The index of self recurrence is 0
         z_t = H[0]
-        z = T.zeros((self.batch_size, 4*self.nout))
+        z = T.zeros((X[0].shape[0], 4*self.nout))
         for x, (parname, parout) in izip(X, self.parent.items()):
             W = self.params['W_'+parname+'__'+self.name]
             z += T.dot(x[:, :parout], W)
@@ -154,7 +158,7 @@ class GFLSTM(LSTM):
         # The index of self recurrence is 0
         z_t = H[0]
         Nm = len(self.recurrent)
-        z = T.zeros((self.batch_size, 4*self.nout+Nm))
+        z = T.zeros((X[0].shape[0], 4*self.nout+Nm))
         for x, (parname, parout) in izip(X, self.parent.items()):
             W = self.params['W_'+parname+'__'+self.name]
             z += T.dot(x[:, :parout], W)
@@ -223,7 +227,7 @@ class GRU(RecurrentLayer):
         X, H = XH
         # The index of self recurrence is 0
         z_tm1 = H[0]
-        z = T.zeros((self.batch_size, 3*self.nout))
+        z = T.zeros((X[0].shape[0], 3*self.nout))
         for x, (parname, parout) in izip(X, self.parent.items()):
             W = self.params['W_'+parname+'__'+self.name]
             z += T.dot(x[:, :parout], W)
@@ -280,7 +284,7 @@ class GFGRU(GRU):
         # The index of self recurrence is 0
         z_tm1 = H[0]
         Nm = len(self.recurrent)
-        z = T.zeros((self.batch_size, 3*self.nout+Nm))
+        z = T.zeros((X[0].shape[0], 3*self.nout+Nm))
         for x, (parname, parout) in izip(X, self.parent.items()):
             W = self.params['W_'+parname+'__'+self.name]
             z += T.dot(x[:, :parout], W)

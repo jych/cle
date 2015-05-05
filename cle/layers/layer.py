@@ -4,8 +4,7 @@ import theano.tensor as T
 
 from cle.cle.cost import (
     KLGaussianStdGaussian,
-    KLGaussianGaussian,
-    KLGaussianGaussianKeepDims
+    KLGaussianGaussian
 )
 from cle.cle.layers import StemCell
 from cle.cle.layers.feedforward import FullyConnectedLayer
@@ -192,19 +191,21 @@ class PriorLayer(StemCell):
             return KLGaussianStdGaussian(X[0], X[1])
         elif len(X) == 4:
             if self.keep_dims:
-                return KLGaussianGaussianKeepDims(X[0], X[1], X[2], X[3])
+                return KLGaussianGaussian(X[0], X[1], X[2], X[3], 1)
             else:
                 return KLGaussianGaussian(X[0], X[1], X[2], X[3])
 
-    def sample(self, X):
+    def sample(self, X, num_sample=None):
         if len(X) != 2 and len(X) != 4:
             raise ValueError("The number of inputs does not match.")
+        if num_sample is None:
+            num_sample = self.num_sample
         mu = X[0]
         sig = X[1]
         mu = mu.dimshuffle(0, 'x', 1)
         sig = sig.dimshuffle(0, 'x', 1)
         epsilon = self.theano_rng.normal(size=(mu.shape[0],
-                                               self.num_sample,
+                                               num_sample,
                                                mu.shape[-1]),
                                          avg=0., std=1.,
                                          dtype=mu.dtype)
