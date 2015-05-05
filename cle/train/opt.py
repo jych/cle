@@ -161,7 +161,7 @@ class Adam(Optimizer):
             not_finite = T.or_(T.isnan(g_norm), T.isinf(g_norm))
             g_norm = T.sqrt(g_norm)
             scaler = self.scaler / T.maximum(self.scaler, g_norm)
-            for p, g in grads.items():
+            for p, g in g_tt.items():
                 lr_scaler = self.lr_scalers.get(str(p), 1.)
                 p_t = p - lr_scaler * self.lr * g_t * scaler
                 updates[p] = p_t
