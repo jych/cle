@@ -163,7 +163,7 @@ class Adam(Optimizer):
             scaler = self.scaler / T.maximum(self.scaler, g_norm)
             for p, g in g_tt.items():
                 lr_scaler = self.lr_scalers.get(str(p), 1.)
-                p_t = p - lr_scaler * self.lr * g_t * scaler
+                p_t = p - lr_scaler * self.lr * g * scaler
                 updates[p] = p_t
         updates[cnt] = cnt + 1
         return updates
