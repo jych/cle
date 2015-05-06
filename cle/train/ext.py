@@ -5,6 +5,7 @@ import numpy as np
 import os
 import sys
 import theano.tensor as T
+import time
 
 from cle.cle.graph import TheanoMixin
 from cle.cle.utils import secure_pickle_dump, tolist
@@ -147,8 +148,11 @@ class Monitoring(Extension, TheanoMixin):
                 if this_mean is np.nan:
                     raise ValueError("NaN occured in output.")
                 logger.info("\t%s: %f" % (out, this_mean))
+            this_t0 = time.time()
             self.monitor_data_based_channels(mainloop)
-
+            mt = time.time() - this_t0
+            logger.info("\tElapsed time for monitoring: %f" % mt)
+ 
 
 class Picklize(Extension):
     """
