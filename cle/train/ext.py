@@ -177,8 +177,6 @@ class Picklize(Extension):
             logger.info("\tSaving model to: %s" % path)
             try:
                 secure_pickle_dump(mainloop, path)
-                #f = open(path, "w")
-                #cPickle.dump(mainloop, f)
             except Exception:
                 raise
 
@@ -210,8 +208,6 @@ class EarlyStopping(Extension):
                     logger.info("\tSaving best model to: %s" % path)
                     try:
                         secure_pickle_dump(mainloop, path)
-                        #f = open(path, "w")
-                        #cPickle.dump(mainloop, f)
                     except Exception:
                         raise
 

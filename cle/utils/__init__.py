@@ -1,8 +1,10 @@
 import ipdb
 import cPickle
+import logging
 import numpy as np
 import os
 import shutil
+import sys
 import tempfile
 import theano
 import theano.tensor as T
@@ -12,6 +14,7 @@ from numpy.lib.stride_tricks import as_strided
 from theano.compat.python2x import OrderedDict
 
 
+logger = logging.getLogger(__name__)
 rng = np.random.RandomState((2015, 2, 19))
 
 
@@ -155,14 +158,28 @@ class PickleMixin(object):
             self._pickle_skip_list.append('extension')
             self._pickle_skip_list.append('grads')
             self._pickle_skip_list.append('params')
+            self._pickle_skip_list.append('inputs')
+            self._pickle_skip_list.append('outputs')
             self._pickle_skip_list.append('updates')
+            self._pickle_skip_list.append('optimizer')
+            self._pickle_skip_list.append('endloop')
             for k, v in self.__dict__.items():
                 if k not in self._pickle_skip_list:
                     try:
                         f = tempfile.TemporaryFile()
                         cPickle.dump(v, f, protocol=-1)
-                    except RuntimeError:
-                        self._pickle_skip_list.append(k)
+                    except RuntimeError as e:
+                        if str(e).find('recursion') != -1:
+                            logger.warning('cle.utils.PickleMixin encountered '
+                               'the following error: ' + str(e) +
+                               '\nAttempting to resolve this error by calling ' +
+                               'sys.setrecusionlimit and retrying')
+                            old_limit = sys.getrecursionlimit()
+                        try:
+                            sys.setrecursionlimit(50000)
+                            cPickle.dump(v, f, protocol=-1)
+                        finally:
+                            sys.setrecursionlimit(old_limit)
         state = OrderedDict()
         for k, v in self.__dict__.items():
             if k not in self._pickle_skip_list:
@@ -188,7 +205,20 @@ def secure_pickle_dump(object_, path):
     try:
         d = os.path.dirname(path)
         with tempfile.NamedTemporaryFile(delete=False, dir=d) as temp:
-            cPickle.dump(object_, temp, protocol=-1)
+            try:
+                cPickle.dump(object_, temp, protocol=-1)
+            except RuntimeError as e:
+                if str(e).find('recursion') != -1:
+                    logger.warning('cle.utils.PickleMixin encountered '
+                        'the following error: ' + str(e) +
+                        '\nAttempting to resolve this error by calling ' +
+                        'sys.setrecusionlimit and retrying')
+                    old_limit = sys.getrecursionlimit()
+                try:
+                    sys.setrecursionlimit(50000)
+                    cPickle.dump(object_, temp, protocol=-1)
+                finally:
+                    sys.setrecursionlimit(old_limit)
         shutil.move(temp.name, path)
     except:
         if "temp" in locals():

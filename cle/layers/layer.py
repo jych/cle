@@ -196,7 +196,7 @@ class PriorLayer(StemCell):
                 return KLGaussianGaussian(X[0], X[1], X[2], X[3])
 
     def sample(self, X, num_sample=None):
-        if len(X) != 2 and len(X) != 4:
+        if len(X) != 2:
             raise ValueError("The number of inputs does not match.")
         if num_sample is None:
             num_sample = self.num_sample
