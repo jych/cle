@@ -6,3 +6,9 @@ but a playground which is open to everyone for free.
 
 We try to manage minimum lines of implementation.<br\>
 Over-engineering is not beautiful.
+
+If you happen to use this library, or bring some of the scripts in this library,
+please don't forget to cite and give credits to the right libraries (do not remove reference in docstrings).
+
+If you happen to use GF-RNN, please do cite this paper.
+Junyoung Chung, Caglar Gulcehre, Kyunghyun Cho and Yoshua Bengio, "Gated Feedback Recurrent Neural Networks", in ICML, 2015.
