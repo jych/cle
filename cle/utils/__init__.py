@@ -163,23 +163,23 @@ class PickleMixin(object):
             self._pickle_skip_list.append('updates')
             self._pickle_skip_list.append('optimizer')
             self._pickle_skip_list.append('endloop')
-            for k, v in self.__dict__.items():
-                if k not in self._pickle_skip_list:
-                    try:
-                        f = tempfile.TemporaryFile()
-                        cPickle.dump(v, f, protocol=-1)
-                    except RuntimeError as e:
-                        if str(e).find('recursion') != -1:
-                            logger.warning('cle.utils.PickleMixin encountered '
-                               'the following error: ' + str(e) +
-                               '\nAttempting to resolve this error by calling ' +
-                               'sys.setrecusionlimit and retrying')
-                            old_limit = sys.getrecursionlimit()
-                        try:
-                            sys.setrecursionlimit(50000)
-                            cPickle.dump(v, f, protocol=-1)
-                        finally:
-                            sys.setrecursionlimit(old_limit)
+            #for k, v in self.__dict__.items():
+            #    if k not in self._pickle_skip_list:
+            #        try:
+            #            f = tempfile.TemporaryFile()
+            #            cPickle.dump(v, f, protocol=-1)
+            #        except RuntimeError as e:
+            #            if str(e).find('recursion') != -1:
+            #                logger.warning('cle.utils.PickleMixin encountered '
+            #                   'the following error: ' + str(e) +
+            #                   '\nAttempting to resolve this error by calling ' +
+            #                   'sys.setrecusionlimit and retrying')
+            #                old_limit = sys.getrecursionlimit()
+            #            try:
+            #                sys.setrecursionlimit(50000)
+            #                cPickle.dump(v, f, protocol=-1)
+            #            finally:
+            #                sys.setrecursionlimit(old_limit)
         state = OrderedDict()
         for k, v in self.__dict__.items():
             if k not in self._pickle_skip_list:
@@ -209,7 +209,7 @@ def secure_pickle_dump(object_, path):
                 cPickle.dump(object_, temp, protocol=-1)
             except RuntimeError as e:
                 if str(e).find('recursion') != -1:
-                    logger.warning('cle.utils.PickleMixin encountered '
+                    logger.warning('cle.utils.secure_pickle_dump encountered '
                         'the following error: ' + str(e) +
                         '\nAttempting to resolve this error by calling ' +
                         'sys.setrecusionlimit and retrying')
