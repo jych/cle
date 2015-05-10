@@ -42,10 +42,17 @@ class GradientClipping(Extension):
             WRITEME
         """
         grads = mainloop.grads
+        """
         for p, g in grads.items():
             grads[p] = g / self.batch_size
         g_norm = 0.
         for g in grads.values():
+            g_norm += (g**2).sum()
+        """
+        g_norm = 0.
+        for p, g in grads.items():
+            g /= self.batch_size
+            grads[p] = g
             g_norm += (g**2).sum()
         not_finite = T.or_(T.isnan(g_norm), T.isinf(g_norm))
         g_norm = T.sqrt(g_norm)
