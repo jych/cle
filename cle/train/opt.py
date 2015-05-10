@@ -10,8 +10,9 @@ logger = logging.getLogger(__name__)
 
 
 class Optimizer(object):
-    def __init__(self, lr, lr_scalers=None, post_clip=0,
-                 scaler=5, batch_size=1):
+    def __init__(self, lr, lr_scalers=None, post_clip=0, scaler=5):
+    #def __init__(self, lr, lr_scalers=None, post_clip=0,
+                 #scaler=5, batch_size=1):
         """
         .. todo::
 
@@ -24,7 +25,7 @@ class Optimizer(object):
             self.lr_scalers = OrderedDict()
         self.post_clip = post_clip
         self.scaler = scaler
-        self.batch_size = batch_size
+        #self.batch_size = batch_size
 
     def get_updates(self):
         """
@@ -158,8 +159,8 @@ class Adam(Optimizer):
         if self.post_clip:
             g_norm = 0.
             for p, g in g_tt.items():
-                g /= self.batch_size
-                g_tt[p] = g
+                #g /= self.batch_size
+                #g_tt[p] = g
                 g_norm += (g**2).sum()
             not_finite = T.or_(T.isnan(g_norm), T.isinf(g_norm))
             g_norm = T.sqrt(g_norm)
