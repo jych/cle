@@ -28,7 +28,7 @@ class RecurrentLayer(StemCell):
         self.recurrent = OrderedDict()
         if self_recurrent:
             self.recurrent[self.name] = self.nout
-        recurrennt_dim = tolist(recurrent_dim)
+        recurrent_dim = tolist(recurrent_dim)
         for i, rec in enumerate(tolist(recurrent)):
             if len(recurrent_dim) != 0:
                 self.recurrent[rec] = recurrent_dim[i]

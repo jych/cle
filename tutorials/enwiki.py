@@ -124,6 +124,7 @@ h3_init_state = T.switch(
                 h3.get_init_state(), h3_tm1
             )
 
+
 def inner_fn(i_t, h1_tm1, h2_tm1, h3_tm1):
 
     x_t = onehot.fprop([i_t])

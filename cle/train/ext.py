@@ -61,7 +61,6 @@ class GradientClipping(Extension):
             grads[p] = T.switch(not_finite, 0.1 * p, g * scaler)
         mainloop.grads = grads
 
-
 #    def exe(self, mainloop):
 #        """
 #        .. todo::
