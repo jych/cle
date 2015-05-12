@@ -65,6 +65,12 @@ class SimpleRecurrent(RecurrentLayer):
     def fprop(self, XH):
         # XH is a list of inputs: [state_belows, state_befores]
         X, H = XH
+        if len(X) != len(self.parent):
+            raise AttributeError("The number of inputs doesn't match "
+                                 "with the number of parents.")
+        if len(H) != len(self.recurrent):
+            raise AttributeError("The number of inputs doesn't match "
+                                 "with the number of recurrents.")
         z = T.zeros((X[0].shape[0], self.nout))
         for x, (parname, parout) in izip(X, self.parent.items()):
             W = self.params['W_'+parname+'__'+self.name]
@@ -98,6 +104,12 @@ class LSTM(RecurrentLayer):
         # each state vector is: [state_before; cell_before]
         # Hence, you use h[:, :self.nout] to compute recurrent term
         X, H = XH
+        if len(X) != len(self.parent):
+            raise AttributeError("The number of inputs doesn't match "
+                                 "with the number of parents.")
+        if len(H) != len(self.recurrent):
+            raise AttributeError("The number of inputs doesn't match "
+                                 "with the number of recurrents.")
         # The index of self recurrence is 0
         z_t = H[0]
         z = T.zeros((X[0].shape[0], 4*self.nout))
@@ -155,6 +167,12 @@ class GFLSTM(LSTM):
         # each state vector is: [state_before; cell_before]
         # Hence, you use h[:, :self.nout] to compute recurrent term
         X, H = XH
+        if len(X) != len(self.parent):
+            raise AttributeError("The number of inputs doesn't match "
+                                 "with the number of parents.")
+        if len(H) != len(self.recurrent):
+            raise AttributeError("The number of inputs doesn't match "
+                                 "with the number of recurrents.")
         # The index of self recurrence is 0
         z_t = H[0]
         Nm = len(self.recurrent)
@@ -225,6 +243,12 @@ class GRU(RecurrentLayer):
         # each state vector is: [state_before; cell_before]
         # Hence, you use h[:, :self.nout] to compute recurrent term
         X, H = XH
+        if len(X) != len(self.parent):
+            raise AttributeError("The number of inputs doesn't match "
+                                 "with the number of parents.")
+        if len(H) != len(self.recurrent):
+            raise AttributeError("The number of inputs doesn't match "
+                                 "with the number of recurrents.")
         # The index of self recurrence is 0
         z_tm1 = H[0]
         z = T.zeros((X[0].shape[0], 3*self.nout))
@@ -281,6 +305,12 @@ class GFGRU(GRU):
         # each state vector is: [state_before; cell_before]
         # Hence, you use h[:, :self.nout] to compute recurrent term
         X, H = XH
+        if len(X) != len(self.parent):
+            raise AttributeError("The number of inputs doesn't match "
+                                 "with the number of parents.")
+        if len(H) != len(self.recurrent):
+            raise AttributeError("The number of inputs doesn't match "
+                                 "with the number of recurrents.")
         # The index of self recurrence is 0
         z_tm1 = H[0]
         Nm = len(self.recurrent)

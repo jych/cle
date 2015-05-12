@@ -14,6 +14,9 @@ class FullyConnectedLayer(StemCell):
     .. todo::
     """
     def fprop(self, X):
+        if len(X) != len(self.parent):
+            raise AttributeError("The number of inputs doesn't match "
+                                 "with the number of parents.")
         # X could be a list of inputs.
         # depending the number of parents.
         z = T.zeros((X[0].shape[0], self.nout))
