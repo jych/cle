@@ -1,5 +1,6 @@
 import ipdb
 import numpy as np
+import scipy
 
 from scipy.fftpack import rfft, irfft
 
@@ -143,13 +144,35 @@ class SequentialPrepMixin(object):
 
     def irfft(self, X):
         """
-        Apply real FFT to X
+        Apply real fast Fourier transform to X
 
         Parameters
         ----------
         X     : list of lists or ndArrays
         """
         X = np.array([irfft(x) for x in X])
+        return X
+
+    def stft(self, X):
+        """
+        Apply short-time Fourier transform to X
+
+        Parameters
+        ----------
+        X     : list of lists or ndArrays
+        """
+        X = np.array([scipy.fft(x) for x in X])
+        return X
+
+    def istft(self, X):
+        """
+        Apply short-time Fourier transform to X
+
+        Parameters
+        ----------
+        X     : list of lists or ndArrays
+        """
+        X = np.array([scipy.real(scipy.ifft(x)) for x in X])
         return X
 
     def fill_zero1D(self, x, pad_len=0, mode='righthand'):
