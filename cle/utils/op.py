@@ -30,18 +30,42 @@ def overlap_sum(X, overlap):
 
     Parameters
     ----------
-    x       : list of lists or ndArrays
+    X       : ndArrays
     overlap : amount of overlap (usually half of the window size)
 
     Notes
     -----
-    This function assumes x as 3D
+    This function assumes X as a matrix form of a sequence
+    """
+    time_steps, frame_size = X.shape
+    new_x = np.zeros(frame_size + (time_steps - 1) * overlap,
+                     dtype=np.float32)
+    start = 0
+    for i in xrange(time_steps):
+        new_x[start:start+frame_size] += X[i]
+        start += overlap
+    return np.asarray(new_x)
+
+
+def batch_overlap_sum(X, overlap):
+    """
+    WRITEME
+
+    Parameters
+    ----------
+    X       : list of lists or ndArrays
+    overlap : amount of overlap (usually half of the window size)
+
+    Notes
+    -----
+    This function assumes X as 3D
     """
     new_X = []
     for i in xrange(len(X)):
         len_x = len(X[i][0])
         time_steps = len(X[i])
-        new_x = np.zeros(len_x + (time_steps - 1) * overlap)
+        new_x = np.zeros(len_x + (time_steps - 1) * overlap,
+                         dtype=np.float32)
         start = 0
         for j in xrange(time_steps):
             new_x[start:start+len_x] += X[i][j]
