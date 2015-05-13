@@ -71,4 +71,24 @@ def batch_overlap_sum(X, overlap):
             new_x[start:start+len_x] += X[i][j]
             start += overlap
         new_X.append(new_x[:-1])
-    return np.asarray(new_X)
+    return np.array(new_X)
+
+
+def complex_vectors_to_real_vector(X):
+    """
+    WRITEME
+
+    Parameters
+    ----------
+    X       : list of complex vectors
+
+    Notes
+    -----
+    This function assumes X as 2D
+    """
+    new_X = []
+    for i in xrange(len(X)):
+        x = X[i]
+        new_x = np.concatenate([np.real(x), np.imag(x)])
+        new_X.append(new_x)
+    return np.array(new_X)
