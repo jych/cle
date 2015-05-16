@@ -73,7 +73,7 @@ def batch_overlap_sum(X, overlap):
     return np.array(new_X)
 
 
-def complex_vectors_to_real_vector(X):
+def complex_to_real(X):
     """
     WRITEME
 
