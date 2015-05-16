@@ -2,8 +2,6 @@ import ipdb
 import numpy as np
 import scipy
 
-from scipy.fftpack import rfft, irfft
-
 
 class StaticPrepMixin(object):
     """
@@ -131,26 +129,48 @@ class SequentialPrepMixin(object):
             X = (X - X_min) / (X_max - X_min)
         return (X, X_max, X_min)
 
-    def rfft(self, X):
+    def numpy_rfft(self, X):
         """
-        Apply real FFT to X
+        Apply real FFT to X (numpy)
 
         Parameters
         ----------
         X     : list of lists or ndArrays
         """
-        X = np.array([rfft(x) for x in X])
+        X = np.array([np.fft.rfft(x) for x in X])
+        return X
+
+    def numpy_irfft(self, X):
+        """
+        Apply real inverse FFT to X (numpy)
+
+        Parameters
+        ----------
+        X     : list of lists or ndArrays
+        """
+        X = np.array([np.fft.irfft(x) for x in X])
+        return X
+
+    def rfft(self, X):
+        """
+        Apply real FFT to X (scipy)
+
+        Parameters
+        ----------
+        X     : list of lists or ndArrays
+        """
+        X = np.array([scipy.fftpack.rfft(x) for x in X])
         return X
 
     def irfft(self, X):
         """
-        Apply real fast Fourier transform to X
+        Apply real inverse FFT to X (scipy)
 
         Parameters
         ----------
         X     : list of lists or ndArrays
         """
-        X = np.array([irfft(x) for x in X])
+        X = np.array([scipy.fftpack.irfft(x) for x in X])
         return X
 
     def stft(self, X):

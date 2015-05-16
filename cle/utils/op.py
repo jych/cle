@@ -37,7 +37,7 @@ def overlap_sum(X, overlap):
     -----
     This function assumes X as a matrix form of a sequence
     """
-    time_steps, frame_size = X.shape
+    time_steps, frame_size = np.array(X).shape
     new_x = np.zeros(frame_size + (time_steps - 1) * overlap,
                      dtype=np.float32)
     start = 0
@@ -62,15 +62,14 @@ def batch_overlap_sum(X, overlap):
     """
     new_X = []
     for i in xrange(len(X)):
-        len_x = len(X[i][0])
-        time_steps = len(X[i])
-        new_x = np.zeros(len_x + (time_steps - 1) * overlap,
+        time_steps, frame_size = np.array(X[i]).shape
+        new_x = np.zeros(frame_size + (time_steps - 1) * overlap,
                          dtype=np.float32)
         start = 0
         for j in xrange(time_steps):
-            new_x[start:start+len_x] += X[i][j]
+            new_x[start:start+frame_size] += X[i][j]
             start += overlap
-        new_X.append(new_x[:-1])
+        new_X.append(new_x)
     return np.array(new_X)
 
 
@@ -80,7 +79,7 @@ def complex_vectors_to_real_vector(X):
 
     Parameters
     ----------
-    X       : list of complex vectors
+    X : list of complex vectors
 
     Notes
     -----
