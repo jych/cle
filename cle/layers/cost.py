@@ -224,10 +224,12 @@ class LaplaceLayer(GaussianLayer):
     def sample(self, X):
         mu = X[0]
         sig = X[1]
-        u = self.theano_rng.uniform(size=mu.shape, low=0.,
-                                    high=1. dtype=mu.dtype)
-        v = self.theano_rng.uniform(size=mu.shape, low=0.,
-                                    high=1. dtype=mu.dtype)
+        u = self.theano_rng.uniform(size=mu.shape,
+                                    low=0., high=1.,
+                                    dtype=mu.dtype)
+        v = self.theano_rng.uniform(size=mu.shape,
+                                    low=0., high=1.,
+                                    dtype=mu.dtype)
         epsilon = T.log(u) - T.log(v)
         z = mu + sig * epsilon
         return z
