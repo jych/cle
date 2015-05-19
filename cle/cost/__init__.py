@@ -41,6 +41,21 @@ def MSE(y, y_hat):
     return mse
 
 
+def Laplace(y, mu, sig):
+    """
+    Gaussian negative log-likelihood
+
+    Parameters
+    ----------
+    y   : TensorVariable
+    mu  : FullyConnected (Linear)
+    sig : FullyConnected (Softplus)
+    """
+    nll = T.sum(abs(y - mu) / sig + T.log(sig) + T.log(2), axis=1)
+    return nll
+
+
+
 def Gaussian(y, mu, sig):
     """
     Gaussian negative log-likelihood

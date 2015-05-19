@@ -175,9 +175,17 @@ class GMMLayer(GaussianLayer):
         mu = mu.reshape((mu.shape[0],
                          mu.shape[1]/coeff.shape[-1],
                          coeff.shape[-1]))
+        sig = sig.reshape((sig.shape[0],
+                           sig.shape[1]/coeff.shape[-1],
+                           coeff.shape[-1]))       
         idx = predict(coeff)
         mu = mu[T.arange(mu.shape[0]), :, idx]
-        return mu
+        sig = sig[T.arange(sig.shape[0]), :, idx]
+        epsilon = self.theano_rng.normal(size=mu.shape,
+                                         avg=0., std=1.,
+                                         dtype=mu.dtype)
+        z = mu + sig * epsilon
+        return z, mu
 
     def sample_mean(self, X):
         mu = X[0]
@@ -203,3 +211,23 @@ class GMMLayer(GaussianLayer):
                                          dtype=mu.dtype)
         z = mu + sig * epsilon
         return z, mu
+
+
+class LaplaceLayer(GaussianLayer):
+    """
+    Linear Laplace layer
+
+    Parameters
+    ----------
+    .. todo::
+    """
+    def sample(self, X):
+        mu = X[0]
+        sig= X[1]
+        u = self.theano_rng.uniform(size=mu.shape, low=0.,
+                                    high= 1. dtype=mu.dtype)
+        v = self.theano_rng.uniform(size=mu.shape, low=0.,
+                                    high= 1. dtype=mu.dtype)
+        epsilon = T.log(u) - T.log(v)
+        z = mu + sig * epsilon
+        return z
