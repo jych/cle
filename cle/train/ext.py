@@ -205,7 +205,11 @@ class Picklize(Extension):
             path = os.path.join(self.path, pklpath)
             logger.info("\tSaving model to: %s" % path)
             try:
-                secure_pickle_dump(mainloop, path)
+                import sys
+                sys.setrecursionlimit(50000)
+                f = open(path, 'wb')
+                cPickle.dump(mainloop, path, -1)
+                #secure_pickle_dump(mainloop, path)
             except Exception:
                 raise
 
@@ -236,7 +240,11 @@ class EarlyStopping(Extension):
                     path = os.path.join(self.path, pklpath)
                     logger.info("\tSaving best model to: %s" % path)
                     try:
-                        secure_pickle_dump(mainloop, path)
+                        import sys
+                        sys.setrecursionlimit(50000)
+                        f = open(path, 'wb')
+                        cPickle.dump(mainloop, path, -1)
+                        #secure_pickle_dump(mainloop, path)
                     except Exception:
                         raise
 
