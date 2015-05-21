@@ -27,6 +27,7 @@ class Training(PickleMixin, TheanoMixin):
                  optimizer,
                  cost,
                  outputs,
+                 debug_print=0,
                  extension=None):
         self.name = name
         self.data = data
@@ -38,8 +39,14 @@ class Training(PickleMixin, TheanoMixin):
         self.outputs = tolist(outputs)
         self.updates = model.updates
         self.extension = extension
+        self.debug_print = debug_print
 
+        t0 = time.time()
         self.cost_fn = self.build_training_graph()
+        print "Elapsed compilation time: %f" % (time.time() - t0)
+        if self.debug_print:
+            from theano.printing import debugprint
+            debugprint(self.cost_fn)
         self.trainlog = TrainLog()
         self.endloop = 0
 

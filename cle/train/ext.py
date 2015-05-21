@@ -208,7 +208,7 @@ class Picklize(Extension):
                 import sys
                 sys.setrecursionlimit(50000)
                 f = open(path, 'wb')
-                cPickle.dump(mainloop, path, -1)
+                cPickle.dump(mainloop, f, -1)
                 #secure_pickle_dump(mainloop, path)
             except Exception:
                 raise
@@ -243,7 +243,7 @@ class EarlyStopping(Extension):
                         import sys
                         sys.setrecursionlimit(50000)
                         f = open(path, 'wb')
-                        cPickle.dump(mainloop, path, -1)
+                        cPickle.dump(mainloop, f, -1)
                         #secure_pickle_dump(mainloop, path)
                     except Exception:
                         raise
