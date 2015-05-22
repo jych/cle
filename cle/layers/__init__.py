@@ -70,7 +70,8 @@ class InitCell(object):
 
 
 class RandomCell(object):
-    seed_rng = np.random.RandomState((2015, 3, 24))
+    #seed_rng = np.random.RandomState((2015, 3, 24))
+    seed_rng = np.random.RandomState(np.random.randint(1024))
     """
     WRITEME
 

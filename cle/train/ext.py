@@ -189,9 +189,10 @@ class Picklize(Extension):
 
         WRITEME
     """
-    def __init__(self, freq, path):
+    def __init__(self, freq, force_freq=1000000000, path):
         self.name = 'ext_save'
         self.freq = freq
+        self.force_freq = force_freq
         if not os.path.exists(path):
             os.makedirs(path)
         self.path = path
@@ -202,6 +203,19 @@ class Picklize(Extension):
         """
         if np.mod(mainloop.trainlog._batch_seen, self.freq) == 0:
             pklpath = mainloop.name + '.pkl'
+            path = os.path.join(self.path, pklpath)
+            logger.info("\tSaving model to: %s" % path)
+            try:
+                import sys
+                sys.setrecursionlimit(50000)
+                f = open(path, 'wb')
+                cPickle.dump(mainloop, f, -1)
+                #secure_pickle_dump(mainloop, path)
+            except Exception:
+                raise
+        if np.mod(mainloop.trainlog._batch_seen, self.force_freq) == 0:
+            pklpath = mainloop.name + '_' + str(mainloop.trainlog._batch_seen)\
+                    + '.pkl'
             path = os.path.join(self.path, pklpath)
             logger.info("\tSaving model to: %s" % path)
             try:
