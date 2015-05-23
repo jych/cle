@@ -215,7 +215,7 @@ class Picklize(Extension):
                 raise
         if np.mod(mainloop.trainlog._batch_seen, self.force_save_freq) == 0:
             pklpath = mainloop.name + '_' + str(mainloop.trainlog._batch_seen)\
-                    + '.pkl'
+                      + '.pkl'
             path = os.path.join(self.path, pklpath)
             logger.info("\tSaving model to: %s" % path)
             try:
