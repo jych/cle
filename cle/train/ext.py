@@ -181,7 +181,7 @@ class Monitoring(Extension, TheanoMixin):
             self.monitor_data_based_channels(mainloop)
             mt = time.time() - this_t0
             logger.info("\tElapsed time for monitoring: %f" % mt)
- 
+
 
 class Picklize(Extension):
     """
@@ -189,10 +189,10 @@ class Picklize(Extension):
 
         WRITEME
     """
-    def __init__(self, freq, force_freq=1000000000, path):
+    def __init__(self, freq, path, force_save_freq=1e15):
         self.name = 'ext_save'
         self.freq = freq
-        self.force_freq = force_freq
+        self.force_save_freq = force_save_freq
         if not os.path.exists(path):
             os.makedirs(path)
         self.path = path
@@ -213,7 +213,7 @@ class Picklize(Extension):
                 #secure_pickle_dump(mainloop, path)
             except Exception:
                 raise
-        if np.mod(mainloop.trainlog._batch_seen, self.force_freq) == 0:
+        if np.mod(mainloop.trainlog._batch_seen, self.force_save_freq) == 0:
             pklpath = mainloop.name + '_' + str(mainloop.trainlog._batch_seen)\
                     + '.pkl'
             path = os.path.join(self.path, pklpath)
@@ -234,9 +234,10 @@ class EarlyStopping(Extension):
 
         WRITEME
     """
-    def __init__(self, path, freq=1):
+    def __init__(self, path, freq=1, force_save_freq=1e15):
         self.name = 'ext_save'
         self.freq = freq
+        self.force_save_freq = force_save_freq
         if not os.path.exists(path):
             os.makedirs(path)
         self.path = path
@@ -251,6 +252,21 @@ class EarlyStopping(Extension):
                 if mainloop.trainlog._ddmonitors[-1][0] < self.best:
                     self.best = mainloop.trainlog._ddmonitors[-1][0]
                     pklpath = mainloop.name + '_best.pkl'
+                    path = os.path.join(self.path, pklpath)
+                    logger.info("\tSaving best model to: %s" % path)
+                    try:
+                        import sys
+                        sys.setrecursionlimit(50000)
+                        f = open(path, 'wb')
+                        cPickle.dump(mainloop, f, -1)
+                        #secure_pickle_dump(mainloop, path)
+                    except Exception:
+                        raise
+            if np.mod(mainloop.trainlog._batch_seen, self.force_save_freq) == 0:
+                if mainloop.trainlog._ddmonitors[-1][0] < self.best:
+                    self.best = mainloop.trainlog._ddmonitors[-1][0]
+                    pklpath = mainloop.name + '_' + str(mainloop.trainlog._batch_seen)\
+                              + '_best.pkl'
                     path = os.path.join(self.path, pklpath)
                     logger.info("\tSaving best model to: %s" % path)
                     try:
