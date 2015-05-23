@@ -215,7 +215,7 @@ class Picklize(Extension):
                 raise
         if np.mod(mainloop.trainlog._batch_seen, self.force_save_freq) == 0:
             pklpath = mainloop.name + '_' + str(mainloop.trainlog._batch_seen)\
-                      + 'epochs.pkl'
+                      + 'updates.pkl'
             path = os.path.join(self.path, pklpath)
             logger.info("\tSaving model to: %s" % path)
             try:
@@ -265,8 +265,8 @@ class EarlyStopping(Extension):
             if np.mod(mainloop.trainlog._batch_seen, self.force_save_freq) == 0:
                 if mainloop.trainlog._ddmonitors[-1][0] < self.best:
                     self.best = mainloop.trainlog._ddmonitors[-1][0]
-                    pklpath = mainloop.name + '_before_' + str(mainloop.trainlog._batch_seen)\
-                              + 'epochs_best.pkl'
+                    pklpath = mainloop.name + '_best_before_' + str(mainloop.trainlog._batch_seen)\
+                              + 'updates.pkl'
                     path = os.path.join(self.path, pklpath)
                     logger.info("\tSaving best model to: %s" % path)
                     try:
