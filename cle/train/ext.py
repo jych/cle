@@ -202,27 +202,30 @@ class Picklize(Extension):
         Pickle the mainloop
         """
         if np.mod(mainloop.trainlog._batch_seen, self.freq) == 0:
-            pklpath = mainloop.name + '.pkl'
-            path = os.path.join(self.path, pklpath)
+            pkl_path = mainloop.name + '.pkl'
+            path = os.path.join(self.path, pkl_path)
             logger.info("\tSaving model to: %s" % path)
             try:
                 import sys
                 sys.setrecursionlimit(50000)
                 f = open(path, 'wb')
                 cPickle.dump(mainloop, f, -1)
+                f.close()
                 #secure_pickle_dump(mainloop, path)
             except Exception:
                 raise
         if np.mod(mainloop.trainlog._batch_seen, self.force_save_freq) == 0:
-            pklpath = mainloop.name + '_' + str(mainloop.trainlog._batch_seen)\
-                      + 'updates.pkl'
-            path = os.path.join(self.path, pklpath)
-            logger.info("\tSaving model to: %s" % path)
+            force_pkl_path = mainloop.name + '_' +\
+                             str(mainloop.trainlog._batch_seen) +\
+                             'updates.pkl'
+            force_path = os.path.join(self.path, force_pkl_path)
+            logger.info("\tSaving model to: %s" % force_path)
             try:
                 import sys
                 sys.setrecursionlimit(50000)
-                f = open(path, 'wb')
+                f = open(force_path, 'wb')
                 cPickle.dump(mainloop, f, -1)
+                f.close()
                 #secure_pickle_dump(mainloop, path)
             except Exception:
                 raise
@@ -248,32 +251,35 @@ class EarlyStopping(Extension):
         Pickle the mainloop
         """
         if len(mainloop.trainlog._ddmonitors) > 0:
-            if np.mod(mainloop.trainlog._batch_seen, self.freq) == 0:
-                if mainloop.trainlog._ddmonitors[-1][0] < self.best:
+            if mainloop.trainlog._ddmonitors[-1][0] < self.best:
+                if np.mod(mainloop.trainlog._batch_seen, self.freq) == 0:
                     self.best = mainloop.trainlog._ddmonitors[-1][0]
-                    pklpath = mainloop.name + '_best.pkl'
-                    path = os.path.join(self.path, pklpath)
+                    pkl_path = mainloop.name + '_best.pkl'
+                    path = os.path.join(self.path, pkl_path)
                     logger.info("\tSaving best model to: %s" % path)
                     try:
                         import sys
                         sys.setrecursionlimit(50000)
                         f = open(path, 'wb')
                         cPickle.dump(mainloop, f, -1)
+                        f.close()
                         #secure_pickle_dump(mainloop, path)
                     except Exception:
                         raise
-            if np.mod(mainloop.trainlog._batch_seen, self.force_save_freq) == 0:
-                if mainloop.trainlog._ddmonitors[-1][0] < self.best:
-                    self.best = mainloop.trainlog._ddmonitors[-1][0]
-                    pklpath = mainloop.name + '_best_before_' + str(mainloop.trainlog._batch_seen)\
-                              + 'updates.pkl'
-                    path = os.path.join(self.path, pklpath)
-                    logger.info("\tSaving best model to: %s" % path)
+                    this_scaler = (mainloop.trainlog._batch_seen /
+                                   self.force_save_freq)
+                    this_number = self.force_save_freq * (this_scaler + 1)
+                    force_pkl_path = mainloop.name + '_best_before_' +\
+                                     str(this_number) +\
+                                     'updates.pkl'
+                    force_path = os.path.join(self.path, force_pkl_path)
+                    logger.info("\tSaving best model to: %s" % force_path)
                     try:
                         import sys
                         sys.setrecursionlimit(50000)
-                        f = open(path, 'wb')
+                        f = open(force_path, 'wb')
                         cPickle.dump(mainloop, f, -1)
+                        f.close()
                         #secure_pickle_dump(mainloop, path)
                     except Exception:
                         raise
