@@ -171,12 +171,15 @@ class Monitoring(Extension, TheanoMixin):
             logger.info("\t------------------")
             logger.info("\tForward-prop based")
             logger.info("\t..................")
-            optch = [out.name for out in mainloop.outputs]
-            for i, out in enumerate(optch):
-                this_mean = np.asarray(log._batches)[srt: end, i].mean()
-                if this_mean is np.nan:
-                    raise ValueError("NaN occured in output.")
-                logger.info("\t%s: %f" % (out, this_mean))
+            output_channel = [out.name for out in mainloop.outputs]
+            if log._batch_seen == 0:
+                logger.info("\tinitial_monitoring")
+            else:
+                for i, out in enumerate(output_channel):
+                    this_mean = np.asarray(log._batches)[srt: end, i].mean()
+                    if this_mean is np.nan:
+                        raise ValueError("NaN occured in output.")
+                    logger.info("\tthis_batch_%s: %f" % (out, this_mean))
             this_t0 = time.time()
             self.monitor_data_based_channels(mainloop)
             mt = time.time() - this_t0
