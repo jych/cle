@@ -69,12 +69,13 @@ class Training(PickleMixin, TheanoMixin):
 
     def run_epoch(self):
         for batch in self.data:
+            self.run_extension('ext_monitor')
             batch_t0 = time.time()
             this_cost = self.cost_fn(*batch)
             self.trainlog._times.append(time.time() - batch_t0)
             self.trainlog._batches.append(this_cost)
             self.trainlog._batch_seen += 1
-            self.run_extension('ext_monitor')
+            #self.run_extension('ext_monitor')
             self.run_extension('ext_save')
         self.trainlog._epoch_seen += 1
         self.run_extension('ext_term')
