@@ -4,6 +4,7 @@ import logging
 import numpy as np
 import os
 import sys
+import theano
 import theano.tensor as T
 import time
 
@@ -51,7 +52,7 @@ class GradientClipping(Extension):
         """
         g_norm = 0.
         for p, g in grads.items():
-            g /= self.batch_size
+            g /= T.cast(self.batch_size, dtype=theano.config.floatX)
             grads[p] = g
             g_norm += (g**2).sum()
         not_finite = T.or_(T.isnan(g_norm), T.isinf(g_norm))
