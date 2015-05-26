@@ -1,5 +1,6 @@
 import ipdb
 import numpy as np
+import theano
 import theano.tensor as T
 
 from cle.cle.layers import StemCell, InitCell
