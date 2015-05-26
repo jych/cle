@@ -240,7 +240,7 @@ class EarlyStopping(Extension):
 
         WRITEME
     """
-    def __init__(self, path, freq=1, force_save_freq=1e15):
+    def __init__(self, path, freq=1, force_save_freq=None):
         self.name = 'ext_save'
         self.freq = freq
         self.force_save_freq = force_save_freq
@@ -269,23 +269,24 @@ class EarlyStopping(Extension):
                         #secure_pickle_dump(mainloop, path)
                     except Exception:
                         raise
-                    this_scaler = (mainloop.trainlog._batch_seen /
-                                   self.force_save_freq)
-                    this_number = self.force_save_freq * (this_scaler + 1)
-                    force_pkl_path = mainloop.name + '_best_before_' +\
-                                     str(this_number) +\
-                                     'updates.pkl'
-                    force_path = os.path.join(self.path, force_pkl_path)
-                    logger.info("\tSaving best model to: %s" % force_path)
-                    try:
-                        import sys
-                        sys.setrecursionlimit(50000)
-                        f = open(force_path, 'wb')
-                        cPickle.dump(mainloop, f, -1)
-                        f.close()
-                        #secure_pickle_dump(mainloop, path)
-                    except Exception:
-                        raise
+                    if self.force_save_freq is not None:
+                        this_scaler = (mainloop.trainlog._batch_seen /
+                                      self.force_save_freq)
+                        this_number = self.force_save_freq * (this_scaler + 1)
+                        force_pkl_path = mainloop.name + '_best_before_' +\
+                                         str(this_number) +\
+                                         'updates.pkl'
+                        force_path = os.path.join(self.path, force_pkl_path)
+                        logger.info("\tSaving best model to: %s" % force_path)
+                        try:
+                            import sys
+                            sys.setrecursionlimit(50000)
+                            f = open(force_path, 'wb')
+                            cPickle.dump(mainloop, f, -1)
+                            f.close()
+                            #secure_pickle_dump(mainloop, path)
+                        except Exception:
+                            raise
 
 
 class WeightDecay(Extension):
