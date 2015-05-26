@@ -42,7 +42,7 @@ class RecurrentLayer(StemCell):
     def get_init_state(self, batch_size=None):
         if batch_size is None:
             batch_size = self.batch_size
-        state = T.zeros((batch_size, self.nout)) + self.init_state_cons
+        state = T.zeros((batch_size, self.nout), dtype=theano.config.floatX) + self.init_state_cons
         state = T.unbroadcast(state, *range(state.ndim))
         return state
 
@@ -71,7 +71,7 @@ class SimpleRecurrent(RecurrentLayer):
         if len(H) != len(self.recurrent):
             raise AttributeError("The number of inputs doesn't match "
                                  "with the number of recurrents.")
-        z = T.zeros((X[0].shape[0], self.nout))
+        z = T.zeros((X[0].shape[0], self.nout), dtype=theano.config.floatX)
         for x, (parname, parout) in izip(X, self.parent.items()):
             W = self.params['W_'+parname+'__'+self.name]
             z += T.dot(x[:, :parout], W)
@@ -95,7 +95,7 @@ class LSTM(RecurrentLayer):
     def get_init_state(self, batch_size=None):
         if batch_size is None:
             batch_size = self.batch_size
-        state = T.zeros((batch_size, 2*self.nout))
+        state = T.zeros((batch_size, 2*self.nout), dtype=theano.config.floatX)
         state = T.unbroadcast(state, *range(state.ndim))
         return state
 
@@ -112,7 +112,7 @@ class LSTM(RecurrentLayer):
                                  "with the number of recurrents.")
         # The index of self recurrence is 0
         z_t = H[0]
-        z = T.zeros((X[0].shape[0], 4*self.nout))
+        z = T.zeros((X[0].shape[0], 4*self.nout), dtype=theano.config.floatX)
         for x, (parname, parout) in izip(X, self.parent.items()):
             W = self.params['W_'+parname+'__'+self.name]
             z += T.dot(x[:, :parout], W)
@@ -176,7 +176,7 @@ class GFLSTM(LSTM):
         # The index of self recurrence is 0
         z_t = H[0]
         Nm = len(self.recurrent)
-        z = T.zeros((X[0].shape[0], 4*self.nout+Nm))
+        z = T.zeros((X[0].shape[0], 4*self.nout+Nm), dtype=theano.config.floatX)
         for x, (parname, parout) in izip(X, self.parent.items()):
             W = self.params['W_'+parname+'__'+self.name]
             z += T.dot(x[:, :parout], W)
@@ -251,7 +251,7 @@ class GRU(RecurrentLayer):
                                  "with the number of recurrents.")
         # The index of self recurrence is 0
         z_tm1 = H[0]
-        z = T.zeros((X[0].shape[0], 3*self.nout))
+        z = T.zeros((X[0].shape[0], 3*self.nout), dtype=theano.config.floatX)
         for x, (parname, parout) in izip(X, self.parent.items()):
             W = self.params['W_'+parname+'__'+self.name]
             z += T.dot(x[:, :parout], W)
@@ -314,7 +314,7 @@ class GFGRU(GRU):
         # The index of self recurrence is 0
         z_tm1 = H[0]
         Nm = len(self.recurrent)
-        z = T.zeros((X[0].shape[0], 3*self.nout+Nm))
+        z = T.zeros((X[0].shape[0], 3*self.nout+Nm), dtype=theano.config.floatX)
         for x, (parname, parout) in izip(X, self.parent.items()):
             W = self.params['W_'+parname+'__'+self.name]
             z += T.dot(x[:, :parout], W)
