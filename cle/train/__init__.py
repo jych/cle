@@ -28,6 +28,7 @@ class Training(PickleMixin, TheanoMixin):
                  cost,
                  outputs,
                  debug_print=0,
+                 trainlog=None,
                  extension=None):
         self.name = name
         self.data = data
@@ -47,7 +48,10 @@ class Training(PickleMixin, TheanoMixin):
         if self.debug_print:
             from theano.printing import debugprint
             debugprint(self.cost_fn)
-        self.trainlog = TrainLog()
+        if trainlog is None:
+            self.trainlog = TrainLog()
+        else:
+            self.trainlog = trainlog
         self.endloop = 0
 
     def build_training_graph(self):
