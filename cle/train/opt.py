@@ -1,5 +1,6 @@
 import ipdb
 import logging
+import theano
 import theano.tensor as T
 
 from theano.compat.python2x import OrderedDict
@@ -126,6 +127,9 @@ class Adam(Optimizer):
         self.__dict__.update(locals())
         del self.self
         super(Adam, self).__init__(**kwargs)
+        if theano.config.floatX == 'float16':
+            self.lambd = 1 - 1e-7
+            self.e = 1e-7
 
     def get_updates(self, grads):
         """
