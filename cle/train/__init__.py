@@ -77,6 +77,7 @@ class Training(PickleMixin, TheanoMixin):
         for batch in self.data:
             if not self.trainlog_token:
                 self.run_extension('ext_monitor')
+            else:
                 self.trainlog_token = 0
             batch_t0 = time.time()
             this_cost = self.cost_fn(*batch)
