@@ -50,10 +50,8 @@ class Training(PickleMixin, TheanoMixin):
             debugprint(self.cost_fn)
         if trainlog is None:
             self.trainlog = TrainLog()
-            self.trainlog_token = 0
         else:
             self.trainlog = trainlog
-            self.trainlog_token = 1
         self.endloop = 0
 
     def build_training_graph(self):
@@ -75,10 +73,7 @@ class Training(PickleMixin, TheanoMixin):
 
     def run_epoch(self):
         for batch in self.data:
-            if not self.trainlog_token:
-                self.run_extension('ext_monitor')
-            else:
-                self.trainlog_token = 0
+            self.run_extension('ext_monitor')
             batch_t0 = time.time()
             this_cost = self.cost_fn(*batch)
             self.trainlog._times.append(time.time() - batch_t0)
