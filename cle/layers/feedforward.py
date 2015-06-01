@@ -70,7 +70,7 @@ class GRBM(StemCell):
 
     def free_energy(self, v, X):
         W = self.params['W_'+parname+'__'+self.name]
-        bias_term = 0.5*(((X[2] - v)/X[3])**2).sum(axis=1) 
+        bias_term = 0.5*(((v - X[2])/X[3])**2).sum(axis=1) 
         hidden_term = T.log(1 + T.exp(T.dot(v/X[3], W) + X[1])).sum(axis=1)
         FE = bias_term -hidden_term
         return FE
