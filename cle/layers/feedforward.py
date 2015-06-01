@@ -38,7 +38,12 @@ class GRBM(StemCell):
     ----------
     .. todo::
     """
-
+    def __init__(self,
+                 k_step=1,
+                 **kwargs):
+        super(GRBM, self).__init__(**kwargs)
+        self.k_step = k_step
+ 
     def initialize(self):
         parname, parout = self.parent.items()[0]
         W_shape = (parout, self.nout)
@@ -51,26 +56,27 @@ class GRBM(StemCell):
                                  "with the number of parents.")
         # X could be a list of inputs.
         # depending the number of parents.
-        v_mean, v, h_mean, h = self.gibbs_step(X)
+        v = X[0]
+        for i in xrange(self.k_step):
+            v_mean, v, h_mean, h = self.gibbs_step(v, X[1], X[2], X[3])
         return v, h
 
-    def gibbs_step(self, X):
-        x = X[0]
+    def gibbs_step(self, x, bh, bx, x_sig):
         parname, parout = self.parent.items()[0]
         W = self.params['W_'+parname+'__'+self.name]
-        h_mean = T.nnet.sigmoid(T.dot(x[:, :parout]/X[3], W) + X[1])
+        h_mean = T.nnet.sigmoid(T.dot(x[:, :parout]/(x_sig**2), W) + bh)
         h = self.theano_rng.binomial(size=h_mean.shape, n=1, p=h_mean,
                                      dtype=theano.config.floatX)
-        v_mean = X[3] * T.dot(h, W.T) + X[2]
+        v_mean = T.dot(h, W.T) + bx
         epsilon = self.theano_rng.normal(size=v_mean.shape, avg=0., std=1.,
                                          dtype=theano.config.floatX)
-        v = v_mean + X[3] * epsilon
+        v = v_mean + x_sig * epsilon
         return v_mean, v, h_mean, h
 
     def free_energy(self, v, X):
         W = self.params['W_'+parname+'__'+self.name]
-        squared_term = ((X[2] - v)**2.) / (2. * X[3])
-        hid_inp = T.dot(v/X[3], W) + X[1]
+        squared_term = 0.5 * ((X[2] - v) / X[3])**2
+        hid_inp = T.dot(v/(X[3]**2), W) + X[1]
         FE = squared_term.sum(axis=1) - T.nnet.softplus(hid_inp).sum(axis=1)
         return FE
 
