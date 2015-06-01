@@ -2,6 +2,7 @@ import ipdb
 import copy
 import numpy as np
 import scipy
+import theano
 import theano.tensor as T
 
 from theano.compat.python2x import OrderedDict

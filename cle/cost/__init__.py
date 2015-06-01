@@ -171,3 +171,10 @@ def KLGaussianGaussian(mu1, sig1, mu2, sig2, keep_dims=0):
                    (sig1**2 + (mu1 - mu2)**2) /
                    sig2**2 - 1), axis=-1)
     return kl
+
+
+def grbm_free_energy(v, W, X):
+    bias_term = 0.5*((X[2] - v/X[3])**2).sum(axis=1) 
+    hidden_term = T.log(1 + T.exp(T.dot(v/X[3], W) + X[1])).sum(axis=1)
+    FE = bias_term -hidden_term
+    return FE
