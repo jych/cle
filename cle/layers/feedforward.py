@@ -58,21 +58,20 @@ class GRBM(StemCell):
         x = X[0]
         parname, parout = self.parent.items()[0]
         W = self.params['W_'+parname+'__'+self.name]
-        h_mean = T.dot(x[:, :parout]/X[3], W) + X[1]
-        h_mean = T.nnet.sigmoid(h_mean)
+        h_mean = T.nnet.sigmoid(T.dot(x[:, :parout]/X[3], W) + X[1])
         h = self.theano_rng.binomial(size=h_mean.shape, n=1, p=h_mean,
                                      dtype=theano.config.floatX)
-        v_mean = T.dot(h, W.T) + X[2]
-        epsilon = self.theano_rng.normal(size=v_mean.shape, avg=0.,
-                                         std=1., dtype=theano.config.floatX)
+        v_mean = X[3] * T.dot(h, W.T) + X[2]
+        epsilon = self.theano_rng.normal(size=v_mean.shape, avg=0., std=1.,
+                                         dtype=theano.config.floatX)
         v = v_mean + X[3] * epsilon
         return v_mean, v, h_mean, h
 
     def free_energy(self, v, X):
         W = self.params['W_'+parname+'__'+self.name]
-        bias_term = 0.5*(((v - X[2])/X[3])**2).sum(axis=1) 
-        hidden_term = T.log(1 + T.exp(T.dot(v/X[3], W) + X[1])).sum(axis=1)
-        FE = bias_term -hidden_term
+        squared_term = ((X[2] - v)**2.) / (2. * X[3])
+        hid_inp = T.dot(v/X[3], W) + X[1]
+        FE = squared_term.sum(axis=1) - T.nnet.softplus(hid_inp).sum(axis=1)
         return FE
 
     def cost(self, X):
