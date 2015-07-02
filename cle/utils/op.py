@@ -71,7 +71,7 @@ def batch_overlap_sum(X, overlap):
     new_X = []
     timesteps, frame_size = np.array(X[0]).shape
     import scipy
-    w = scipy.signal.hann(frame_size)
+    w = np.maximum(scipy.signal.hann(frame_size), 1e-4)
     w2 = w**2
     w_sum = np.zeros(frame_size + (timesteps - 1) * overlap,
                      dtype=np.float32)
@@ -79,7 +79,6 @@ def batch_overlap_sum(X, overlap):
     for i in xrange(timesteps):
         w_sum[start:start+frame_size] += w2
         start += overlap
-    w_sum = np.maximum(w_sum, 0.01)
     for i in xrange(len(X)):
         timesteps, frame_size = np.array(X[i]).shape
         new_x = np.zeros(frame_size + (timesteps - 1) * overlap,

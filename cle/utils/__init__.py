@@ -185,7 +185,7 @@ class PickleMixin(object):
             if k not in self._pickle_skip_list:
                 state[k] = v
         return state
- 
+
     def __setstate__(self, state):
         self.__dict__ = state
 
