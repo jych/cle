@@ -111,9 +111,15 @@ class TemporalSeries(Data):
         max_sample_len = max(samples_len)
         mask = np.zeros((max_sample_len, len(batch)),
                         dtype=batch.dtype)
-        rval = np.zeros((max_sample_len, len(batch), batch[0].shape[-1]),
-                        dtype=batch.dtype)
+        if batch[0].ndim == 1:
+            rval = np.zeros((max_sample_len, len(batch), dtype=batch.dtype)
+        else:
+            rval = np.zeros((max_sample_len, len(batch), batch[0].shape[1]),
+                            dtype=batch.dtype)
         for i, (sample, sample_len) in enumerate(zip(batch, samples_len)):
             mask[:sample_len, i] = 1.
-            rval[:sample_len, i, :] = sample
+            if batch[0].ndim == 1:
+                rval[:sample_len, i] = sample
+            else:
+                rval[:sample_len, i, :] = sample
         return rval, mask
