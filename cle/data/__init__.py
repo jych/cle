@@ -112,7 +112,7 @@ class TemporalSeries(Data):
         mask = np.zeros((max_sample_len, len(batch)),
                         dtype=batch.dtype)
         if batch[0].ndim == 1:
-            rval = np.zeros((max_sample_len, len(batch), dtype=batch.dtype)
+            rval = np.zeros((max_sample_len, len(batch)), dtype=batch.dtype)
         else:
             rval = np.zeros((max_sample_len, len(batch), batch[0].shape[1]),
                             dtype=batch.dtype)
