@@ -96,10 +96,9 @@ class TemporalSeries(Data):
                         dtype=batch.dtype)
         for i, sample_len in enumerate(samples_len):
             mask[:sample_len, i] = 1.
-        return mask
+        return mask, max_sample_len
 
-    def zero_pad(self, batch):
-        max_sample_len = max(len(sample) for sample in batch)
+    def zero_pad(self, batch, max_sample_len):
         rval = np.zeros((len(batch), max_sample_len,
                          batch[0].shape[-1]), batch.dtype)
         for i, sample in enumerate(batch):
