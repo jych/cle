@@ -100,8 +100,8 @@ class TemporalSeries(Data):
 
     def zero_pad(self, batch):
         max_sample_len = max(len(sample) for sample in batch)
-        rval = np.zeros((len(batch), max_sample_len,
-                         batch[0].shape[-1]), batch.dtype)
+        rval = np.zeros((len(batch), max_sample_len, batch[0].shape[-1]),
+                        dtype=batch.dtype)
         for i, sample in enumerate(batch):
             rval[i, :len(sample)] = sample
         return rval.swapaxes(0, 1)
@@ -111,8 +111,8 @@ class TemporalSeries(Data):
         max_sample_len = max(samples_len)
         mask = np.zeros((max_sample_len, len(batch)),
                         dtype=batch.dtype)
-        rval = np.zeros((max_sample_len, len(batch)
-                         batch[0].shape[-1]), batch.dtype)
+        rval = np.zeros((max_sample_len, len(batch), batch[0].shape[-1]),
+                        dtype=batch.dtype)
         for i, (sample, sample_len) in enumerate(zip(batch, samples_len)):
             mask[:sample_len, i] = 1.
             rval[:sample_len, i] = sample
