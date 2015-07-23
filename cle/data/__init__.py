@@ -116,4 +116,4 @@ class TemporalSeries(Data):
         for i, (sample, sample_len) in enumerate(zip(batch, samples_len)):
             mask[:sample_len, i] = 1.
             rval[:sample_len, i] = sample
-        return mask, rval
+        return rval, mask
