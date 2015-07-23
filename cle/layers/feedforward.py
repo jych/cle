@@ -23,7 +23,10 @@ class FullyConnectedLayer(StemCell):
         z = T.zeros((X[0].shape[0], self.nout))
         for x, (parname, parout) in izip(X, self.parent.items()):
             W = self.params['W_'+parname+'__'+self.name]
-            z += T.dot(x[:, :parout], W)
+            if x.ndim == 1:
+                z += W[T.cast(x, 'int16')]
+            else:
+                z += T.dot(x[:, :parout], W)
         z += self.params['b_'+self.name]
         z = self.nonlin(z) + self.cons
         z.name = self.name
@@ -43,7 +46,7 @@ class GRBM(StemCell):
                  **kwargs):
         super(GRBM, self).__init__(**kwargs)
         self.k_step = k_step
- 
+
     def initialize(self):
         parname, parout = self.parent.items()[0]
         W_shape = (parout, self.nout)

@@ -29,6 +29,26 @@ def NllMul(y, y_hat):
     return nll
 
 
+def NllMulInd(y, y_hat):
+    """
+    Multi cross-entropy
+    Efficient implementation using the indices in y
+    Credit assignment
+    This code is brought from: https://github.com/lisa-lab/pylearn2
+
+    Parameters
+    ----------
+    .. todo::
+    """
+    log_prob = T.log(y_hat)
+    flat_log_prob = log_prob.flatten()
+    flat_y = y.flatten()
+    range_ = T.arange(y.shape[0])
+    flat_indices = flat_y + range_ * log_prob.shape[-1]
+    nll = -flat_log_prob[T.cast(flat_indices, 'int16')].reshape(y.shape, ndim=2)
+    return nll
+
+
 def MSE(y, y_hat):
     """
     Mean squared error
@@ -174,7 +194,7 @@ def KLGaussianGaussian(mu1, sig1, mu2, sig2, keep_dims=0):
 
 
 def grbm_free_energy(v, W, X):
-    bias_term = 0.5*(((v - X[1])/X[2])**2).sum(axis=1) 
+    bias_term = 0.5*(((v - X[1])/X[2])**2).sum(axis=1)
     hidden_term = T.log(1 + T.exp(T.dot(v/X[2], W) + X[0])).sum(axis=1)
     FE = bias_term -hidden_term
     return FE

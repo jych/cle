@@ -75,7 +75,10 @@ class SimpleRecurrent(RecurrentLayer):
         z = T.zeros((X[0].shape[0], self.nout), dtype=theano.config.floatX)
         for x, (parname, parout) in izip(X, self.parent.items()):
             W = self.params['W_'+parname+'__'+self.name]
-            z += T.dot(x[:, :parout], W)
+            if x.ndim == 1:
+                z += W[T.cast(x, 'int16')]
+            else:
+                z += T.dot(x[:, :parout], W)
         for h, (recname, recout) in izip(H, self.recurrent.items()):
             U = self.params['U_'+recname+'__'+self.name]
             z += T.dot(h[:, :recout], U)
@@ -116,7 +119,10 @@ class LSTM(RecurrentLayer):
         z = T.zeros((X[0].shape[0], 4*self.nout), dtype=theano.config.floatX)
         for x, (parname, parout) in izip(X, self.parent.items()):
             W = self.params['W_'+parname+'__'+self.name]
-            z += T.dot(x[:, :parout], W)
+            if x.ndim == 1:
+                z += W[T.cast(x, 'int16')]
+            else:
+                z += T.dot(x[:, :parout], W)
         for h, (recname, recout) in izip(H, self.recurrent.items()):
             U = self.params['U_'+recname+'__'+self.name]
             z += T.dot(h[:, :recout], U)
@@ -180,7 +186,10 @@ class GFLSTM(LSTM):
         z = T.zeros((X[0].shape[0], 4*self.nout+Nm), dtype=theano.config.floatX)
         for x, (parname, parout) in izip(X, self.parent.items()):
             W = self.params['W_'+parname+'__'+self.name]
-            z += T.dot(x[:, :parout], W)
+            if x.ndim == 1:
+                z += W[T.cast(x, 'int16')]
+            else:
+                z += T.dot(x[:, :parout], W)
         for h, (recname, recout) in izip(H, self.recurrent.items()):
             U = self.params['U_'+recname+'__'+self.name]
             z = T.inc_subtensor(
@@ -255,7 +264,10 @@ class GRU(RecurrentLayer):
         z = T.zeros((X[0].shape[0], 3*self.nout), dtype=theano.config.floatX)
         for x, (parname, parout) in izip(X, self.parent.items()):
             W = self.params['W_'+parname+'__'+self.name]
-            z += T.dot(x[:, :parout], W)
+            if x.ndim == 1:
+                z += W[T.cast(x, 'int16')]
+            else:
+                z += T.dot(x[:, :parout], W)
         for h, (recname, recout) in izip(H, self.recurrent.items()):
             U = self.params['U_'+recname+'__'+self.name]
             z = T.inc_subtensor(
@@ -318,7 +330,10 @@ class GFGRU(GRU):
         z = T.zeros((X[0].shape[0], 3*self.nout+Nm), dtype=theano.config.floatX)
         for x, (parname, parout) in izip(X, self.parent.items()):
             W = self.params['W_'+parname+'__'+self.name]
-            z += T.dot(x[:, :parout], W)
+            if x.ndim == 1:
+                z += W[T.cast(x, 'int16')]
+            else:
+                z += T.dot(x[:, :parout], W)
         for h, (recname, recout) in izip(H, self.recurrent.items()):
             U = self.params['U_'+recname+'__'+self.name]
             z = T.inc_subtensor(
