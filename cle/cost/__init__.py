@@ -33,7 +33,8 @@ def NllMulInd(y, y_hat):
     """
     Multi cross-entropy
     Efficient implementation using the indices in y
-    Credit assignment
+
+    Credit assignment:
     This code is brought from: https://github.com/lisa-lab/pylearn2
 
     Parameters
@@ -45,7 +46,7 @@ def NllMulInd(y, y_hat):
     flat_y = y.flatten()
     range_ = T.arange(y.shape[0])
     flat_indices = flat_y + range_ * log_prob.shape[-1]
-    nll = -flat_log_prob[T.cast(flat_indices, 'int16')].reshape(y.shape, ndim=2)
+    nll = -flat_log_prob[T.cast(flat_indices, 'int16')]
     return nll
 
 
