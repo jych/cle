@@ -25,7 +25,8 @@ def NllMul(y, y_hat):
     ----------
     .. todo::
     """
-    nll = -T.sum(y * T.log(y_hat), axis=-1)
+    ll = (y * T.log(y_hat)).sum(axis=1)
+    nll = -ll
     return nll
 
 
