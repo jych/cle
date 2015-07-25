@@ -76,7 +76,7 @@ class SimpleRecurrent(RecurrentLayer):
         for x, (parname, parout) in izip(X, self.parent.items()):
             W = self.params['W_'+parname+'__'+self.name]
             if x.ndim == 1:
-                z += W[T.cast(x, 'int16')]
+                z += W[T.cast(x, 'int64')]
             else:
                 z += T.dot(x[:, :parout], W)
         for h, (recname, recout) in izip(H, self.recurrent.items()):
@@ -120,7 +120,7 @@ class LSTM(RecurrentLayer):
         for x, (parname, parout) in izip(X, self.parent.items()):
             W = self.params['W_'+parname+'__'+self.name]
             if x.ndim == 1:
-                z += W[T.cast(x, 'int16')]
+                z += W[T.cast(x, 'int64')]
             else:
                 z += T.dot(x[:, :parout], W)
         for h, (recname, recout) in izip(H, self.recurrent.items()):
@@ -187,7 +187,7 @@ class GFLSTM(LSTM):
         for x, (parname, parout) in izip(X, self.parent.items()):
             W = self.params['W_'+parname+'__'+self.name]
             if x.ndim == 1:
-                z += W[T.cast(x, 'int16')]
+                z += W[T.cast(x, 'int64')]
             else:
                 z += T.dot(x[:, :parout], W)
         for h, (recname, recout) in izip(H, self.recurrent.items()):
@@ -265,7 +265,7 @@ class GRU(RecurrentLayer):
         for x, (parname, parout) in izip(X, self.parent.items()):
             W = self.params['W_'+parname+'__'+self.name]
             if x.ndim == 1:
-                z += W[T.cast(x, 'int16')]
+                z += W[T.cast(x, 'int64')]
             else:
                 z += T.dot(x[:, :parout], W)
         for h, (recname, recout) in izip(H, self.recurrent.items()):
@@ -331,7 +331,7 @@ class GFGRU(GRU):
         for x, (parname, parout) in izip(X, self.parent.items()):
             W = self.params['W_'+parname+'__'+self.name]
             if x.ndim == 1:
-                z += W[T.cast(x, 'int16')]
+                z += W[T.cast(x, 'int64')]
             else:
                 z += T.dot(x[:, :parout], W)
         for h, (recname, recout) in izip(H, self.recurrent.items()):
