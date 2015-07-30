@@ -63,6 +63,7 @@ class Iterator(object):
         for idx in xrange(start, end, self.batch_size):
             yield self.data.slices(idx, idx + self.batch_size)
 
+
 class DesignMatrix(Data):
     """
     Abstract class for static data.
