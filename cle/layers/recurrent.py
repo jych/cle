@@ -242,7 +242,7 @@ class GFLSTM(LSTM):
 
 class GRU(RecurrentLayer):
     """
-    Long short-term memory
+    Gated recurrent unit
 
     Parameters
     ----------
