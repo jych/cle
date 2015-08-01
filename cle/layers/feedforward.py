@@ -24,7 +24,9 @@ class FullyConnectedLayer(StemCell):
         for x, (parname, parout) in izip(X, self.parent.items()):
             W = self.params['W_'+parname+'__'+self.name]
             if x.ndim == 1:
-                z += W[T.cast(x, 'int64')]
+                if 'int' not in x.dtype:
+                    x = T.cast(x, 'int64')
+                z += W[x]
             else:
                 z += T.dot(x[:, :parout], W)
         z += self.params['b_'+self.name]
