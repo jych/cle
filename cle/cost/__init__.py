@@ -47,7 +47,7 @@ def NllMulInd(y, y_hat):
     log_prob = T.log(y_hat)
     flat_log_prob = log_prob.flatten()
     flat_y = y.flatten()
-    flat_indices = flat_y + T.arange(y.shape[0]) * log_prob.shape[1]
+    flat_indices = flat_y + T.arange(y.shape[0], dtype=y.dtype) * T.cast(log_prob.shape[1], dtype=y.dtype)
     ll = flat_log_prob[flat_indices]
     nll = -ll
     return nll
