@@ -1,8 +1,9 @@
 import ipdb
 import numpy as np
+import theano
 
-from cle.cle.data import Iterator
 from cle.cle.cost import NllBin
+from cle.cle.data import Iterator
 from cle.cle.graph.net import Net
 from cle.cle.models import Model
 from cle.cle.layers import InitCell
@@ -16,45 +17,43 @@ from cle.cle.train.ext import (
     Picklize
 )
 from cle.cle.train.opt import RMSProp
-from cle.cle.utils import OrderedDict
+from cle.cle.utils import flatten, OrderedDict
 from cle.datasets.music import Music
 
 
-#data_path = '/data/lisa/data/music/MuseData.pickle'
-#save_path = '/u/chungjun/repos/cle/saved/'
-data_path = '/home/junyoung/data/music/MuseData.pickle'
-save_path = '/home/junyoung/repos/cle/saved/'
+data_path = '/data/lisa/data/music/MuseData.pickle'
+save_path = '/u/chungjun/repos/cle/saved/'
+#data_path = '/home/junyoung/data/music/MuseData.pickle'
+#save_path = '/home/junyoung/repos/cle/saved/'
 
 batch_size = 10
 nlabel = 105
 debug = 0
 
 model = Model()
-trdata = Music(name='train',
-               path=data_path,
-               nlabel=nlabel)
-valdata = Music(name='valid',
-                path=data_path,
-                nlabel=nlabel)
+train_data = Music(name='train',
+                   path=data_path,
+                   nlabel=nlabel)
+
+valid_data = Music(name='valid',
+                   path=data_path,
+                   nlabel=nlabel)
 
 # Choose the random initialization method
 init_W = InitCell('randn')
 init_U = InitCell('ortho')
 init_b = InitCell('zeros')
 
-model.inputs = trdata.theano_vars()
-x, y, mask = model.inputs
+x, y, mask = train_data.theano_vars()
 # You must use THEANO_FLAGS="compute_test_value=raise" python -m ipdb
 if debug:
     x.tag.test_value = np.zeros((10, batch_size, nlabel), dtype=np.float32)
     y.tag.test_value = np.zeros((10, batch_size, nlabel), dtype=np.float32)
     mask.tag.test_value = np.ones((10, batch_size), dtype=np.float32)
 
-inputs = [x, y, mask]
-inputs_dim = {'x':nlabel}
-
 h1 = LSTM(name='h1',
           parent=['x'],
+          parent_dim=[105],
           batch_size=batch_size,
           nout=50,
           unit='tanh',
@@ -63,7 +62,8 @@ h1 = LSTM(name='h1',
           init_b=init_b)
 
 h2 = LSTM(name='h2',
-          parent=['x', 'h1'],
+          parent=['h1'],
+          parent_dim=[50],
           batch_size=batch_size,
           nout=50,
           unit='tanh',
@@ -72,7 +72,8 @@ h2 = LSTM(name='h2',
           init_b=init_b)
 
 h3 = LSTM(name='h3',
-          parent=['x', 'h2'],
+          parent=['h2'],
+          parent_dim=[50],
           batch_size=batch_size,
           nout=50,
           unit='tanh',
@@ -80,23 +81,53 @@ h3 = LSTM(name='h3',
           init_U=init_U,
           init_b=init_b)
 
-h4 = FullyConnectedLayer(name='h4',
-                         parent=['h1', 'h2', 'h3'],
-                         nout=nlabel,
-                         unit='sigmoid',
-                         init_W=init_W,
-                         init_b=init_b)
+output = FullyConnectedLayer(name='output',
+                             parent=['h1', 'h2', 'h3'],
+                             parent_dim=[50, 50, 50],
+                             nout=nlabel,
+                             unit='sigmoid',
+                             init_W=init_W,
+                             init_b=init_b)
 
-nodes = [h1, h2, h3, h4]
-rnn = Net(inputs=inputs, inputs_dim=inputs_dim, nodes=nodes)
-y_hat = rnn.build_recurrent_graph(output_args=[h4])[0]
-masked_y = y[mask.nonzero()]
-masked_y_hat = y_hat[mask.nonzero()]
-cost = NllBin(masked_y, masked_y_hat).sum()
-nll = NllBin(masked_y, masked_y_hat).mean()
+nodes = [h1, h2, h3, output]
+
+for node in nodes:
+    node.initialize()
+
+params = flatten([node.get_params().values() for node in nodes])
+
+s1_0 = h1.get_init_state(batch_size)
+s2_0 = h2.get_init_state(batch_size)
+s3_0 = h3.get_init_state(batch_size)
+
+def inner_fn(x_t, s1_tm1, s2_tm1, s3_tm1):
+
+    h1_t = h1.fprop([[x_t], [s1_tm1]])
+    h2_t = h2.fprop([[h1_t], [s2_tm1]])
+    h3_t = h3.fprop([[h2_t], [s2_tm1]])
+    output_t = output.fprop([h1_t, h2_t, h3_t])
+
+    return h1_t, h2_t, h3_t, output_t
+
+((h1_temp, h2_temp, h3_temp, output_temp), updates) =\
+    theano.scan(fn=inner_fn,
+                sequences=[x],
+                outputs_info=[s1_0, s2_0, s3_0, None])
+
+ts, _, _ = output_temp.shape
+output_in = output_temp.reshape((ts*batch_size, -1))
+y_in = y.reshape((ts*batch_size, -1))
+cost = NllBin(y, output_in)
+cost_temp = cost.reshape((ts, batch_size))
+cost = cost_temp * mask
+nll = cost.sum() / mask.sum()
+cost = cost.sum(axis=0).mean()
 cost.name = 'cost'
 nll.name = 'nll'
-model.graphs = [rnn]
+
+model.inputs = [x, y, mask]
+model._params = params
+model.nodes = nodes
 
 optimizer = RMSProp(
     lr=0.0001,
@@ -108,14 +139,14 @@ extension = [
     EpochCount(100),
     Monitoring(freq=10,
                ddout=[cost, nll],
-               data=[Iterator(valdata, batch_size)]),
+               data=[Iterator(valid_data, batch_size)]),
     Picklize(freq=5,
              path=save_path)
 ]
 
 mainloop = Training(
     name='toy_music',
-    data=Iterator(trdata, batch_size),
+    data=Iterator(train_data, batch_size),
     model=model,
     optimizer=optimizer,
     cost=cost,
