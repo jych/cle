@@ -100,6 +100,7 @@ s1_0 = h1.get_init_state(batch_size)
 s2_0 = h2.get_init_state(batch_size)
 s3_0 = h3.get_init_state(batch_size)
 
+
 def inner_fn(x_t, s1_tm1, s2_tm1, s3_tm1):
 
     h1_t = h1.fprop([[x_t], [s1_tm1]])
