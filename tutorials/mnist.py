@@ -21,33 +21,29 @@ from cle.datasets.mnist import MNIST
 
 
 # Set your dataset
-data_path = '/data/lisa/data/mnist/mnist.pkl'
-save_path = '/u/chungjun/repos/cle/saved/'
-#data_path = '/home/junyoung/data/mnist/mnist.pkl'
-#save_path = '/home/junyoung/repos/cle/saved/'
+data_path = '/home/junyoung/data/mnist/mnist.pkl'
+save_path = '/home/junyoung/repos/cle/saved/'
 
 batch_size = 128
 debug = 0
 
 model = Model()
-trdata = MNIST(name='train',
-               path=data_path)
-valdata = MNIST(name='valid',
-                path=data_path)
+train_data = MNIST(name='train',
+                   path=data_path)
+
+valid_data = MNIST(name='valid',
+                   path=data_path)
 
 # Choose the random initialization method
 init_W = InitCell('randn')
 init_b = InitCell('zeros')
 
 # Define nodes: objects
-x, y = trdata.theano_vars()
+x, y = train_data.theano_vars()
 # You must use THEANO_FLAGS="compute_test_value=raise" python -m ipdb
 if debug:
     x.tag.test_value = np.zeros((batch_size, 784), dtype=np.float32)
     y.tag.test_value = np.zeros((batch_size, 1), dtype=np.float32)
-
-inputs = [x, y]
-inputs_dim = {'x':784, 'y':1}
 
 h1 = FullyConnectedLayer(name='h1',
                          parent=['x'],
@@ -81,7 +77,6 @@ y_hat = output.fprop([h1_out])
 # Compute the cost
 cost = NllMulInd(y, y_hat).mean()
 err = error(predict(y_hat), y)
-
 cost.name = 'cross_entropy'
 err.name = 'error_rate'
 
@@ -99,15 +94,15 @@ extension = [
     EpochCount(40),
     Monitoring(freq=100,
                ddout=[cost, err],
-               data=[Iterator(trdata, batch_size),
-                     Iterator(valdata, batch_size)]),
+               data=[Iterator(train_data, batch_size),
+                     Iterator(valid_data, batch_size)]),
     Picklize(freq=200,
              path=save_path)
 ]
 
 mainloop = Training(
     name='toy_mnist',
-    data=Iterator(trdata, batch_size),
+    data=Iterator(train_data, batch_size),
     model=model,
     optimizer=optimizer,
     cost=cost,
