@@ -6,7 +6,7 @@ import theano.tensor as T
 from cle.cle.cost import NllMulInd
 from cle.cle.data import Iterator
 from cle.cle.models import Model
-from cle.cle.layers import InitCell, OnehotLayer
+from cle.cle.layers import InitCell
 from cle.cle.layers.feedforward import FullyConnectedLayer
 from cle.cle.layers.recurrent import GFLSTM
 from cle.cle.train import Training

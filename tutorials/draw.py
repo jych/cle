@@ -33,8 +33,8 @@ datapath = '/home/junyoung/data/mnist/mnist_binarized_salakhutdinov.pkl'
 savepath = '/home/junyoung/repos/cle/saved/'
 
 batch_size = 100
-inpsz = 784
-latsz = 100
+input_dim = 784
+latent_dim = 100
 n_steps = 64
 debug = 0
 
@@ -85,7 +85,7 @@ enc = LSTM(name='enc',
 phi_mu = FullyConnectedLayer(name='phi_mu',
                              parent=['enc'],
                              parent_dim=[256],
-                             nout=latsz,
+                             nout=latent_dim,
                              unit='linear',
                              init_W=init_W,
                              init_b=init_b)
@@ -93,26 +93,26 @@ phi_mu = FullyConnectedLayer(name='phi_mu',
 phi_sig = FullyConnectedLayer(name='phi_sig',
                               parent=['enc'],
                               parent_dim=[256],
-                              nout=latsz,
+                              nout=latent_dim,
                               unit='softplus',
                               init_W=init_W,
                               init_b=init_b_sig)
 
 prior = PriorLayer(name='prior',
                    parent=['phi_mu', 'phi_sig'],
-                   parent_dim=[latsz, latsz],
+                   parent_dim=[latent_dim, latent_dim],
                    use_sample=1,
-                   nout=latsz)
+                   nout=latent_dim)
 
 kl = PriorLayer(name='kl',
                 parent=['phi_mu', 'phi_sig'],
-                parent_dim=[latsz, latsz],
+                parent_dim=[latent_dim, latent_dim],
                 use_sample=0,
-                nout=latsz)
+                nout=latent_dim)
 
 dec = LSTM(name='dec',
            parent=['prior'],
-           parent_dim=[latsz],
+           parent_dim=[latent_dim],
            batch_size=batch_size,
            nout=256,
            unit='tanh',

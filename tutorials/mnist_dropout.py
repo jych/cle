@@ -5,8 +5,7 @@ import theano
 from cle.cle.cost import NllMulInd
 from cle.cle.data import Iterator
 from cle.cle.models import Model
-from cle.cle.layers import InitCell, OnehotLayer
-from cle.cle.layers.cost import MulCrossEntropyLayer
+from cle.cle.layers import InitCell
 from cle.cle.layers.feedforward import FullyConnectedLayer
 from cle.cle.layers.layer import DropoutLayer
 from cle.cle.train import Training
