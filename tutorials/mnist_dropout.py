@@ -21,8 +21,10 @@ from cle.cle.utils import error, flatten, predict, OrderedDict
 from cle.datasets.mnist import MNIST
 
 # Set your dataset
-data_path = '/home/junyoung/data/mnist/mnist.pkl'
-save_path = '/home/junyoung/repos/cle/saved/'
+data_path = '/data/lisa/data/mnist/mnist.pkl'
+save_path = '/u/chungjun/src/cle/saved/'
+#data_path = '/home/junyoung/data/mnist/mnist.pkl'
+#save_path = '/home/junyoung/src/cle/saved/'
 
 batch_size = 128
 debug = 0
@@ -103,10 +105,8 @@ err.name = 'error_rate'
 d1.set_mode(1)
 d2.set_mode(1)
 mn_h1_out = h1.fprop([mn_x])
-mn_d1_out = d1.fprop([mn_h1_out])
-mn_h2_out = h2.fprop([mn_d1_out])
-mn_d2_out = d2.fprop([mn_h2_out])
-mn_y_hat = output.fprop([mn_d2_out])
+mn_h2_out = h2.fprop([mn_h1_out])
+mn_y_hat = output.fprop([mn_h2_out])
 
 mn_cost = NllMulInd(mn_y, mn_y_hat).mean()
 mn_err = error(predict(mn_y_hat), mn_y)

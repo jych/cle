@@ -20,9 +20,8 @@ from cle.cle.train.opt import Adam
 from cle.cle.utils import flatten, sharedX, unpack, OrderedDict
 from cle.datasets.enwiki import EnWiki
 
-data_path = '/data/lisa/data/wikipedia-text/enwiki_char_and_word.npz'
-#data_path = '/home/junyoung/data/wikipedia-text/enwiki_char_and_word.npz'
-save_path = '/home/junyoung/repos/cle/saved/'
+data_path = '/home/junyoung/data/wikipedia-text/enwiki_char_and_word.npz'
+save_path = '/home/junyoung/src/cle/saved/'
 
 batch_size = 100
 reset_freq = 100

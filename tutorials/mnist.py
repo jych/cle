@@ -20,7 +20,7 @@ from cle.datasets.mnist import MNIST
 
 # Set your dataset
 data_path = '/home/junyoung/data/mnist/mnist.pkl'
-save_path = '/home/junyoung/repos/cle/saved/'
+save_path = '/home/junyoung/src/cle/saved/'
 
 batch_size = 128
 debug = 0
