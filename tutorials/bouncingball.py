@@ -1,8 +1,8 @@
 import ipdb
 import numpy as np
 
-from cle.cle.data import Iterator
 from cle.cle.graph.net import Net
+from cle.cle.data import Iterator
 from cle.cle.models import Model
 from cle.cle.layers import InitCell
 from cle.cle.layers.cost import MSELayer

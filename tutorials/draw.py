@@ -3,8 +3,8 @@ import numpy as np
 import theano
 import theano.tensor as T
 
-from cle.cle.data import Iterator
 from cle.cle.cost import NllBin
+from cle.cle.data import Iterator
 from cle.cle.models import Model
 from cle.cle.models.draw import (
     CanvasLayer,
@@ -28,7 +28,6 @@ from cle.cle.train.opt import Adam
 from cle.cle.utils import flatten
 from cle.cle.utils.compat import OrderedDict
 from cle.datasets.mnist import MNIST
-
 
 datapath = '/home/junyoung/data/mnist/mnist_binarized_salakhutdinov.pkl'
 savepath = '/home/junyoung/repos/cle/saved/'
@@ -148,9 +147,11 @@ canvas = CanvasLayer(name='canvas',
                      batch_size=batch_size)
 
 nodes = [read_param, read, enc, phi_mu, phi_sig, prior, kl, dec, w, write_param, write, error, canvas]
+
 for node in nodes:
     node.initialize()
 params = flatten([node.get_params().values() for node in nodes])
+
 
 def inner_fn(enc_tm1, dec_tm1, canvas_tm1, x):
 
@@ -185,6 +186,7 @@ def inner_fn(enc_tm1, dec_tm1, canvas_tm1, x):
                               None],
                 non_sequences=[x],
                 n_steps=n_steps)
+
 for k, v in updates.iteritems():
     k.default_update = v
 
@@ -196,6 +198,7 @@ recon_term.name = 'recon_term'
 kl_term.name = 'kl_term'
 recon_err = ((x - T.nnet.sigmoid(canvas_out[-1]))**2).mean() / x.std()
 recon_err.name = 'recon_err'
+
 model.inputs = [x]
 model._params = params
 model.nodes = nodes

@@ -1,8 +1,8 @@
 import ipdb
 import numpy as np
 
-from cle.cle.data import Iterator
 from cle.cle.graph.net import Net
+from cle.cle.data import Iterator
 from cle.cle.models import Model
 from cle.cle.layers import InitCell
 from cle.cle.layers.cost import MulCrossEntropyLayer
@@ -17,37 +17,37 @@ from cle.cle.train.ext import (
     Picklize
 )
 from cle.cle.train.opt import Adam
-from cle.cle.utils import error, predict
+from cle.cle.utils import error, flatten, predict
 from cle.datasets.cifar10 import CIFAR10
 
-
 # Set your dataset
-#data_path = ['/data/lisa/data/cifar10/pylearn2_gcn_whitened/train.npy',
-#            '/u/chungjun/repos/cle/labels/trainy.npy']
-#testdata_path = ['/data/lisa/data/cifar10/pylearn2_gcn_whitened/test.npy',
-#                '/u/chungjun/repos/cle/labels/testy.npy']
-#save_path = '/u/chungjun/repos/cle/saved/'
-data_path = ['/home/junyoung/data/cifar10/pylearn2_gcn_whitened/train.npy',
-            '/home/junyoung/data/cifar10/pylearn2_gcn_whitened/trainy.npy']
-testdata_path = ['/home/junyoung/data/cifar10/pylearn2_gcn_whitened/test.npy',
-                '/home/junyoung/data/cifar10/pylearn2_gcn_whitened/testy.npy']
-save_path = '/home/junyoung/repos/cle/saved/'
+data_path = ['/data/lisa/data/cifar10/pylearn2_gcn_whitened/train.npy',
+            '/u/chungjun/repos/cle/labels/trainy.npy']
+test_data_path = ['/data/lisa/data/cifar10/pylearn2_gcn_whitened/test.npy',
+                '/u/chungjun/repos/cle/labels/testy.npy']
+save_path = '/u/chungjun/repos/cle/saved/'
+#data_path = ['/home/junyoung/data/cifar10/pylearn2_gcn_whitened/train.npy',
+#            '/home/junyoung/data/cifar10/pylearn2_gcn_whitened/trainy.npy']
+#test_data_path = ['/home/junyoung/data/cifar10/pylearn2_gcn_whitened/test.npy',
+#                '/home/junyoung/data/cifar10/pylearn2_gcn_whitened/testy.npy']
+#save_path = '/home/junyoung/repos/cle/saved/'
 
 batch_size = 128
 debug = 0
 
 model = Model()
-trdata = CIFAR10(name='train',
-                 path=data_path)
-testdata = CIFAR10(name='test',
-                   path=testdata_path)
+train_data = CIFAR10(name='train',
+                     path=data_path)
+
+test_data = CIFAR10(name='test',
+                    path=test_data_path)
 
 # Choose the random initialization method
 init_W = InitCell('rand')
 init_b = InitCell('zeros')
 
 # Define nodes: objects
-model.inputs = trdata.theano_vars()
+model.inputs = train_data.theano_vars()
 x, y = model.inputs
 # You must use THEANO_FLAGS="compute_test_value=raise" python -m ipdb
 if debug:
@@ -121,14 +121,14 @@ extension = [
     EpochCount(100),
     Monitoring(freq=100,
                ddout=[cost, err],
-               data=[Iterator(testdata, batch_size)]),
+               data=[Iterator(test_data, batch_size)]),
     Picklize(freq=10000,
              path=save_path)
 ]
 
 mainloop = Training(
     name='toy_cifar',
-    data=Iterator(trdata, batch_size),
+    data=Iterator(train_data, batch_size),
     model=model,
     optimizer=optimizer,
     cost=cost,
