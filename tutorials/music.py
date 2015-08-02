@@ -20,15 +20,12 @@ from cle.cle.train.opt import RMSProp
 from cle.cle.utils import flatten, OrderedDict
 from cle.datasets.music import Music
 
-
-data_path = '/data/lisa/data/music/MuseData.pickle'
-save_path = '/u/chungjun/repos/cle/saved/'
-#data_path = '/home/junyoung/data/music/MuseData.pickle'
-#save_path = '/home/junyoung/repos/cle/saved/'
+data_path = '/home/junyoung/data/music/MuseData.pickle'
+save_path = '/home/junyoung/repos/cle/saved/'
 
 batch_size = 10
 nlabel = 105
-debug = 0
+debug = 1
 
 model = Model()
 train_data = Music(name='train',
@@ -118,7 +115,7 @@ def inner_fn(x_t, s1_tm1, s2_tm1, s3_tm1):
 ts, _, _ = output_temp.shape
 output_in = output_temp.reshape((ts*batch_size, -1))
 y_in = y.reshape((ts*batch_size, -1))
-cost = NllBin(y, output_in)
+cost = NllBin(y_in, output_in)
 cost_temp = cost.reshape((ts, batch_size))
 cost = cost_temp * mask
 nll = cost.sum() / mask.sum()

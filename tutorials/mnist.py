@@ -19,7 +19,6 @@ from cle.cle.train.opt import RMSProp
 from cle.cle.utils import error, flatten, predict, OrderedDict
 from cle.datasets.mnist import MNIST
 
-
 # Set your dataset
 data_path = '/home/junyoung/data/mnist/mnist.pkl'
 save_path = '/home/junyoung/repos/cle/saved/'
