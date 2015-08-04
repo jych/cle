@@ -63,7 +63,7 @@ class SimpleRecurrent(RecurrentLayer):
     ----------
     .. todo::
     """
-    def fprop(self, XH):
+    def fprop(self, XH, add_noise=False):
         # XH is a list of inputs: [state_belows, state_befores]
         X, H = XH
         if len(X) != len(self.parent):
@@ -75,6 +75,8 @@ class SimpleRecurrent(RecurrentLayer):
         z = T.zeros((X[0].shape[0], self.nout), dtype=theano.config.floatX)
         for x, (parname, parout) in izip(X, self.parent.items()):
             W = self.params['W_'+parname+'__'+self.name]
+            if add_noise:
+                W = add_noise(W, self.weight_noise, self.theano_rng)
             if x.ndim == 1:
                 if 'int' not in x.dtype:
                     x = T.cast(x, 'int64')
@@ -105,7 +107,7 @@ class LSTM(RecurrentLayer):
         state = T.unbroadcast(state, *range(state.ndim))
         return state
 
-    def fprop(self, XH):
+    def fprop(self, XH, add_noise=False):
         # XH is a list of inputs: [state_belows, state_befores]
         # each state vector is: [state_before; cell_before]
         # Hence, you use h[:, :self.nout] to compute recurrent term
@@ -121,6 +123,8 @@ class LSTM(RecurrentLayer):
         z = T.zeros((X[0].shape[0], 4*self.nout), dtype=theano.config.floatX)
         for x, (parname, parout) in izip(X, self.parent.items()):
             W = self.params['W_'+parname+'__'+self.name]
+            if add_noise:
+                W = add_noise(W, self.weight_noise, self.theano_rng)
             if x.ndim == 1:
                 if 'int' not in x.dtype:
                     x = T.cast(x, 'int64')
@@ -173,7 +177,7 @@ class GFLSTM(LSTM):
     ----------
     .. todo::
     """
-    def fprop(self, XH):
+    def fprop(self, XH, add_noise=False):
         # XH is a list of inputs: [state_belows, state_befores]
         # each state vector is: [state_before; cell_before]
         # Hence, you use h[:, :self.nout] to compute recurrent term
@@ -190,6 +194,8 @@ class GFLSTM(LSTM):
         z = T.zeros((X[0].shape[0], 4*self.nout+Nm), dtype=theano.config.floatX)
         for x, (parname, parout) in izip(X, self.parent.items()):
             W = self.params['W_'+parname+'__'+self.name]
+            if add_noise:
+                W = add_noise(W, self.weight_noise, self.theano_rng)
             if x.ndim == 1:
                 if 'int' not in x.dtype:
                     x = T.cast(x, 'int64')
@@ -254,7 +260,7 @@ class GRU(RecurrentLayer):
     ----------
     .. todo::
     """
-    def fprop(self, XH):
+    def fprop(self, XH, add_noise=False):
         # XH is a list of inputs: [state_belows, state_befores]
         # each state vector is: [state_before; cell_before]
         # Hence, you use h[:, :self.nout] to compute recurrent term
@@ -270,6 +276,8 @@ class GRU(RecurrentLayer):
         z = T.zeros((X[0].shape[0], 3*self.nout), dtype=theano.config.floatX)
         for x, (parname, parout) in izip(X, self.parent.items()):
             W = self.params['W_'+parname+'__'+self.name]
+            if add_noise:
+                W = add_noise(W, self.weight_noise, self.theano_rng)
             if x.ndim == 1:
                 if 'int' not in x.dtype:
                     x = T.cast(x, 'int64')
@@ -321,7 +329,7 @@ class GFGRU(GRU):
     ----------
     .. todo::
     """
-    def fprop(self, XH):
+    def fprop(self, XH, add_noise=False):
         # XH is a list of inputs: [state_belows, state_befores]
         # each state vector is: [state_before; cell_before]
         # Hence, you use h[:, :self.nout] to compute recurrent term
@@ -338,6 +346,8 @@ class GFGRU(GRU):
         z = T.zeros((X[0].shape[0], 3*self.nout+Nm), dtype=theano.config.floatX)
         for x, (parname, parout) in izip(X, self.parent.items()):
             W = self.params['W_'+parname+'__'+self.name]
+            if add_noise:
+                W = add_noise(W, self.weight_noise, self.theano_rng)
             if x.ndim == 1:
                 if 'int' not in x.dtype:
                     x = T.cast(x, 'int64')
