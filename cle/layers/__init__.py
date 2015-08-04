@@ -196,6 +196,7 @@ class StemCell(NonlinCell):
                  cons=0.,
                  name=None,
                  lr_scaler=None,
+                 weight_noise=0.075,
                  **kwargs):
         super(StemCell, self).__init__(**kwargs)
         if name is None:
@@ -218,6 +219,7 @@ class StemCell(NonlinCell):
                 self.parent[par] = None
         self.params = OrderedDict()
         self.lr_scaler = lr_scaler
+        self.weight_noise = weight_noise
 
     def get_params(self):
         return self.params

@@ -130,6 +130,6 @@ def real_to_complex(X):
         x = X[i]
         real = x[:n/2]
         imag = x[n/2:]
-        new_x = real + imag*1.0j 
+        new_x = real + imag*1.0j
         new_X.append(new_x)
-    return np.array(new_X)   
+    return np.array(new_X)
