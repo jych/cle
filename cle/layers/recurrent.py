@@ -5,6 +5,7 @@ import theano.tensor as T
 
 from cle.cle.layers import StemCell, InitCell
 from cle.cle.utils import tolist
+from cle.cle.utils.op import add_noise
 from itertools import izip
 from theano.compat.python2x import OrderedDict
 
