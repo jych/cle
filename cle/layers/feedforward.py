@@ -3,7 +3,7 @@ import theano
 import theano.tensor as T
 
 from cle.cle.layers import StemCell
-from cle.cle.utils import add_noise
+from cle.cle.utils.op import add_noise
 from itertools import izip
 
 
