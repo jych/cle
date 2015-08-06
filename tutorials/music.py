@@ -4,7 +4,6 @@ import theano
 
 from cle.cle.cost import NllBin
 from cle.cle.data import Iterator
-from cle.cle.graph.net import Net
 from cle.cle.models import Model
 from cle.cle.layers import InitCell
 from cle.cle.layers.feedforward import FullyConnectedLayer
@@ -107,15 +106,15 @@ def inner_fn(x_t, s1_tm1, s2_tm1, s3_tm1):
 
     return h1_t, h2_t, h3_t, output_t
 
-((h1_temp, h2_temp, h3_temp, output_temp), updates) =\
+((h1_temp, h2_temp, h3_temp, y_hat_temp), updates) =\
     theano.scan(fn=inner_fn,
                 sequences=[x],
                 outputs_info=[s1_0, s2_0, s3_0, None])
 
-ts, _, _ = output_temp.shape
-output_in = output_temp.reshape((ts*batch_size, -1))
+ts, _, _ = y_hat_temp.shape
+y_hat_in = y_hat_temp.reshape((ts*batch_size, -1))
 y_in = y.reshape((ts*batch_size, -1))
-cost = NllBin(y_in, output_in)
+cost = NllBin(y_in, y_hat_in)
 cost_temp = cost.reshape((ts, batch_size))
 cost = cost_temp * mask
 nll = cost.sum() / mask.sum()

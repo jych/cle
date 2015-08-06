@@ -1,11 +1,11 @@
 import ipdb
 import numpy as np
+import theano
 
+from cle.cle.cost import MSE
 from cle.cle.data import Iterator
-from cle.cle.graph.net import Net
 from cle.cle.models import Model
 from cle.cle.layers import InitCell
-from cle.cle.layers.cost import MSELayer
 from cle.cle.layers.feedforward import FullyConnectedLayer
 from cle.cle.layers.recurrent import LSTM
 from cle.cle.train import Training
@@ -16,38 +16,36 @@ from cle.cle.train.ext import (
     Picklize
 )
 from cle.cle.train.opt import Adam
-from cle.cle.utils import unpack, OrderedDict
+from cle.cle.utils import flatten, OrderedDict
 from cle.datasets.bouncing_balls import BouncingBalls
 
 
-#data_path = '/data/lisatmp3/chungjun/bouncing_balls/bouncing_ball_2balls_16wh_20len_50000cases.npy'
-#save_path = '/u/chungjun/repos/cle/saved/'
 data_path = '/home/junyoung/data/bouncing_balls/bouncing_ball_2balls_16wh_20len_50000cases.npy'
-save_path = '/home/junyoung/repos/cle/saved/'
+save_path = '/home/junyoung/src/cle/saved/'
 
 batch_size = 128
-res = 256
+frame_size = 256
 debug = 0
 
 model = Model()
-trdata = BouncingBalls(name='train',
-                       path=data_path)
+train_data = BouncingBalls(name='train',
+                           path=data_path)
+
+valid_data = BouncingBalls(name='valid',
+                           path=data_path)
 
 init_W = InitCell('randn')
 init_U = InitCell('ortho')
 init_b = InitCell('zeros')
 
-model.inputs = trdata.theano_vars()
-x, y = model.inputs
+x, y = train_data.theano_vars()
 if debug:
-    x.tag.test_value = np.zeros((10, batch_size, res), dtype=np.float32)
-    y.tag.test_value = np.zeros((10, batch_size, res), dtype=np.float32)
-
-inputs = [x, y]
-inputs_dim = {'x':256, 'y':256}
+    x.tag.test_value = np.zeros((10, batch_size, frame_size), dtype=np.float32)
+    y.tag.test_value = np.zeros((10, batch_size, frame_size), dtype=np.float32)
 
 h1 = LSTM(name='h1',
           parent=['x'],
+          parent_dim=[frame_size],
           batch_size=batch_size,
           nout=200,
           unit='tanh',
@@ -56,7 +54,8 @@ h1 = LSTM(name='h1',
           init_b=init_b)
 
 h2 = LSTM(name='h2',
-          parent=['x', 'h1'],
+          parent=['h1'],
+          parent_dim=[200],
           batch_size=batch_size,
           nout=200,
           unit='tanh',
@@ -65,7 +64,8 @@ h2 = LSTM(name='h2',
           init_b=init_b)
 
 h3 = LSTM(name='h3',
-          parent=['x', 'h2'],
+          parent=['h2'],
+          parent_dim=[200],
           batch_size=batch_size,
           nout=200,
           unit='tanh',
@@ -73,21 +73,50 @@ h3 = LSTM(name='h3',
           init_U=init_U,
           init_b=init_b)
 
-h4 = FullyConnectedLayer(name='h4',
-                         parent=['h1', 'h2', 'h3'],
-                         nout=res,
-                         unit='sigmoid',
-                         init_W=init_W,
-                         init_b=init_b)
+output = FullyConnectedLayer(name='output',
+                             parent=['h1', 'h2', 'h3'],
+                             parent_dim=[200, 200, 200],
+                             nout=frame_size,
+                             unit='sigmoid',
+                             init_W=init_W,
+                             init_b=init_b)
 
-cost = MSELayer(name='cost', parent=['h4', 'y'])
+nodes = [h1, h2, h3, output]
 
-nodes = [h1, h2, h3, h4, cost]
-rnn = Net(inputs=inputs, inputs_dim=inputs_dim, nodes=nodes)
-cost = unpack(rnn.build_recurrent_graph(output_args=[cost]))
-cost = cost.mean()
-cost.name = 'cost'
-model.graphs = [rnn]
+for node in nodes:
+    node.initialize()
+
+params = flatten([node.get_params().values() for node in nodes])
+
+s1_0 = h1.get_init_state(batch_size)
+s2_0 = h2.get_init_state(batch_size)
+s3_0 = h3.get_init_state(batch_size)
+
+
+def inner_fn(x_t, s1_tm1, s2_tm1, s3_tm1):
+
+    s1_t = h1.fprop([[x_t], [s1_tm1]])
+    s2_t = h2.fprop([[s1_t], [s2_tm1]])
+    s3_t = h3.fprop([[s2_t], [s3_tm1]])
+    y_hat_t = output.fprop([s1_t, s2_t, s3_t])
+
+    return s1_t, s2_t, s3_t, y_hat_t
+
+((h1_temp, h2_temp, h3_temp, y_hat_temp), updates) =\
+    theano.scan(fn=inner_fn,
+                sequences=[x],
+                outputs_info=[s1_0, s2_0, s3_0, None])
+
+ts, _, _ = y_hat_temp.shape
+y_hat_in = y_hat_temp.reshape((ts*batch_size, -1))
+y_in = y.reshape((ts*batch_size, -1))
+mse = MSE(y_in, y_hat_in)
+mse = mse.mean()
+mse.name = 'mse'
+
+model.inputs = [x, y]
+model._params = params
+model.nodes = nodes
 
 optimizer = Adam(
     lr=0.001
@@ -97,18 +126,20 @@ extension = [
     GradientClipping(batch_size=batch_size),
     EpochCount(100),
     Monitoring(freq=100,
-               ddout=[cost]),
+               ddout=[mse],
+               data=[Iterator(valid_data, batch_size),
+                     Iterator(train_data, batch_size)]),
     Picklize(freq=200,
              path=save_path)
 ]
 
 mainloop = Training(
     name='toy_bb_lstm',
-    data=Iterator(trdata, batch_size),
+    data=Iterator(train_data, batch_size),
     model=model,
     optimizer=optimizer,
-    cost=cost,
-    outputs=[cost],
+    cost=mse,
+    outputs=[mse],
     extension=extension
 )
 mainloop.run()
