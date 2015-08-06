@@ -46,7 +46,6 @@ def inner_fn(s1_tm1, s2_tm1, s3_tm1, iter_):
 
 ((s1_temp, s2_temp, s3_temp, y_hat_temp), updates) =\
     theano.scan(fn=inner_fn,
-                sequences=[x],
                 outputs_info=[s1_0, s2_0, s3_0, x],
                 n_steps=N_steps)
 
