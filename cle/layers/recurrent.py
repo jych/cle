@@ -22,11 +22,11 @@ class RecurrentLayer(StemCell):
                  batch_size,
                  recurrent=[],
                  recurrent_dim=[],
+                 skip_list=[],
+                 use_fast_fprop=0,
                  self_recurrent=1,
                  init_state_cons=0.,
                  init_U=InitCell('ortho'),
-                 use_fast_fprop=0,
-                 skip_list=[],
                  **kwargs):
         super(RecurrentLayer, self).__init__(**kwargs)
         self.recurrent = OrderedDict()
@@ -43,7 +43,7 @@ class RecurrentLayer(StemCell):
         self.init_states = OrderedDict()
         self.init_state_cons = init_state_cons
         self.use_fast_fprop = use_fast_fprop
-        self.skip_list = skip_list
+        self.skip_list = tolist(skip_list)
         if len(self.slip_list) > 0:
             if len(self.skip_list) != len(parent):
                 raise ValueError("length of parents and skip list should match")
