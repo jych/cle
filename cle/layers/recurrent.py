@@ -44,7 +44,7 @@ class RecurrentLayer(StemCell):
         self.init_state_cons = init_state_cons
         self.use_fast_fprop = use_fast_fprop
         self.skip_list = skip_list
-        if self.use_fast_fprop:
+        if len(self.slip_list) > 0:
             if len(self.skip_list) != len(parent):
                 raise ValueError("length of parents and skip list should match")
 
@@ -120,12 +120,13 @@ class SimpleRecurrent(RecurrentLayer):
         return z
 
     def initialize(self):
-        if len(self.skip_list) > 0:
-            for (parname, parout), skip in izip(self.parent.items(), self.skip_list):
-                if not skip:
-                    W_shape = (parout, self.nout)
-                    W_name = 'W_'+parname+'__'+self.name
-                    self.alloc(self.init_W.get(W_shape, W_name))
+        if self.use_fast_fprop:
+            if len(self.skip_list) > 0:
+                for (parname, parout), skip in izip(self.parent.items(), self.skip_list):
+                    if not skip:
+                        W_shape = (parout, self.nout)
+                        W_name = 'W_'+parname+'__'+self.name
+                        self.alloc(self.init_W.get(W_shape, W_name))
         else:
             for parname, parout in self.parent.items():
                 W_shape = (parout, self.nout)
@@ -136,8 +137,6 @@ class SimpleRecurrent(RecurrentLayer):
             U_shape = (recout, self.nout)
             U_name = 'U_'+recname+'__'+self.name
             self.alloc(self.init_U.get(U_shape, U_name))
-
-
 
 
 class LSTM(RecurrentLayer):
@@ -202,12 +201,13 @@ class LSTM(RecurrentLayer):
 
     def initialize(self):
         N = self.nout
-        if len(self.skip_list) > 0:
-            for (parname, parout), skip in izip(self.parent.items(), self.skip_list):
-                if not skip:
-                    W_shape = (parout, 4*N)
-                    W_name = 'W_'+parname+'__'+self.name
-                    self.alloc(self.init_W.get(W_shape, W_name))
+        if self.use_fast_fprop:
+            if len(self.skip_list) > 0:
+                for (parname, parout), skip in izip(self.parent.items(), self.skip_list):
+                    if not skip:
+                        W_shape = (parout, 4*N)
+                        W_name = 'W_'+parname+'__'+self.name
+                        self.alloc(self.init_W.get(W_shape, W_name))
         for recname, recout in self.recurrent.items():
             M = recout
             U = self.init_U.ortho((M, N))
