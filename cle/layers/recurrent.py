@@ -25,7 +25,7 @@ class RecurrentLayer(StemCell):
                  self_recurrent=1,
                  init_state_cons=0.,
                  init_U=InitCell('ortho'),
-                 fast_rnn=0,
+                 use_fast_fprop=0,
                  **kwargs):
         super(RecurrentLayer, self).__init__(**kwargs)
         self.recurrent = OrderedDict()
@@ -41,7 +41,7 @@ class RecurrentLayer(StemCell):
         self.init_U = init_U
         self.init_states = OrderedDict()
         self.init_state_cons = init_state_cons
-        self.fast_rnn = fast_rnn
+        self.use_fast_fprop = use_fast_fprop
 
     def get_init_state(self, batch_size=None):
         if batch_size is None:
@@ -157,7 +157,7 @@ class LSTM(RecurrentLayer):
 
     def initialize(self):
         N = self.nout
-        if not self.fast_rnn:
+        if not self.use_fast_fprop:
             for parname, parout in self.parent.items():
                 W_shape = (parout, 4*N)
                 W_name = 'W_'+parname+'__'+self.name
