@@ -26,6 +26,7 @@ class RecurrentLayer(StemCell):
                  init_state_cons=0.,
                  init_U=InitCell('ortho'),
                  use_fast_fprop=0,
+                 skip_list=[],
                  **kwargs):
         super(RecurrentLayer, self).__init__(**kwargs)
         self.recurrent = OrderedDict()
@@ -42,6 +43,7 @@ class RecurrentLayer(StemCell):
         self.init_states = OrderedDict()
         self.init_state_cons = init_state_cons
         self.use_fast_fprop = use_fast_fprop
+        self.skip_list = skip_list
 
     def get_init_state(self, batch_size=None):
         if batch_size is None:
@@ -114,6 +116,26 @@ class SimpleRecurrent(RecurrentLayer):
         z.name = self.name
         return z
 
+    def initialize(self):
+        if len(self.skip_list) > 0:
+            for (parname, parout), skip in izip(self.parent.items(), self.skip_list):
+                if not skip:
+                    W_shape = (parout, self.nout)
+                    W_name = 'W_'+parname+'__'+self.name
+                    self.alloc(self.init_W.get(W_shape, W_name))
+        else:
+            for parname, parout in self.parent.items():
+                W_shape = (parout, self.nout)
+                W_name = 'W_'+parname+'__'+self.name
+                self.alloc(self.init_W.get(W_shape, W_name))
+        self.alloc(self.init_b.get(self.nout, 'b_'+self.name))
+        for recname, recout in self.recurrent.items():
+            U_shape = (recout, self.nout)
+            U_name = 'U_'+recname+'__'+self.name
+            self.alloc(self.init_U.get(U_shape, U_name))
+
+
+
 
 class LSTM(RecurrentLayer):
     """
@@ -177,11 +199,12 @@ class LSTM(RecurrentLayer):
 
     def initialize(self):
         N = self.nout
-        if not self.use_fast_fprop:
-            for parname, parout in self.parent.items():
-                W_shape = (parout, 4*N)
-                W_name = 'W_'+parname+'__'+self.name
-                self.alloc(self.init_W.get(W_shape, W_name))
+        if len(self.skip_list) > 0:
+            for (parname, parout), skip in izip(self.parent.items(), self.skip_list):
+                if not skip:
+                    W_shape = (parout, 4*N)
+                    W_name = 'W_'+parname+'__'+self.name
+                    self.alloc(self.init_W.get(W_shape, W_name))
         for recname, recout in self.recurrent.items():
             M = recout
             U = self.init_U.ortho((M, N))
@@ -206,8 +229,19 @@ class LSTM(RecurrentLayer):
         # The index of self recurrence is 0
         z_t = H[0]
         z = T.zeros((X[0].shape[0], 4*self.nout), dtype=theano.config.floatX)
-        for x, (parname, parout) in izip(X, self.parent.items()):
-            z += x
+        for x, (parname, parout), skip in izip(X, self.parent.items(), self.skip_list):
+            if skip:
+                z += x
+            else:
+                W = self.params['W_'+parname+'__'+self.name]
+                if weight_noise:
+                    W = add_noise(W, self.weight_noise, self.theano_rng)
+                if x.ndim == 1:
+                    if 'int' not in x.dtype:
+                        x = T.cast(x, 'int64')
+                    z += W[x]
+                else:
+                    z += T.dot(x[:, :parout], W)
         for h, (recname, recout) in izip(H, self.recurrent.items()):
             U = self.params['U_'+recname+'__'+self.name]
             z += T.dot(h[:, :recout], U)
