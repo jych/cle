@@ -25,6 +25,7 @@ class RecurrentLayer(StemCell):
                  self_recurrent=1,
                  init_state_cons=0.,
                  init_U=InitCell('ortho'),
+                 fast_rnn=0,
                  **kwargs):
         super(RecurrentLayer, self).__init__(**kwargs)
         self.recurrent = OrderedDict()
@@ -40,6 +41,7 @@ class RecurrentLayer(StemCell):
         self.init_U = init_U
         self.init_states = OrderedDict()
         self.init_state_cons = init_state_cons
+        self.fast_rnn = fast_rnn
 
     def get_init_state(self, batch_size=None):
         if batch_size is None:
@@ -155,10 +157,11 @@ class LSTM(RecurrentLayer):
 
     def initialize(self):
         N = self.nout
-        for parname, parout in self.parent.items():
-            W_shape = (parout, 4*N)
-            W_name = 'W_'+parname+'__'+self.name
-            self.alloc(self.init_W.get(W_shape, W_name))
+        if not self.fast_rnn:
+            for parname, parout in self.parent.items():
+                W_shape = (parout, 4*N)
+                W_name = 'W_'+parname+'__'+self.name
+                self.alloc(self.init_W.get(W_shape, W_name))
         for recname, recout in self.recurrent.items():
             M = recout
             U = self.init_U.ortho((M, N))
@@ -168,6 +171,43 @@ class LSTM(RecurrentLayer):
             U = self.init_U.setX(U, U_name)
             self.alloc(U)
         self.alloc(self.init_b.get(4*N, 'b_'+self.name))
+
+    def fast_fprop(self, XH, weight_noise=False):
+        # XH is a list of inputs: [state_belows, state_befores]
+        # each state vector is: [state_before; cell_before]
+        # Hence, you use h[:, :self.nout] to compute recurrent term
+        X, H = XH
+        if len(X) != len(self.parent):
+            raise AttributeError("The number of inputs doesn't match "
+                                 "with the number of parents.")
+        if len(H) != len(self.recurrent):
+            raise AttributeError("The number of inputs doesn't match "
+                                 "with the number of recurrents.")
+        # The index of self recurrence is 0
+        z_t = H[0]
+        z = T.zeros((X[0].shape[0], 4*self.nout), dtype=theano.config.floatX)
+        for x, (parname, parout) in izip(X, self.parent.items()):
+            z += x
+        for h, (recname, recout) in izip(H, self.recurrent.items()):
+            U = self.params['U_'+recname+'__'+self.name]
+            z += T.dot(h[:, :recout], U)
+        z += self.params['b_'+self.name]
+        # Compute activations of gating units
+        i_on = T.nnet.sigmoid(z[:, self.nout:2*self.nout])
+        f_on = T.nnet.sigmoid(z[:, 2*self.nout:3*self.nout])
+        o_on = T.nnet.sigmoid(z[:, 3*self.nout:])
+        # Update hidden & cell states
+        z_t = T.set_subtensor(
+            z_t[:, self.nout:],
+            f_on * z_t[:, self.nout:] +
+            i_on * self.nonlin(z[:, :self.nout])
+        )
+        z_t = T.set_subtensor(
+            z_t[:, :self.nout],
+            o_on * self.nonlin(z_t[:, self.nout:])
+        )
+        z_t.name = self.name
+        return z_t
 
 
 class GFLSTM(LSTM):
