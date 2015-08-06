@@ -19,7 +19,6 @@ class RecurrentLayer(StemCell):
     .. todo::
     """
     def __init__(self,
-                 batch_size,
                  recurrent=[],
                  recurrent_dim=[],
                  skip_list=[],
@@ -38,7 +37,6 @@ class RecurrentLayer(StemCell):
                 self.recurrent[rec] = recurrent_dim[i]
             else:
                 self.recurrent[rec] = None
-        self.batch_size = batch_size
         self.init_U = init_U
         self.init_states = OrderedDict()
         self.init_state_cons = init_state_cons
@@ -48,9 +46,7 @@ class RecurrentLayer(StemCell):
             if len(self.skip_list) != len(parent):
                 raise ValueError("length of parents and skip list should match")
 
-    def get_init_state(self, batch_size=None):
-        if batch_size is None:
-            batch_size = self.batch_size
+    def get_init_state(self, batch_size):
         state = T.zeros((batch_size, self.nout), dtype=theano.config.floatX) + self.init_state_cons
         state = T.unbroadcast(state, *range(state.ndim))
         return state
@@ -147,9 +143,7 @@ class LSTM(RecurrentLayer):
     ----------
     .. todo::
     """
-    def get_init_state(self, batch_size=None):
-        if batch_size is None:
-            batch_size = self.batch_size
+    def get_init_state(self, batch_size):
         state = T.zeros((batch_size, 2*self.nout), dtype=theano.config.floatX)
         state = T.unbroadcast(state, *range(state.ndim))
         return state
