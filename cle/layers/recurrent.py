@@ -42,7 +42,7 @@ class RecurrentLayer(StemCell):
         self.init_state_cons = init_state_cons
         self.use_fast_fprop = use_fast_fprop
         self.skip_list = tolist(skip_list)
-        if len(self.slip_list) > 0:
+        if len(self.skip_list) > 0:
             if len(self.skip_list) != len(parent):
                 raise ValueError("length of parents and skip list should match")
 
