@@ -30,8 +30,8 @@ res = 256
 debug = 0
 
 model = Model()
-trdata = BouncingBalls(name='train',
-                       path=data_path)
+train_data = BouncingBalls(name='train',
+                           path=data_path)
 
 # Choose the random initialization method
 init_W = InitCell('randn')
@@ -39,7 +39,7 @@ init_U = InitCell('ortho')
 init_b = InitCell('zeros')
 
 # Define nodes: objects
-model.inputs = trdata.theano_vars()
+model.inputs = train_data.theano_vars()
 x, y = model.inputs
 # You must use THEANO_FLAGS="compute_test_value=raise" python -m ipdb
 if debug:
@@ -108,7 +108,7 @@ extension = [
 
 mainloop = Training(
     name='toy_bb',
-    data=Iterator(trdata, batch_size),
+    data=Iterator(train_data, batch_size),
     model=model,
     optimizer=optimizer,
     cost=cost,
