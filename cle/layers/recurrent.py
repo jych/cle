@@ -203,11 +203,10 @@ class LSTM(RecurrentLayer):
                         W_name = 'W_'+parname+'__'+self.name
                         self.alloc(self.init_W.get(W_shape, W_name))
         else:
-            for (parname, parout), skip in izip(self.parent.items(), self.skip_list):
-                if not skip:
-                    W_shape = (parout, 4*N)
-                    W_name = 'W_'+parname+'__'+self.name
-                    self.alloc(self.init_W.get(W_shape, W_name))
+            for parname, parout in self.parent.items():
+                W_shape = (parout, 4*N)
+                W_name = 'W_'+parname+'__'+self.name
+                self.alloc(self.init_W.get(W_shape, W_name))
         for recname, recout in self.recurrent.items():
             M = recout
             U = self.init_U.ortho((M, N))
