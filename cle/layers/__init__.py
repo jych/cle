@@ -197,7 +197,6 @@ class StemCell(NonlinCell):
                  name=None,
                  lr_scaler=None,
                  weight_noise=0.075,
-                 use_fast_fprop=0
                  **kwargs):
         super(StemCell, self).__init__(**kwargs)
         if name is None:
@@ -221,7 +220,6 @@ class StemCell(NonlinCell):
         self.params = OrderedDict()
         self.lr_scaler = lr_scaler
         self.weight_noise = weight_noise
-        self.use_fast_fprop = use_fast_fprop
 
     def get_params(self):
         return self.params
@@ -234,11 +232,10 @@ class StemCell(NonlinCell):
         self.params[x.name] = x
 
     def initialize(self):
-        if not self.use_fast_fprop:
-            for parname, parout in self.parent.items():
-                W_shape = (parout, self.nout)
-                W_name = 'W_'+parname+'__'+self.name
-                self.alloc(self.init_W.get(W_shape, W_name))
+        for parname, parout in self.parent.items():
+            W_shape = (parout, self.nout)
+            W_name = 'W_'+parname+'__'+self.name
+            self.alloc(self.init_W.get(W_shape, W_name))
         self.alloc(self.init_b.get(self.nout, 'b_'+self.name))
 
 

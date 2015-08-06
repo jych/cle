@@ -94,6 +94,26 @@ class SimpleRecurrent(RecurrentLayer):
         z.name = self.name
         return z
 
+    def fast_fprop(self, XH, weight_noise=False):
+        # XH is a list of inputs: [state_belows, state_befores]
+        X, H = XH
+        if len(X) != len(self.parent):
+            raise AttributeError("The number of inputs doesn't match "
+                                 "with the number of parents.")
+        if len(H) != len(self.recurrent):
+            raise AttributeError("The number of inputs doesn't match "
+                                 "with the number of recurrents.")
+        z = T.zeros((X[0].shape[0], self.nout), dtype=theano.config.floatX)
+        for x, (parname, parout) in izip(X, self.parent.items()):
+            z += x
+        for h, (recname, recout) in izip(H, self.recurrent.items()):
+            U = self.params['U_'+recname+'__'+self.name]
+            z += T.dot(h[:, :recout], U)
+        z += self.params['b_'+self.name]
+        z = self.nonlin(z)
+        z.name = self.name
+        return z
+
 
 class LSTM(RecurrentLayer):
     """

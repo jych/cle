@@ -37,20 +37,6 @@ class FullyConnectedLayer(StemCell):
         z.name = self.name
         return z
 
-    def fast_fprop(self, X, weight_noise=False):
-        if len(X) != len(self.parent):
-            raise AttributeError("The number of inputs doesn't match "
-                                 "with the number of parents.")
-        # X could be a list of inputs.
-        # depending the number of parents.
-        z = T.zeros((X[0].shape[0], self.nout))
-        for x, (parname, parout) in izip(X, self.parent.items()):
-            z += x
-        z += self.params['b_'+self.name]
-        z = self.nonlin(z) + self.cons
-        z.name = self.name
-        return z
-
 
 class GRBM(StemCell):
     """
