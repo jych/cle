@@ -105,8 +105,23 @@ class SimpleRecurrent(RecurrentLayer):
             raise AttributeError("The number of inputs doesn't match "
                                  "with the number of recurrents.")
         z = T.zeros((X[0].shape[0], self.nout), dtype=theano.config.floatX)
-        for x, (parname, parout) in izip(X, self.parent.items()):
-            z += x
+        if len(self.skip_list) > 0:
+            for x, (parname, parout), skip in izip(X, self.parent.items(), self.skip_list):
+                if skip:
+                    z += x
+                else:
+                    W = self.params['W_'+parname+'__'+self.name]
+                    if weight_noise:
+                        W = add_noise(W, self.weight_noise, self.theano_rng)
+                    if x.ndim == 1:
+                        if 'int' not in x.dtype:
+                            x = T.cast(x, 'int64')
+                        z += W[x]
+                    else:
+                        z += T.dot(x[:, :parout], W)
+        else:
+            for x, (parname, parout) in izip(X, self.parent.items()):
+                z += x
         for h, (recname, recout) in izip(H, self.recurrent.items()):
             U = self.params['U_'+recname+'__'+self.name]
             z += T.dot(h[:, :recout], U)
