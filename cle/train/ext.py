@@ -26,7 +26,7 @@ class Extension(object):
 
 
 class GradientClipping(Extension):
-    def __init__(self, scaler=5, batch_size=1):
+    def __init__(self, scaler=5, batch_size=1, check_nan=0):
         """
         .. todo::
 
@@ -35,6 +35,7 @@ class GradientClipping(Extension):
         self.name = 'ext_grad'
         self.scaler = scaler
         self.batch_size = batch_size
+        self.check_nan = check_nan
 
     def exe(self, mainloop):
         """
@@ -48,31 +49,17 @@ class GradientClipping(Extension):
             g /= T.cast(self.batch_size, dtype=theano.config.floatX)
             grads[p] = g
             g_norm += (g**2).sum()
-        not_finite = T.or_(T.isnan(g_norm), T.isinf(g_norm))
+        if self.check_nan:
+            not_finite = T.or_(T.isnan(g_norm), T.isinf(g_norm))
         g_norm = T.sqrt(g_norm)
         scaler = self.scaler / T.maximum(self.scaler, g_norm)
-        for p, g in grads.items():
-            grads[p] = T.switch(not_finite, 0.1 * p, g * scaler)
+        if self.check_nan:
+            for p, g in grads.items():
+                grads[p] = T.switch(not_finite, 0.1 * p, g * scaler)
+        else:
+            for p, g in grads.items():
+                grads[p] = g * scaler
         mainloop.grads = grads
-
-#    def exe(self, mainloop):
-#        """
-#        .. todo::
-#
-#            WRITEME
-#        """
-#        grads = mainloop.grads
-#        g_norm = 0.
-#        for g in grads.values():
-#            g /= self.batch_size
-#            g_norm += (g**2).sum()
-#        not_finite = T.or_(T.isnan(g_norm), T.isinf(g_norm))
-#        g_norm = T.sqrt(g_norm)
-#        scaler = self.scaler / T.maximum(self.scaler, g_norm)
-#        for p, g in grads.items():
-#            g /= self.batch_size
-#            grads[p] = T.switch(not_finite, 0.1 * p, g * scaler)
-#        mainloop.grads = grads
 
 
 class EpochCount(Extension):
