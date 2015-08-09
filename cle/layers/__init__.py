@@ -4,9 +4,11 @@ import scipy
 import theano
 import theano.tensor as T
 
+from cle.cle.utils import sharedX, tolist, unpack
+from cle.cle.utils.gpu_op import softmax
+
 from theano.compat.python2x import OrderedDict
 from theano.sandbox.rng_mrg import MRG_RandomStreams
-from cle.cle.utils import sharedX, tolist, unpack
 
 
 class InitCell(object):
@@ -138,6 +140,9 @@ class NonlinCell(RandomCell):
 
     def softmax(self, z):
         return T.nnet.softmax(z)
+
+    def gpu_softmax(self, z):
+        return softmax(z)
 
     def softplus(self, z):
         return T.nnet.softplus(z)
