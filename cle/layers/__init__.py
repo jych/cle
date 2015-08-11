@@ -6,6 +6,7 @@ import theano.tensor as T
 
 from cle.cle.utils import sharedX, tolist, unpack
 from cle.cle.utils.gpu_op import softmax
+from cle.cle.utils.op import add_noise
 
 from theano.compat.python2x import OrderedDict
 from theano.sandbox.rng_mrg import MRG_RandomStreams
@@ -201,7 +202,6 @@ class StemCell(NonlinCell):
                  cons=0.,
                  name=None,
                  lr_scaler=None,
-                 weight_noise=0.075,
                  **kwargs):
         super(StemCell, self).__init__(**kwargs)
         if name is None:
@@ -224,7 +224,6 @@ class StemCell(NonlinCell):
                 self.parent[par] = None
         self.params = OrderedDict()
         self.lr_scaler = lr_scaler
-        self.weight_noise = weight_noise
 
     def get_params(self):
         return self.params
@@ -242,6 +241,12 @@ class StemCell(NonlinCell):
             W_name = 'W_'+parname+'__'+self.name
             self.alloc(self.init_W.get(W_shape, W_name))
         self.alloc(self.init_b.get(self.nout, 'b_'+self.name))
+
+    def add_noise(self, key=['W'], weight_noise=0.075):
+        self.noisy_params = OrderedDict()
+        for param in self.params.items():
+            if param[0].split('_')[0] in key:
+                self.noisy_params[param[0]] = add_noise(param[1], weight_noise, self.theano_rng)
 
 
 class OnehotLayer(StemCell):

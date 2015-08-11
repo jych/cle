@@ -3,7 +3,6 @@ import theano
 import theano.tensor as T
 
 from cle.cle.layers import StemCell
-from cle.cle.utils.op import add_noise
 from itertools import izip
 
 
@@ -15,7 +14,7 @@ class FullyConnectedLayer(StemCell):
     ----------
     .. todo::
     """
-    def fprop(self, X, weight_noise=False):
+    def fprop(self, X):
         if len(X) != len(self.parent):
             raise AttributeError("The number of inputs doesn't match "
                                  "with the number of parents.")
@@ -23,9 +22,10 @@ class FullyConnectedLayer(StemCell):
         # depending the number of parents.
         z = T.zeros((X[0].shape[0], self.nout))
         for x, (parname, parout) in izip(X, self.parent.items()):
-            W = self.params['W_'+parname+'__'+self.name]
-            if weight_noise:
-                W = add_noise(W, self.weight_noise, self.theano_rng)
+            if hasattr(self, 'noisy_params'):
+                W = self.noisy_params['W_'+parname+'__'+self.name]
+            else:
+                W = self.params['W_'+parname+'__'+self.name]
             if x.ndim == 1:
                 if 'int' not in x.dtype:
                     x = T.cast(x, 'int64')
