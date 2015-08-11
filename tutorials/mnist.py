@@ -94,8 +94,7 @@ extension = [
                ddout=[cost, err],
                data=[Iterator(train_data, batch_size),
                      Iterator(valid_data, batch_size)]),
-    Picklize(freq=200,
-             path=save_path)
+    Picklize(freq=200, path=save_path)
 ]
 
 mainloop = Training(

@@ -134,8 +134,7 @@ extension = [
     Monitoring(freq=10,
                ddout=[cost, nll],
                data=[Iterator(valid_data, batch_size)]),
-    Picklize(freq=5,
-             path=save_path)
+    Picklize(freq=10, path=save_path)
 ]
 
 mainloop = Training(

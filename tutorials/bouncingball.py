@@ -99,8 +99,7 @@ extension = [
     EpochCount(100),
     Monitoring(freq=100,
                ddout=[cost]),
-    Picklize(freq=200,
-             path=save_path)
+    Picklize(freq=200, path=save_path)
 ]
 
 mainloop = Training(

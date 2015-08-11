@@ -132,8 +132,7 @@ extension = [
                data=[Iterator(train_data, batch_size),
                      Iterator(valid_data, batch_size)],
                monitor_fn=monitor_fn),
-    Picklize(freq=1000000,
-             path=save_path),
+    Picklize(freq=1000000, path=save_path),
     WeightNorm(param_name='W')
 ]
 
