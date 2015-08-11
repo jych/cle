@@ -68,5 +68,3 @@ samples = test_fn(seed, dummy_ts)[-1]
 samples = np.transpose(samples, (1, 0, 2))
 ipdb.set_trace()
 samples = samples.reshape(batch_size, -1)
-
-
