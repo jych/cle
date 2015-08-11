@@ -242,11 +242,14 @@ class StemCell(NonlinCell):
             self.alloc(self.init_W.get(W_shape, W_name))
         self.alloc(self.init_b.get(self.nout, 'b_'+self.name))
 
-    def add_noise(self, key=['W'], weight_noise=0.075):
+    def add_noisy_params(self, key=['W'], weight_noise=0.075):
         self.noisy_params = OrderedDict()
         for param in self.params.items():
             if param[0].split('_')[0] in key:
                 self.noisy_params[param[0]] = add_noise(param[1], weight_noise, self.theano_rng)
+
+    def del_noisy_params(self):
+        del self.noisy_params
 
 
 class OnehotLayer(StemCell):

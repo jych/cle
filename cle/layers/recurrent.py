@@ -67,7 +67,7 @@ class SimpleRecurrent(RecurrentLayer):
     ----------
     .. todo::
     """
-    def fprop(self, XH):
+    def fprop(self, XH, use_noisy_params=False):
         # XH is a list of inputs: [state_belows, state_befores]
         X, H = XH
         if len(X) != len(self.parent):
@@ -78,7 +78,7 @@ class SimpleRecurrent(RecurrentLayer):
                                  "with the number of recurrents.")
         z = T.zeros((X[0].shape[0], self.nout), dtype=theano.config.floatX)
         for x, (parname, parout) in izip(X, self.parent.items()):
-            if hasattr(self, 'noisy_params'):
+            if use_noisy_params:
                 W = self.noisy_params['W_'+parname+'__'+self.name]
             else:
                 W = self.params['W_'+parname+'__'+self.name]
@@ -96,7 +96,7 @@ class SimpleRecurrent(RecurrentLayer):
         z.name = self.name
         return z
 
-    def fast_fprop(self, XH):
+    def fast_fprop(self, XH, use_noisy_params=False):
         # XH is a list of inputs: [state_belows, state_befores]
         X, H = XH
         if len(X) != len(self.parent):
@@ -111,7 +111,7 @@ class SimpleRecurrent(RecurrentLayer):
                 if skip:
                     z += x
                 else:
-                    if hasattr(self, 'noisy_params'):
+                    if use_noisy_params:
                         W = self.noisy_params['W_'+parname+'__'+self.name]
                     else:
                         W = self.params['W_'+parname+'__'+self.name]
@@ -165,7 +165,7 @@ class LSTM(RecurrentLayer):
         state = T.unbroadcast(state, *range(state.ndim))
         return state
 
-    def fprop(self, XH):
+    def fprop(self, XH, use_noisy_params=False):
         # XH is a list of inputs: [state_belows, state_befores]
         # each state vector is: [state_before; cell_before]
         # Hence, you use h[:, :self.nout] to compute recurrent term
@@ -180,7 +180,7 @@ class LSTM(RecurrentLayer):
         z_t = H[0]
         z = T.zeros((X[0].shape[0], 4*self.nout), dtype=theano.config.floatX)
         for x, (parname, parout) in izip(X, self.parent.items()):
-            if hasattr(self, 'noisy_params'):
+            if use_noisy_params:
                 W = self.noisy_params['W_'+parname+'__'+self.name]
             else:
                 W = self.params['W_'+parname+'__'+self.name]
@@ -235,7 +235,7 @@ class LSTM(RecurrentLayer):
             self.alloc(U)
         self.alloc(self.init_b.get(4*N, 'b_'+self.name))
 
-    def fast_fprop(self, XH):
+    def fast_fprop(self, XH, use_noisy_params=False):
         # XH is a list of inputs: [state_belows, state_befores]
         # each state vector is: [state_before; cell_before]
         # Hence, you use h[:, :self.nout] to compute recurrent term
@@ -254,7 +254,7 @@ class LSTM(RecurrentLayer):
                 if skip:
                     z += x
                 else:
-                    if hasattr(self, 'noisy_params'):
+                    if use_noisy_params:
                         W = self.noisy_params['W_'+parname+'__'+self.name]
                     else:
                         W = self.params['W_'+parname+'__'+self.name]
@@ -297,7 +297,7 @@ class GFLSTM(LSTM):
     ----------
     .. todo::
     """
-    def fprop(self, XH):
+    def fprop(self, XH, use_noisy_params=False):
         # XH is a list of inputs: [state_belows, state_befores]
         # each state vector is: [state_before; cell_before]
         # Hence, you use h[:, :self.nout] to compute recurrent term
@@ -313,7 +313,7 @@ class GFLSTM(LSTM):
         Nm = len(self.recurrent)
         z = T.zeros((X[0].shape[0], 4*self.nout+Nm), dtype=theano.config.floatX)
         for x, (parname, parout) in izip(X, self.parent.items()):
-            if hasattr(self, 'noisy_params'):
+            if use_noisy_params:
                 W = self.noisy_params['W_'+parname+'__'+self.name]
             else:
                 W = self.params['W_'+parname+'__'+self.name]
@@ -381,7 +381,7 @@ class GRU(RecurrentLayer):
     ----------
     .. todo::
     """
-    def fprop(self, XH):
+    def fprop(self, XH, use_noisy_params=False):
         # XH is a list of inputs: [state_belows, state_befores]
         # each state vector is: [state_before; cell_before]
         # Hence, you use h[:, :self.nout] to compute recurrent term
@@ -396,7 +396,7 @@ class GRU(RecurrentLayer):
         z_tm1 = H[0]
         z = T.zeros((X[0].shape[0], 3*self.nout), dtype=theano.config.floatX)
         for x, (parname, parout) in izip(X, self.parent.items()):
-            if hasattr(self, 'noisy_params'):
+            if use_noisy_params:
                 W = self.noisy_params['W_'+parname+'__'+self.name]
             else:
                 W = self.params['W_'+parname+'__'+self.name]
@@ -451,7 +451,7 @@ class GFGRU(GRU):
     ----------
     .. todo::
     """
-    def fprop(self, XH):
+    def fprop(self, XH, use_noisy_params=False):
         # XH is a list of inputs: [state_belows, state_befores]
         # each state vector is: [state_before; cell_before]
         # Hence, you use h[:, :self.nout] to compute recurrent term
@@ -467,7 +467,7 @@ class GFGRU(GRU):
         Nm = len(self.recurrent)
         z = T.zeros((X[0].shape[0], 3*self.nout+Nm), dtype=theano.config.floatX)
         for x, (parname, parout) in izip(X, self.parent.items()):
-            if hasattr(self, 'noisy_params'):
+            if use_noisy_params:
                 W = self.noisy_params['W_'+parname+'__'+self.name]
             else:
                 W = self.params['W_'+parname+'__'+self.name]
