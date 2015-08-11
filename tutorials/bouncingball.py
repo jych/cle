@@ -52,7 +52,6 @@ inputs_dim = {'x':256, 'y':256}
 # Using skip connections is easy
 h1 = SimpleRecurrent(name='h1',
                      parent=['x'],
-                     batch_size=batch_size,
                      nout=200,
                      unit='tanh',
                      init_W=init_W,
@@ -61,7 +60,6 @@ h1 = SimpleRecurrent(name='h1',
 
 h2 = SimpleRecurrent(name='h2',
                      parent=['x', 'h1'],
-                     batch_size=batch_size,
                      nout=200,
                      unit='tanh',
                      init_W=init_W,
@@ -70,7 +68,6 @@ h2 = SimpleRecurrent(name='h2',
 
 h3 = SimpleRecurrent(name='h3',
                      parent=['x', 'h2'],
-                     batch_size=batch_size,
                      nout=200,
                      unit='tanh',
                      init_W=init_W,
