@@ -62,7 +62,7 @@ test_fn = theano.function(inputs=[x, ts],
                           allow_input_downcast=True,
                           on_unused_input='ignore')
 
-seed = np.zeros((batch_size, frame_size))
+seed = np.zeros((batch_size, frame_size), dtype=np.float32)
 dummy_ts = 200
 samples = test_fn(seed, dummy_ts)[-1]
 samples = np.transpose(samples, (1, 0, 2))
