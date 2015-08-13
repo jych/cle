@@ -163,6 +163,8 @@ class PickleMixin(object):
             self._pickle_skip_list.append('updates')
             self._pickle_skip_list.append('optimizer')
             self._pickle_skip_list.append('endloop')
+            self._pickle_skip_list.append('debug_print')
+            self._pickle_skip_list.append('model.params')
             #for k, v in self.__dict__.items():
             #    if k not in self._pickle_skip_list:
             #        try:
@@ -268,7 +270,7 @@ def segment_axis(a, length, overlap=0, axis=None, end='cut', endvalue=0):
         The axis to operate on; if None, act on the flattened array
     end : {'cut', 'wrap', 'end'}, optional
         What to do with the last frame, if the array is not evenly
-        divisible into pieces. 
+        divisible into pieces.
 
             - 'cut'   Simply discard the extra values
             - 'wrap'  Copy values from the beginning of the array
