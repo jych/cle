@@ -164,7 +164,6 @@ class PickleMixin(object):
             self._pickle_skip_list.append('optimizer')
             self._pickle_skip_list.append('endloop')
             self._pickle_skip_list.append('debug_print')
-            self._pickle_skip_list.append('model.params')
             #for k, v in self.__dict__.items():
             #    if k not in self._pickle_skip_list:
             #        try:

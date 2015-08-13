@@ -34,10 +34,10 @@ class Training(PickleMixin, TheanoMixin):
         self.data = data
         self.model = model
         self.optimizer = optimizer
-        self.inputs = model.inputs.copy()
+        self.inputs = model.inputs
         self.cost = cost
         self.outputs = tolist(outputs)
-        self.updates = model.updates.copy()
+        self.updates = model.updates
         self.extension = extension
         self.debug_print = debug_print
 
