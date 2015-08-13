@@ -83,6 +83,8 @@ class Training(PickleMixin, TheanoMixin):
         self.trainlog._epoch_seen += 1
         self.run_extension('ext_term')
         if self.end_training():
+            self.run_extension('ext_monitor')
+            self.run_extension('ext_save')
             return False
         return True
 
