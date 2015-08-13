@@ -132,7 +132,7 @@ class Monitoring(Extension, TheanoMixin):
             WRITEME
         """
         log = mainloop.trainlog
-        if np.mod(log._batch_seen, self.freq) == 0:
+        if np.mod(log._batch_seen, self.freq) == 0 or mainloop.endloop:
             srt = max(0, log._batch_seen - self.freq)
             end = max(1, log._batch_seen)
             t = np.asarray(log._times)[srt: end].sum()
