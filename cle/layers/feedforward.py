@@ -27,11 +27,10 @@ class FullyConnectedLayer(StemCell):
         else:
             if type(ndim) is list:
                 ndim = np.array([x.ndim for x in X]).max()
-            else:
-                if ndim == 2:
-                    z = T.zeros((X[0].shape[0], self.nout))
-                if ndim == 3:
-                    z = T.zeros((X[0].shape[0], X[0].shape[1], self.nout))
+            if ndim == 2:
+                z = T.zeros((X[0].shape[0], self.nout))
+            if ndim == 3:
+                z = T.zeros((X[0].shape[0], X[0].shape[1], self.nout))
         for x, (parname, parout) in izip(X, self.parent.items()):
             if use_noisy_params:
                 W = self.noisy_params['W_'+parname+'__'+self.name]
