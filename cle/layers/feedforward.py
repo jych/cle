@@ -14,13 +14,16 @@ class FullyConnectedLayer(StemCell):
     ----------
     .. todo::
     """
-    def fprop(self, X, use_noisy_params=False):
+    def fprop(self, X, use_noisy_params=False, ndim=2):
         if len(X) != len(self.parent):
             raise AttributeError("The number of inputs doesn't match "
                                  "with the number of parents.")
         # X could be a list of inputs.
         # depending the number of parents.
-        z = T.zeros((X[0].shape[0], self.nout))
+        if ndim == 2:
+            z = T.zeros((X[0].shape[0], self.nout))
+        elif ndim == 3:
+            z = T.zeros((X[0].shape[0], X[0].shape[1], self.nout))
         for x, (parname, parout) in izip(X, self.parent.items()):
             if use_noisy_params:
                 W = self.noisy_params['W_'+parname+'__'+self.name]
@@ -31,7 +34,10 @@ class FullyConnectedLayer(StemCell):
                     x = T.cast(x, 'int64')
                 z += W[x]
             else:
-                z += T.dot(x[:, :parout], W)
+                if ndim == 2:
+                    z += T.dot(x[:, :parout], W)
+                if ndim == 3:
+                    z += T.dot(x[:, :, :parout], W)
         z += self.params['b_'+self.name]
         z = self.nonlin(z) + self.cons
         z.name = self.name
