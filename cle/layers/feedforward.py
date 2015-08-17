@@ -24,7 +24,7 @@ class FullyConnectedLayer(StemCell):
         if ndim is None:
             ndim_list = [x.ndim for x in X]
             idx = np.argmax(ndim_list)
-            ndim = np.max(np.array(ndim_list).max(), 2)
+            ndim = np.maximum(np.array(ndim_list).max(), 2)
         if ndim == 2:
             z = T.zeros((X[idx].shape[0], self.nout))
         if ndim == 3:
