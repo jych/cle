@@ -22,13 +22,13 @@ class FullyConnectedLayer(StemCell):
         # X could be a list of inputs.
         # depending the number of parents.
         if ndim is None:
-            ndim = 2
-        elif type(ndim) is list:
-            ndim = np.array([x.ndim for x in X]).max()
+            ndim_list = [x.ndim for x in X]
+            idx = np.argmax(ndim_list)
+            ndim = np.max(np.array(ndim_list).max(), 2)
         if ndim == 2:
-            z = T.zeros((X[-1].shape[0], self.nout))
+            z = T.zeros((X[idx].shape[0], self.nout))
         if ndim == 3:
-            z = T.zeros((X[-1].shape[0], X[-1].shape[1], self.nout))
+            z = T.zeros((X[idx].shape[0], X[idx].shape[1], self.nout))
         for x, (parname, parout) in izip(X, self.parent.items()):
             if use_noisy_params:
                 W = self.noisy_params['W_'+parname+'__'+self.name]
