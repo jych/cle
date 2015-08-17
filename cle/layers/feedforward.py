@@ -52,7 +52,9 @@ class FullyConnectedLayer(StemCell):
                 if z.ndim != 3:
                     raise ValueError("your target ndim is less than the source ndim")
                 z += T.dot(x[:, :, :parout], W)
-        if self.use_bias:
+        if not hasattr(self, 'use_bias'):
+            z += self.params['b_'+self.name]
+        elif self.use_bias:
             z += self.params['b_'+self.name]
         z = self.nonlin(z) + self.cons
         z.name = self.name
