@@ -27,10 +27,6 @@ class FullyConnectedLayer(StemCell):
             ndim = np.maximum(np.array(ndims).max(), 2)
         z_shape = [X[idx].shape[i] for i in xrange(ndim-1)] + [self.nout]
         z = T.zeros(z_shape)
-        #if ndim == 2:
-        #    z = T.zeros((X[idx].shape[0], self.nout))
-        #if ndim == 3:
-        #    z = T.zeros((X[idx].shape[0], X[idx].shape[1], self.nout))
         for x, (parname, parout) in izip(X, self.parent.items()):
             if use_noisy_params:
                 W = self.noisy_params['W_'+parname+'__'+self.name]
