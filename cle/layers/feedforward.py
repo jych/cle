@@ -17,18 +17,20 @@ class FullyConnectedLayer(StemCell):
     """
     def fprop(self, X, use_noisy_params=False, ndim=None):
         if len(X) != len(self.parent):
-            raise AttributeError("The number of inputs doesn't match "
+            raise AttributeError("The number of inputs does not match "
                                  "with the number of parents.")
         # X could be a list of inputs.
         # depending the number of parents.
         if ndim is None:
-            ndim_list = [x.ndim for x in X]
-            idx = np.argmax(ndim_list)
-            ndim = np.maximum(np.array(ndim_list).max(), 2)
-        if ndim == 2:
-            z = T.zeros((X[idx].shape[0], self.nout))
-        if ndim == 3:
-            z = T.zeros((X[idx].shape[0], X[idx].shape[1], self.nout))
+            ndims = [x.ndim for x in X]
+            idx = np.argmax(ndims)
+            ndim = np.maximum(np.array(ndims).max(), 2)
+        z_shape = [X[idx].shape[i] for i in xrange(ndim-1)] + [self.nout]
+        z = T.zeros(z_shape)
+        #if ndim == 2:
+        #    z = T.zeros((X[idx].shape[0], self.nout))
+        #if ndim == 3:
+        #    z = T.zeros((X[idx].shape[0], X[idx].shape[1], self.nout))
         for x, (parname, parout) in izip(X, self.parent.items()):
             if use_noisy_params:
                 W = self.noisy_params['W_'+parname+'__'+self.name]
@@ -48,9 +50,10 @@ class FullyConnectedLayer(StemCell):
                     z += T.dot(x[:, :parout], W)[None, :, :]
             elif x.ndim == 3:
                 if z.ndim != 3:
-                    raise ValueError("your target ndim is less than source ndim")
+                    raise ValueError("your target ndim is less than the source ndim")
                 z += T.dot(x[:, :, :parout], W)
-        z += self.params['b_'+self.name]
+        if self.use_bias:
+            z += self.params['b_'+self.name]
         z = self.nonlin(z) + self.cons
         z.name = self.name
         return z

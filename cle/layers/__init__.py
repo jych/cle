@@ -200,6 +200,7 @@ class StemCell(NonlinCell):
                  init_W=InitCell('randn'),
                  init_b=InitCell('zeros'),
                  cons=0.,
+                 use_bias=1,
                  name=None,
                  lr_scaler=None,
                  **kwargs):
@@ -224,6 +225,7 @@ class StemCell(NonlinCell):
                 self.parent[par] = None
         self.params = OrderedDict()
         self.lr_scaler = lr_scaler
+        self.use_bias = use_bias
 
     def get_params(self):
         return self.params
@@ -240,7 +242,8 @@ class StemCell(NonlinCell):
             W_shape = (parout, self.nout)
             W_name = 'W_'+parname+'__'+self.name
             self.alloc(self.init_W.get(W_shape, W_name))
-        self.alloc(self.init_b.get(self.nout, 'b_'+self.name))
+        if self.use_bias:
+            self.alloc(self.init_b.get(self.nout, 'b_'+self.name))
 
     def add_noisy_params(self, key=['W'], weight_noise=0.075):
         self.noisy_params = OrderedDict()
@@ -274,58 +277,9 @@ class OnehotLayer(StemCell):
         pass
 
 
-class ProjectionLayer(StemCell):
-    """
-    Transform a scalar to one-hot vector
-
-    Parameters
-    ----------
-    .. todo::
-    """
-    def fprop(self, x):
-        x = unpack(x)
-        z = T.zeros((x.shape[0], self.nout))
-        for x, (parname, parout) in izip(X, self.parent.items()):
-            W = self.params['W_'+parname+'__'+self.name]
-            z += T.dot(x[:, :parout], W)
-        z.name = self.name
-        return z
-
-    def initialize(self):
-        for parname, parout in self.parent.items():
-            W_shape = (parout, self.nout)
-            W_name = 'W_'+parname+'__'+self.name
-            self.alloc(self.init_W.get(W_shape, W_name))
-
-
-class ConcLayer(StemCell):
-    """
-    Concatenate two tensor varaibles
-
-    Parameters
-    ----------
-    .. todo::
-    """
-    def __init__(self,
-                 axis=-1,
-                 **kwargs):
-        super(ConcLayer, self).__init__(**kwargs)
-        self.axis = axis
-
-    def fprop(self, X):
-        x = X[0]
-        y = X[1]
-        z = T.concatenate([x[:, y.shape[-1]:], y], axis=self.axis)
-        z.name = self.name
-        return z
-
-    def initialize(self):
-        pass
-
-
 class RealVectorLayer(StemCell):
     """
-    Concatenate two tensor varaibles
+    Continuous vector
 
     Parameters
     ----------
