@@ -309,19 +309,19 @@ def segment_axis(a, length, overlap=0, axis=None, end='cut', endvalue=0):
         raise ValueError, "overlap must be nonnegative and length must be "\
                           "positive"
 
-    if l<length or (l-length)%(length-overlap):
-        if l>length:
-            roundup = length + \
-                      (1+(l-length)//(length-overlap))*(length-overlap)
-            rounddown = length + \
-                        ((l-length)//(length-overlap))*(length-overlap)
+    if l < length or (l - length) % (length - overlap):
+        if l > length:
+            roundup = length +\
+                      (1 + (l - length) // (length - overlap)) * (length - overlap)
+            rounddown = length +\
+                        ((l - length) // (length - overlap)) * (length - overlap)
         else:
             roundup = length
             rounddown = 0
-        assert rounddown<l<roundup
-        assert roundup==rounddown+(length-overlap) or \
-               (roundup==length and rounddown==0)
-        a = a.swapaxes(-1,axis)
+        assert rounddown < l < roundup
+        assert roundup == rounddown + (length - overlap) or\
+               (roundup == length and rounddown==0)
+        a = a.swapaxes(-1, axis)
 
         if end=='cut':
             a = a[...,:rounddown]
