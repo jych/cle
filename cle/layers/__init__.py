@@ -55,11 +55,14 @@ class InitCell(object):
         x = np.random.normal(self.mean, self.stddev, shape)
         return scipy.linalg.orth(x)
 
-    def get(self, shape, name=None):
+    def getX(self, shape, name=None):
         return sharedX(self.init_param(shape), name)
 
     def setX(self, x, name=None):
         return sharedX(x, name)
+
+    def get(self, shape):
+        return self.init_param(shape)
 
     def __getstate__(self):
         dic = self.__dict__.copy()
@@ -194,6 +197,7 @@ class StemCell(NonlinCell):
     .. todo::
     """
     def __init__(self,
+                 name,
                  parent=[],
                  parent_dim=[],
                  nout=None,
@@ -201,7 +205,6 @@ class StemCell(NonlinCell):
                  init_b=InitCell('zeros'),
                  cons=0.,
                  use_bias=1,
-                 name=None,
                  lr_scaler=None,
                  **kwargs):
         super(StemCell, self).__init__(**kwargs)
@@ -223,36 +226,26 @@ class StemCell(NonlinCell):
                 self.parent[par] = parent_dim[i]
             else:
                 self.parent[par] = None
-        self.params = OrderedDict()
         self.lr_scaler = lr_scaler
         self.use_bias = use_bias
 
-    def get_params(self):
-        return self.params
-
-    def fprop(self, x=None):
+    def fprop(self):
         raise NotImplementedError(
             str(type(self)) + " does not implement Layer.fprop.")
 
-    def alloc(self, x):
-        self.params[x.name] = x
-
     def initialize(self):
+
+        params = OrderedDict()
+
         for parname, parout in self.parent.items():
             W_shape = (parout, self.nout)
-            W_name = 'W_'+parname+'__'+self.name
-            self.alloc(self.init_W.get(W_shape, W_name))
+            W_name = 'W_' + parname + '__' + self.name
+            params[W_name] = self.init_W.get(W_shape)
+
         if self.use_bias:
-            self.alloc(self.init_b.get(self.nout, 'b_'+self.name))
+            params['b_'+self.name] = self.init_b.get(self.nout)
 
-    def add_noisy_params(self, key=['W'], weight_noise=0.075):
-        self.noisy_params = OrderedDict()
-        for param in self.params.items():
-            if param[0].split('_')[0] in key:
-                self.noisy_params[param[0]] = add_noise(param[1], weight_noise, self.theano_rng)
-
-    def del_noisy_params(self):
-        del self.noisy_params
+        return params
 
 
 class OnehotLayer(StemCell):
@@ -264,6 +257,7 @@ class OnehotLayer(StemCell):
     .. todo::
     """
     def fprop(self, x):
+
         x = unpack(x)
         x = T.cast(x, 'int32')
         z = T.zeros((x.shape[0], self.nout))
@@ -271,6 +265,7 @@ class OnehotLayer(StemCell):
             z[T.arange(x.size) % x.shape[0], x.T.flatten()], 1
         )
         z.name = self.name
+
         return z
 
     def initialize(self):
@@ -285,17 +280,21 @@ class RealVectorLayer(StemCell):
     ----------
     .. todo::
     """
-    def fprop(self, X=None):
-        z = self.params['b_'+self.name]
-        if z.ndim == 1:
-            z = z.dimshuffle('x', 0)
+    def fprop(self, tparams):
+
+        z = tparams['b_'+self.name]
         z = self.nonlin(z) + self.cons
+
         if self.nout == 1:
             z = T.addbroadcast(z, 1)
+
         z.name = self.name
+
         return z
 
     def initialize(self):
-        b_name = 'b_' + self.name
-        self.alloc(self.init_b.get(self.nout, b_name))
-        self.out = self.params[b_name]
+
+        params = OrderedDict()
+        params['b_'+self.name] = self.init_b.get(self.nout)
+
+        return params

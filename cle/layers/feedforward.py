@@ -15,23 +15,24 @@ class FullyConnectedLayer(StemCell):
     ----------
     .. todo::
     """
-    def fprop(self, X, use_noisy_params=False, ndim=None):
+    def fprop(self, X, tparams, ndim=None):
+
         if len(X) != len(self.parent):
             raise AttributeError("The number of inputs does not match "
                                  "with the number of parents.")
+
         # X could be a list of inputs.
         # depending the number of parents.
         if ndim is None:
             ndims = [x.ndim for x in X]
             idx = np.argmax(ndims)
             ndim = np.maximum(np.array(ndims).max(), 2)
+
         z_shape = [X[idx].shape[i] for i in xrange(ndim-1)] + [self.nout]
         z = T.zeros(z_shape)
+
         for x, (parname, parout) in izip(X, self.parent.items()):
-            if use_noisy_params:
-                W = self.noisy_params['W_'+parname+'__'+self.name]
-            else:
-                W = self.params['W_'+parname+'__'+self.name]
+            W = tparams['W_'+parname+'__'+self.name]
             if x.ndim == 1:
                 if 'int' not in x.dtype:
                     x = T.cast(x, 'int64')
@@ -48,12 +49,15 @@ class FullyConnectedLayer(StemCell):
                 if z.ndim != 3:
                     raise ValueError("your target ndim is less than the source ndim")
                 z += T.dot(x[:, :, :parout], W)
+
         if not hasattr(self, 'use_bias'):
-            z += self.params['b_'+self.name]
+            z += tparams['b_'+self.name]
         elif self.use_bias:
-            z += self.params['b_'+self.name]
+            z += tparams['b_'+self.name]
+
         z = self.nonlin(z) + self.cons
         z.name = self.name
+
         return z
 
 
@@ -72,12 +76,17 @@ class GRBM(StemCell):
         self.k_step = k_step
 
     def initialize(self):
+
+        params = OrderedDict()
         parname, parout = self.parent.items()[0]
         W_shape = (parout, self.nout)
-        W_name = 'W_'+parname+'__'+self.name
-        self.alloc(self.init_W.get(W_shape, W_name))
+        W_name = 'W_' + parname + '__' + self.name
+        params[W_name] = self.init_W.get(W_shape)
+
+        return params
 
     def fprop(self, X):
+
         if len(X) != len(self.parent):
             raise AttributeError("The number of inputs doesn't match "
                                  "with the number of parents.")
@@ -86,11 +95,13 @@ class GRBM(StemCell):
         v = X[0]
         for i in xrange(self.k_step):
             v_mean, v, h_mean, h = self.gibbs_step(v, X[1], X[2], X[3])
+
         return v, h
 
-    def gibbs_step(self, x, bh, bx, x_sig):
+    def gibbs_step(self, x, bh, bx, x_sig, tparams):
+
         parname, parout = self.parent.items()[0]
-        W = self.params['W_'+parname+'__'+self.name]
+        W = tparams['W_'+parname+'__'+self.name]
         h_mean = T.nnet.sigmoid(T.dot(x[:, :parout]/(x_sig**2), W) + bh)
         h = self.theano_rng.binomial(size=h_mean.shape, n=1, p=h_mean,
                                      dtype=theano.config.floatX)
@@ -98,20 +109,26 @@ class GRBM(StemCell):
         epsilon = self.theano_rng.normal(size=v_mean.shape, avg=0., std=1.,
                                          dtype=theano.config.floatX)
         v = v_mean + x_sig * epsilon
+
         return v_mean, v, h_mean, h
 
-    def free_energy(self, v, X):
-        W = self.params['W_'+parname+'__'+self.name]
+    def free_energy(self, v, X, tparams):
+
+        W = tparams['W_'+parname+'__'+self.name]
         squared_term = 0.5 * ((X[2] - v) / X[3])**2
-        hid_inp = T.dot(v/(X[3]**2), W) + X[1]
+        hid_inp = T.dot(v / (X[3]**2), W) + X[1]
         FE = squared_term.sum(axis=1) - T.nnet.softplus(hid_inp).sum(axis=1)
+
         return FE
 
-    def cost(self, X):
+    def cost(self, X, tparams):
+
         v_mean, v, h_mean, h = self.gibbs_step(X)
-        return (self.free_energy(X[0], X) - self.free_energy(v, X)).mean()
+
+        return (self.free_energy(X[0], X, tparams) - self.free_energy(v, X, tparams)).mean()
 
     def sample(self, X):
+
         mu = X[0]
         sig = X[1]
         coeff = X[2]
@@ -134,4 +151,5 @@ class GRBM(StemCell):
                                          avg=0., std=1.,
                                          dtype=mu.dtype)
         z = mu + sig * epsilon
+
         return z

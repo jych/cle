@@ -1,13 +1,14 @@
 import ipdb
 import theano
 
-from collections import OrderedDict
 from cle.cle.utils import (
     flatten,
     tolist,
     topological_sort,
     PickleMixin
 )
+
+from collections import OrderedDict
 
 
 class Model(object):
@@ -28,5 +29,6 @@ class Model(object):
                 self.updates[update] = update
 
     def set_updates(self, updates):
+
         for update in updates:
             self.updates[update] = update

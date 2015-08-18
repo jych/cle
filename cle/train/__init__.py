@@ -3,10 +3,14 @@ import logging
 import theano.tensor as T
 import time
 
-from itertools import izip
 from cle.cle.graph import TheanoMixin
 from cle.cle.models import Model
 from cle.cle.utils import PickleMixin, OrderedDict, tolist
+
+from collections import OrderedDict
+
+from itertools import izip
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -37,7 +41,8 @@ class Training(PickleMixin, TheanoMixin):
         self.inputs = model.inputs
         self.cost = cost
         self.outputs = tolist(outputs)
-        self.updates = model.updates
+        self.updates = OrderedDict()
+        self.updates.update(model.updates)
         self.extension = extension
         self.debug_print = debug_print
 
@@ -54,14 +59,18 @@ class Training(PickleMixin, TheanoMixin):
         self.endloop = 0
 
     def build_training_graph(self):
+
         self.run_extension('ext_regularize_pre_grad')
-        self.grads = OrderedDict(izip(self.model.params,
-                                      T.grad(self.cost, self.model.params)))
+        self.grads = OrderedDict(izip(self.model.params.values(),
+                                      T.grad(self.cost, self.model.params.values())))
         self.run_extension('ext_grad')
         grads = self.optimizer.get_updates(self.grads)
+
         for key, val in grads.items():
             self.updates[key] = val
+
         self.run_extension('ext_regularize_post_grad')
+
         return self.build_theano_graph(self.inputs, self.outputs, self.updates)
 
     def run(self):
@@ -71,6 +80,7 @@ class Training(PickleMixin, TheanoMixin):
         logger.info("Terminating main loop")
 
     def run_epoch(self):
+
         for batch in self.data:
             self.run_extension('ext_monitor')
             batch_t0 = time.time()
@@ -79,15 +89,19 @@ class Training(PickleMixin, TheanoMixin):
             self.trainlog._batches.append(this_cost)
             self.trainlog._batch_seen += 1
             self.run_extension('ext_save')
+
         self.trainlog._epoch_seen += 1
         self.run_extension('ext_term')
+
         if self.end_training():
             self.run_extension('ext_monitor')
             self.run_extension('ext_save')
             return False
+
         return True
 
     def find_extension(self, name):
+
         try:
             exts = [extension for extension in self.extension
                     if extension.name == name]

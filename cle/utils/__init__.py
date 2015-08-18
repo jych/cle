@@ -233,8 +233,49 @@ def initialize_from_pkl(arg, path):
     f.close()
 
 
-def _p(pp, name):
-    return '%s_%s' % (pp, name)
+# push parameters to Theano shared variables
+def zipp(params, tparams):
+
+    for kk, vv in params.iteritems():
+        tparams[kk].set_value(vv)
+
+
+# pull parameters from Theano shared variables
+def unzip(zipped):
+
+    new_params = OrderedDict()
+    for kk, vv in zipped.iteritems():
+        new_params[kk] = vv.get_value()
+
+    return new_params
+
+
+# get the list of parameters: Note that tparams must be OrderedDict
+def itemlist(tparams):
+    return [vv for kk, vv in tparams.iteritems()]
+
+
+# initialize Theano shared variables according to the initial parameters
+def init_tparams(params):
+
+    tparams = OrderedDict()
+    for kk, pp in params.iteritems():
+        tparams[kk] = theano.shared(castX(params[kk]), name=kk)
+
+    return tparams
+
+
+# load parameters
+def load_params(path, params):
+
+    pp = numpy.load(path)
+    for kk, vv in params.iteritems():
+        if kk not in pp:
+            warnings.warn('%s is not in the archive' % kk)
+            continue
+        params[kk] = pp[kk]
+
+    return params
 
 
 def segment_axis(a, length, overlap=0, axis=None, end='cut', endvalue=0):
