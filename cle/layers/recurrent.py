@@ -378,6 +378,70 @@ class GRU(RecurrentLayer):
         return params
 
 
+class GRU2(GRU):
+    """
+    Gated recurrent unit with different implementation
+    \tilde{h}_t = Wx + U(r \odot h_{t-1})
+
+    Parameters
+    ----------
+    .. todo::
+    """
+    def fprop(self, XH, tparams):
+
+        # XH is a list of inputs: [state_belows, state_befores]
+        # each state vector is: [state_before; cell_before]
+        # Hence, you use h[:, :self.nout] to compute recurrent term
+        X, H = XH
+
+        if len(X) != len(self.parent):
+            raise AttributeError("The number of inputs doesn't match "
+                                 "with the number of parents.")
+
+        if len(H) != len(self.recurrent):
+            raise AttributeError("The number of inputs doesn't match "
+                                 "with the number of recurrents.")
+
+        # The index of self recurrence is 0
+        z_tm1 = H[0]
+        z = T.zeros((X[0].shape[0], 3*self.nout), dtype=theano.config.floatX)
+
+        for x, (parname, parout) in izip(X, self.parent.items()):
+            W = tparams['W_'+parname+'__'+self.name]
+            if x.ndim == 1:
+                if 'int' not in x.dtype:
+                    x = T.cast(x, 'int64')
+                z += W[x]
+            else:
+                z += T.dot(x[:, :parout], W)
+
+        for h, (recname, recout) in izip(H, self.recurrent.items()):
+            U = tparams['U_'+recname+'__'+self.name]
+            z = T.inc_subtensor(
+                z[:, self.nout:],
+                T.dot(h[:, :recout], U[:, self.nout:])
+            )
+
+        z += tparams['b_'+self.name]
+
+        # Compute activations of gating units
+        r_on = T.nnet.sigmoid(z[:, self.nout:2*self.nout])
+        u_on = T.nnet.sigmoid(z[:, 2*self.nout:])
+
+        # Update hidden & cell states
+        c_t = T.zeros_like(z_tm1)
+
+        for h, (recname, recout) in izip(H, self.recurrent.items()):
+            U = tparams['U_'+recname+'__'+self.name]
+            c_t += T.dot(r_on * h[:, :recout], U[:, :self.nout])
+
+        z_t = T.tanh(z[:, :self.nout] + c_t)
+        z_t = u_on * z_tm1 + (1. - u_on) * z_t
+        z_t.name = self.name
+
+        return z_t
+
+
 class GFGRU(GRU):
     """
     Long short-term memory
