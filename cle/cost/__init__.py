@@ -13,7 +13,9 @@ def NllBin(y, y_hat):
     ----------
     .. todo::
     """
-    nll = T.nnet.binary_crossentropy(y_hat, y).sum(axis=1)
+    #nll = T.nnet.binary_crossentropy(y_hat, y).sum(axis=1)
+    ll = y * T.log(y_hat) + (1. - y) * T.log(1. - y_hat)
+    nll = -ll
     return nll
 
 
