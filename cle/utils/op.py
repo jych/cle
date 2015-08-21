@@ -2,8 +2,15 @@ import ipdb
 import numpy as np
 import theano.tensor as T
 
+from theano.sandbox.rng_mrg import MRG_RandomStreams
 
-def dropout(x, p, theano_rng):
+
+seed_rng = np.random.RandomState(np.random.randint(1024))
+theano_seed = seed_rng.randint(np.iinfo(np.int32).max)
+default_theano_rng = MRG_RandomStreams(theano_seed)
+
+
+def dropout(x, p, theano_rng=default_theano_rng):
     if p < 0 or p > 1:
         raise ValueError("p should be in [0, 1].")
     mask = theano_rng.binomial(p=p, size=x.shape, dtype=x.dtype)
