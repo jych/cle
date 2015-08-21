@@ -95,65 +95,13 @@ class ClockworkLayer(StemCell):
                  **kwargs):
         super(ClockworkLayer, self).__init__(**kwargs)
         self.N = N
-    
+
     def fprop(self, z):
         z = theano.ifelse.ifelse(T.mod(idx, self.N) != 0,
                                  T.zeros_like(z),
                                  z)
         z.name = self.name
         return z
-
-
-class DropoutLayer(StemCell):
-    """
-    Dropout layer
-
-    Parameters
-    ----------
-    .. todo::
-    """
-    def __init__(self,
-                 p=0.5,
-                 train_scale=2.,
-                 test_scale=1.,
-                 is_test=0,
-                 **kwargs):
-        super(DropoutLayer, self).__init__(**kwargs)
-        self.p = p
-        self.train_scale = train_scale
-        self.test_scale = test_scale
-        self.is_test = is_test
-        self.set_mode(self.is_test)
-
-    def set_mode(self, is_test=0):
-        self.is_test = is_test
-        if self.is_test:
-            self.fprop = self.which_fn('test_prop')
-        else:
-            self.fprop = self.which_fn('train_prop')
-
-    def train_prop(self, z):
-        z = unpack(z)
-        z = dropout(z, self.p, self.theano_rng)
-        z.name = self.name
-        return z * self.train_scale
-
-    def test_prop(self, z):
-        z = unpack(z)
-        z.name = self.name
-        return z * self.test_scale
-
-    def __getstate__(self):
-        dic = self.__dict__.copy()
-        dic.pop('fprop')
-        return dic
-    
-    def __setstate__(self, state):
-        self.__dict__.update(state)
-        self.set_mode(self.is_test)
-  
-    def initialize(self):
-        pass
 
 
 class PriorLayer(StemCell):
@@ -217,14 +165,14 @@ class PriorLayer(StemCell):
         dic = self.__dict__.copy()
         dic.pop('fprop')
         return dic
-    
+
     def __setstate__(self, state):
         self.__dict__.update(state)
         if self.use_sample:
             self.fprop = self.which_fn('sample')
         else:
             self.fprop = self.which_fn('cost')
-  
+
     def initialize(self):
         pass
 
@@ -270,7 +218,7 @@ class BatchNormalizationLayer(StemCell):
         dic = self.__dict__.copy()
         dic.pop('fprop')
         return dic
-    
+
     def __setstate__(self, state):
         self.__dict__.update(state)
         self.set_mode(self.is_test)
