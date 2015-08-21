@@ -23,11 +23,9 @@ def logsumexp(x, axis=None):
     return z.sum(axis=axis)
 
 
-def add_noise(x, stddev, theano_rng):
-    x += theano_rng.normal(size=x.shape,
-                           avg=0.,
-                           std=stddev,
-                           dtype=x.dtype)
+def add_noise(x, std_dev=0.075, theano_rng=default_theano_rng):
+    x += theano_rng.normal(size=x.shape, avg=0.,
+                           std=std_dev, dtype=x.dtype)
     return x
 
 
