@@ -10,7 +10,7 @@ theano_seed = seed_rng.randint(np.iinfo(np.int32).max)
 default_theano_rng = MRG_RandomStreams(theano_seed)
 
 
-def dropout(x, p, theano_rng=default_theano_rng):
+def dropout(x, p=0.5, theano_rng=default_theano_rng):
     if p < 0 or p > 1:
         raise ValueError("p should be in [0, 1].")
     mask = theano_rng.binomial(p=p, size=x.shape, dtype=x.dtype)
