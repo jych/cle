@@ -12,7 +12,7 @@ from collections import OrderedDict
 from itertools import izip
 
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, format='%(message)s')
 logger = logging.getLogger(__name__)
 
 
