@@ -119,7 +119,7 @@ class Monitoring(Extension, TheanoMixin):
                     if this_mean is np.nan:
                         raise ValueError("NaN occured in output.")
                     this_ch.append(this_mean)
-                    logger.info("\t%s_%s: %f" %
+                    logger.info("%s_%s: %f" %
                                 (data.name, ch.name, this_mean))
             mainloop.trainlog._ddmonitors.append(this_ch)
         else:
