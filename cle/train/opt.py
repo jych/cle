@@ -73,8 +73,8 @@ class Momentum(Optimizer):
         return updates
 
     def monitor(self):
-        logger.info("Learning rate: %f" % self.lr.get_value())
-        logger.info("Momentum: %f" % self.mom)
+        logger.info(" Learning rate: %f" % self.lr.get_value())
+        logger.info(" Momentum: %f" % self.mom)
 
 
 class RMSProp(Optimizer):
@@ -112,9 +112,9 @@ class RMSProp(Optimizer):
         return updates
 
     def monitor(self):
-        logger.info("Learning rate: %f" % self.lr.get_value())
-        logger.info("Momentum: %f" % self.mom)
-        logger.info("Second Momentum: %f" % self.sec_mom)
+        logger.info(" Learning rate: %f" % self.lr.get_value())
+        logger.info(" Momentum: %f" % self.mom)
+        logger.info(" Second Momentum: %f" % self.sec_mom)
 
 
 class Adam(Optimizer):
@@ -157,6 +157,6 @@ class Adam(Optimizer):
         return updates
 
     def monitor(self):
-        logger.info("Learning rate: %f" % self.lr.get_value())
-        logger.info("Beta_1: %f" % self.b1)
-        logger.info("Beta_2: %f" % self.b2)
+        logger.info(" Learning rate: %f" % self.lr.get_value())
+        logger.info(" Beta_1: %f" % self.b1)
+        logger.info(" Beta_2: %f" % self.b2)
