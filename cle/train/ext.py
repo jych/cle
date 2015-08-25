@@ -119,7 +119,7 @@ class Monitoring(Extension, TheanoMixin):
                     if this_mean is np.nan:
                         raise ValueError("NaN occured in output.")
                     this_ch.append(this_mean)
-                    logger.info("%s_%s: %f" %
+                    logger.info(" %s_%s: %f" %
                                 (data.name, ch.name, this_mean))
             mainloop.trainlog._ddmonitors.append(this_ch)
         else:
@@ -137,34 +137,34 @@ class Monitoring(Extension, TheanoMixin):
             end = max(1, log._batch_seen)
             t = np.asarray(log._times)[srt: end].sum()
             logger.info("")
-            logger.info("Monitoring step")
-            logger.info("***************")
-            logger.info("----------------")
-            logger.info("Traininig basics")
-            logger.info("................")
-            logger.info("Elapsed time: %f" % t)
-            logger.info("Epochs  seen: %d" % log._epoch_seen)
-            logger.info("Batches seen: %d" % log._batch_seen)
-            logger.info("-----------------------")
-            logger.info("Optimization parameters")
-            logger.info(".......................")
+            logger.info(" Monitoring step")
+            logger.info(" ***************")
+            logger.info(" ----------------")
+            logger.info(" Traininig basics")
+            logger.info(" ................")
+            logger.info(" Elapsed time: %f" % t)
+            logger.info(" Epochs  seen: %d" % log._epoch_seen)
+            logger.info(" Batches seen: %d" % log._batch_seen)
+            logger.info(" -----------------------")
+            logger.info(" Optimization parameters")
+            logger.info(" .......................")
             mainloop.optimizer.monitor()
-            logger.info("------------------")
-            logger.info("Forward-prop based")
-            logger.info("..................")
+            logger.info(" ------------------")
+            logger.info(" Forward-prop based")
+            logger.info(" ..................")
             output_channel = [out.name for out in mainloop.outputs]
             if log._batch_seen == 0:
-                logger.info("initial_monitoring")
+                logger.info(" initial_monitoring")
             else:
                 for i, out in enumerate(output_channel):
                     this_mean = np.asarray(log._batches)[srt: end, i].mean()
                     if this_mean is np.nan:
                         raise ValueError("NaN occured in output.")
-                    logger.info("this_batch_%s: %f" % (out, this_mean))
+                    logger.info(" this_batch_%s: %f" % (out, this_mean))
             this_t0 = time.time()
             self.monitor_data_based_channels(mainloop)
             mt = time.time() - this_t0
-            logger.info("Elapsed time for monitoring: %f" % mt)
+            logger.info(" Elapsed time for monitoring: %f" % mt)
 
 
 class Picklize(Extension):
@@ -188,7 +188,7 @@ class Picklize(Extension):
         if np.mod(mainloop.trainlog._batch_seen, self.freq) == 0 or mainloop.endloop:
             pkl_path = mainloop.name + '.pkl'
             path = os.path.join(self.path, pkl_path)
-            logger.info("Saving model to: %s" % path)
+            logger.info(" Saving model to: %s" % path)
             try:
                 import sys
                 sys.setrecursionlimit(50000)
@@ -203,7 +203,7 @@ class Picklize(Extension):
                              str(mainloop.trainlog._batch_seen) +\
                              'updates.pkl'
             force_path = os.path.join(self.path, force_pkl_path)
-            logger.info("Saving model to: %s" % force_path)
+            logger.info(" Saving model to: %s" % force_path)
             try:
                 import sys
                 sys.setrecursionlimit(50000)
@@ -240,7 +240,7 @@ class EarlyStopping(Extension):
                     self.best = mainloop.trainlog._ddmonitors[-1][0]
                     pkl_path = mainloop.name + '_best.pkl'
                     path = os.path.join(self.path, pkl_path)
-                    logger.info("Saving best model to: %s" % path)
+                    logger.info(" Saving best model to: %s" % path)
                     try:
                         import sys
                         sys.setrecursionlimit(50000)
@@ -258,7 +258,7 @@ class EarlyStopping(Extension):
                                          str(this_number) +\
                                          'updates.pkl'
                         force_path = os.path.join(self.path, force_pkl_path)
-                        logger.info("Saving best model to: %s" % force_path)
+                        logger.info(" Saving best model to: %s" % force_path)
                         try:
                             import sys
                             sys.setrecursionlimit(50000)
