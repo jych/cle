@@ -23,7 +23,7 @@ class InitCell(object):
     def __init__(self,
                  init_type='randn',
                  mean=0.,
-                 stddev=0.01,
+                 std_dev=0.01,
                  low=-0.08,
                  high=0.08,
                  **kwargs):
@@ -32,7 +32,7 @@ class InitCell(object):
         if init_type is not None:
             self.init_param = self.which_init(init_type)
         self.mean = mean
-        self.stddev = stddev
+        self.std_dev = std_dev
         self.low = low
         self.high = high
 
@@ -43,7 +43,7 @@ class InitCell(object):
         return np.random.uniform(self.low, self.high, shape)
 
     def randn(self, shape):
-        return np.random.normal(self.mean, self.stddev, shape)
+        return np.random.normal(self.mean, self.std_dev, shape)
 
     def zeros(self, shape):
         return np.zeros(shape)
@@ -52,7 +52,7 @@ class InitCell(object):
         return np.zeros(shape) + self.mean
 
     def ortho(self, shape):
-        x = np.random.normal(self.mean, self.stddev, shape)
+        x = np.random.normal(self.mean, self.std_dev, shape)
         return scipy.linalg.orth(x)
 
     def getX(self, shape, name=None):
