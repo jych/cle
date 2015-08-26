@@ -84,7 +84,7 @@ class EpochCount(Extension):
 
 class Monitoring(Extension, TheanoMixin):
     def __init__(self, freq, ddout=None, data=None, monitor_fn=None,
-                 obj_monitor_fn=None, obj_monitor_ch=None):
+            obj_monitor_fn=None, obj_monitor_ch=[]):
         """
         obj_monitor_fn :
             Python function, a function adapted to the mean of main objective,
@@ -125,16 +125,16 @@ class Monitoring(Extension, TheanoMixin):
                         raise ValueError("NaN occured in output.")
                     logger.info(" %s_%s: %f" %
                                 (data.name, ch.name, this_mean))
-                    if i==0:
+                    if i == 0:
                         mainloop.trainlog.monitor['obj'].append(this_mean)
-                        if self.obj_monitor_fn is not None:
-                            obj_monitor_val = self.obj_monitor_fn(this_mean)
-                            ch_name = "%s_%s" % (data.name, self.obj_monitor_ch)
-                            logger.info(" %s: %f" % (ch_name, obj_monitor_val))
-                            mainloop.trainlog.monitor[ch_name].append(obj_monitor_val)
                     else:
                         ch_name = "%s_%s" % (data.name, ch.name)
                         mainloop.trainlog.monitor[ch_name].append(this_mean)
+                    if i < len(self.obj_monitor_ch) and self.obj_monitor_fn is not None:
+                        obj_monitor_val = self.obj_monitor_fn(this_mean)
+                        ch_name = "%s_%s" % (data.name, self.obj_monitor_ch[i])
+                        logger.info(" %s: %f" % (ch_name, obj_monitor_val))
+                        mainloop.trainlog.monitor[ch_name].append(obj_monitor_val)
         else:
             pass
 
