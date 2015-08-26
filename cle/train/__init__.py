@@ -5,9 +5,9 @@ import time
 
 from cle.cle.graph import TheanoMixin
 from cle.cle.models import Model
-from cle.cle.utils import PickleMixin, OrderedDict, tolist
+from cle.cle.utils import PickleMixin, OrderedDict, tolist, DefaultListOrderedDict
 
-from collections import OrderedDict
+from collections import defaultdict, OrderedDict
 
 from itertools import izip
 
@@ -85,12 +85,12 @@ class Training(PickleMixin, TheanoMixin):
             self.run_extension('ext_monitor')
             batch_t0 = time.time()
             this_cost = self.cost_fn(*batch)
-            self.trainlog._times.append(time.time() - batch_t0)
-            self.trainlog._batches.append(this_cost)
-            self.trainlog._batch_seen += 1
+            self.trainlog.monitor['time'].append(time.time() - batch_t0)
+            self.trainlog.monitor['update'].append(this_cost)
+            self.trainlog.batch_seen += 1
             self.run_extension('ext_save')
 
-        self.trainlog._epoch_seen += 1
+        self.trainlog.epoch_seen += 1
         self.run_extension('ext_term')
 
         if self.end_training():
@@ -132,8 +132,6 @@ class TrainLog(object):
     .. todo::
     """
     def __init__(self):
-        self._batches = []
-        self._times = []
-        self._ddmonitors = []
-        self._epoch_seen = 0
-        self._batch_seen = 0
+        self.monitor = defaultdict(list)
+        self.epoch_seen = 0
+        self.batch_seen = 0

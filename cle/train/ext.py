@@ -78,13 +78,17 @@ class EpochCount(Extension):
 
             WRITEME
         """
-        if np.mod(mainloop.trainlog._epoch_seen, self.num_epoch) == 0:
+        if np.mod(mainloop.trainlog.epoch_seen, self.num_epoch) == 0:
             mainloop.endloop = 1
 
 
 class Monitoring(Extension, TheanoMixin):
-    def __init__(self, freq, ddout=None, data=None, monitor_fn=None):
+    def __init__(self, freq, ddout=None, data=None, monitor_fn=None,
+                 obj_monitor_fn=None, obj_monitor_ch=None):
         """
+        obj_monitor_fn :
+            Python function, a function adapted to the mean of main objective,
+            e.g., perplexity
         .. todo::
 
             WRITEME
@@ -94,6 +98,8 @@ class Monitoring(Extension, TheanoMixin):
         self.ddout = ddout
         self.data = data
         self.monitor_fn = monitor_fn
+        self.obj_monitor_fn = obj_monitor_fn
+        self.obj_monitor_ch = obj_monitor_ch
 
     def monitor_data_based_channels(self, mainloop):
         """
@@ -112,16 +118,23 @@ class Monitoring(Extension, TheanoMixin):
                     this_out = self.monitor_fn(*batch)
                     batch_record.append(this_out)
                 data_record.append(np.asarray(batch_record))
-            this_ch = []
             for record, data in zip(data_record, self.data):
                 for i, ch in enumerate(self.ddout):
                     this_mean = record[:, i].mean()
                     if this_mean is np.nan:
                         raise ValueError("NaN occured in output.")
-                    this_ch.append(this_mean)
                     logger.info(" %s_%s: %f" %
                                 (data.name, ch.name, this_mean))
-            mainloop.trainlog._ddmonitors.append(this_ch)
+                    if i==0:
+                        mainloop.trainlog.monitor['obj'].append(this_mean)
+                        if self.obj_monitor_fn is not None:
+                            obj_monitor_val = self.obj_monitor_fn(this_mean)
+                            ch_name = "%s_%s" % (data.name, self.obj_monitor_ch)
+                            logger.info(" %s: %f" % (ch_name, obj_monitor_val))
+                            mainloop.trainlog.monitor[ch_name].append(obj_monitor_val)
+                    else:
+                        ch_name = "%s_%s" % (data.name, ch.name)
+                        mainloop.trainlog.monitor[ch_name].append(this_mean)
         else:
             pass
 
@@ -132,10 +145,10 @@ class Monitoring(Extension, TheanoMixin):
             WRITEME
         """
         log = mainloop.trainlog
-        if np.mod(log._batch_seen, self.freq) == 0 or mainloop.endloop:
-            srt = max(0, log._batch_seen - self.freq)
-            end = max(1, log._batch_seen)
-            t = np.asarray(log._times)[srt: end].sum()
+        if np.mod(log.batch_seen, self.freq) == 0 or mainloop.endloop:
+            srt = max(0, log.batch_seen - self.freq)
+            end = max(1, log.batch_seen)
+            t = np.asarray(log.monitor['time'])[srt: end].sum()
             logger.info("")
             logger.info(" Monitoring step")
             logger.info(" ***************")
@@ -143,8 +156,8 @@ class Monitoring(Extension, TheanoMixin):
             logger.info(" Traininig basics")
             logger.info(" ................")
             logger.info(" Elapsed time: %f" % t)
-            logger.info(" Epochs  seen: %d" % log._epoch_seen)
-            logger.info(" Batches seen: %d" % log._batch_seen)
+            logger.info(" Epochs  seen: %d" % log.epoch_seen)
+            logger.info(" Batches seen: %d" % log.batch_seen)
             logger.info(" -----------------------")
             logger.info(" Optimization parameters")
             logger.info(" .......................")
@@ -153,11 +166,11 @@ class Monitoring(Extension, TheanoMixin):
             logger.info(" Forward-prop based")
             logger.info(" ..................")
             output_channel = [out.name for out in mainloop.outputs]
-            if log._batch_seen == 0:
+            if log.batch_seen == 0:
                 logger.info(" initial_monitoring")
             else:
                 for i, out in enumerate(output_channel):
-                    this_mean = np.asarray(log._batches)[srt: end, i].mean()
+                    this_mean = np.asarray(log.monitor['update'])[srt: end, i].mean()
                     if this_mean is np.nan:
                         raise ValueError("NaN occured in output.")
                     logger.info(" this_batch_%s: %f" % (out, this_mean))
@@ -185,7 +198,7 @@ class Picklize(Extension):
         """
         Pickle the mainloop
         """
-        if np.mod(mainloop.trainlog._batch_seen, self.freq) == 0 or mainloop.endloop:
+        if np.mod(mainloop.trainlog.batch_seen, self.freq) == 0 or mainloop.endloop:
             pkl_path = mainloop.name + '.pkl'
             path = os.path.join(self.path, pkl_path)
             logger.info(" Saving model to: %s" % path)
@@ -198,9 +211,9 @@ class Picklize(Extension):
                 #secure_pickle_dump(mainloop, path)
             except Exception:
                 raise
-        if np.mod(mainloop.trainlog._batch_seen, self.force_save_freq) == 0:
+        if np.mod(mainloop.trainlog.batch_seen, self.force_save_freq) == 0:
             force_pkl_path = mainloop.name + '_' +\
-                             str(mainloop.trainlog._batch_seen) +\
+                             str(mainloop.trainlog.batch_seen) +\
                              'updates.pkl'
             force_path = os.path.join(self.path, force_pkl_path)
             logger.info(" Saving model to: %s" % force_path)
@@ -234,10 +247,10 @@ class EarlyStopping(Extension):
         """
         Pickle the mainloop
         """
-        if len(mainloop.trainlog._ddmonitors) > 0:
-            if mainloop.trainlog._ddmonitors[-1][0] < self.best:
-                if np.mod(mainloop.trainlog._batch_seen, self.freq) == 0:
-                    self.best = mainloop.trainlog._ddmonitors[-1][0]
+        if len(mainloop.trainlog.monitor['update']) > 0:
+            if mainloop.trainlog.monitor['obj'][-1] < self.best:
+                if np.mod(mainloop.trainlog.batch_seen, self.freq) == 0:
+                    self.best = mainloop.trainlog.monitor['obj'][-1]
                     pkl_path = mainloop.name + '_best.pkl'
                     path = os.path.join(self.path, pkl_path)
                     logger.info(" Saving best model to: %s" % path)
@@ -251,7 +264,7 @@ class EarlyStopping(Extension):
                     except Exception:
                         raise
                     if self.force_save_freq is not None:
-                        this_scaler = (mainloop.trainlog._batch_seen /
+                        this_scaler = (mainloop.trainlog.batch_seen /
                                       self.force_save_freq)
                         this_number = self.force_save_freq * (this_scaler + 1)
                         force_pkl_path = mainloop.name + '_best_before_' +\

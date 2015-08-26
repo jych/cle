@@ -278,6 +278,12 @@ def load_params(path, params):
     return params
 
 
+class DefaultListOrderedDict(OrderedDict):
+    def __missing__(self,k):
+        self[k] = []
+        return self[k]
+
+
 def segment_axis(a, length, overlap=0, axis=None, end='cut', endvalue=0):
     """Generate a new array that chops the given array along the given axis
     into overlapping frames.
