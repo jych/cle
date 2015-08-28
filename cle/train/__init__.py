@@ -5,7 +5,7 @@ import time
 
 from cle.cle.graph import TheanoMixin
 from cle.cle.models import Model
-from cle.cle.utils import PickleMixin, OrderedDict, tolist, DefaultListOrderedDict
+from cle.cle.utils import PickleMixin, OrderedDict, tolist
 
 from collections import defaultdict, OrderedDict
 
