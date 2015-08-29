@@ -28,6 +28,17 @@ def add_noise(x, std_dev=0.075, theano_rng=default_theano_rng):
     return x
 
 
+def add_noise_params(params, keys=['W']):
+    nparams = OrderedDict()
+    for param in params.items():
+        for key in keys:
+            if key in param[0]:
+                nparams[param[0]] = add_noise(param[1])
+            else:
+                nparams[param[0]] = param[1]
+    return nparams
+
+
 def overlap_sum(X, overlap):
     """
     WRITEME
