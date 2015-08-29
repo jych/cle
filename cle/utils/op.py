@@ -34,9 +34,9 @@ def add_noise_params(params, keys=['W']):
     for param in params.items():
         for key in keys:
             if key in param[0]:
-                nparams[param[0]] = add_noise(param[1])
+                nparams[param[0]] = add_noise(param[1].copy())
             else:
-                nparams[param[0]] = param[1]
+                nparams[param[0]] = param[1].copy()
     return nparams
 
 
