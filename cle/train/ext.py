@@ -243,7 +243,8 @@ class EarlyStopping(Extension):
         self.minimize_ = minimize
         self.channel = channel
         if self.channel is None:
-            raise AttributeError("channel is required for early stopping.")
+            self.channel = 'valid_nll'
+            #raise AttributeError("channel is required for early stopping.")
 
     def exe(self, mainloop):
         """
