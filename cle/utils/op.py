@@ -2,6 +2,7 @@ import ipdb
 import numpy as np
 import theano.tensor as T
 
+from theano.compat.python2x import OrderedDict
 from theano.sandbox.rng_mrg import MRG_RandomStreams
 
 
