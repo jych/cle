@@ -125,11 +125,8 @@ class Monitoring(Extension, TheanoMixin):
                         raise ValueError("NaN occured in output.")
                     logger.info(" %s_%s: %f" %
                                 (data.name, ch.name, this_mean))
-                    if i == 0:
-                        mainloop.trainlog.monitor['obj'].append(this_mean)
-                    else:
-                        ch_name = "%s_%s" % (data.name, ch.name)
-                        mainloop.trainlog.monitor[ch_name].append(this_mean)
+                    ch_name = "%s_%s" % (data.name, ch.name)
+                    mainloop.trainlog.monitor[ch_name].append(this_mean)
                     if i < len(self.obj_monitor_ch) and self.obj_monitor_fn is not None:
                         obj_monitor_val = self.obj_monitor_fn(this_mean)
                         ch_name = "%s_%s" % (data.name, self.obj_monitor_ch[i])
@@ -234,7 +231,8 @@ class EarlyStopping(Extension):
 
         WRITEME
     """
-    def __init__(self, path, freq=1, force_save_freq=None):
+    def __init__(self, path, channel=None, freq=1, force_save_freq=None,
+                 minimize=1):
         self.name = 'ext_save'
         self.freq = freq
         self.force_save_freq = force_save_freq
@@ -242,15 +240,26 @@ class EarlyStopping(Extension):
             os.makedirs(path)
         self.path = path
         self.best = sys.float_info.max
+        self.minimize_ = minimize
+        self.channel = channel
+        if self.channel is None:
+            raise AttributeError("channel is required for early stopping.")
 
     def exe(self, mainloop):
         """
         Pickle the mainloop
         """
         if len(mainloop.trainlog.monitor['update']) > 0:
-            if mainloop.trainlog.monitor['obj'][-1] < self.best:
-                if np.mod(mainloop.trainlog.batch_seen, self.freq) == 0:
-                    self.best = mainloop.trainlog.monitor['obj'][-1]
+            if np.mod(mainloop.trainlog.batch_seen, self.freq) == 0 or mainloop.endloop:
+                token = 0
+                if self.minimize_:
+                    if mainloop.trainlog.monitor[self.channel][-1] < self.best:
+                        token = 1
+                else:
+                    if mainloop.trainlog.monitor[self.channel][-1] > self.best:
+                        token = 1
+                if token:
+                    self.best = mainloop.trainlog.monitor[self.channel][-1]
                     pkl_path = mainloop.name + '_best.pkl'
                     path = os.path.join(self.path, pkl_path)
                     logger.info(" Saving best model to: %s" % path)
