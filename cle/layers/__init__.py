@@ -205,7 +205,7 @@ class StemCell(NonlinCell):
                  init_b=InitCell('zeros'),
                  cons=0.,
                  use_bias=1,
-                 lr_scaler=None,
+                 lr_scaler=1.,
                  **kwargs):
         super(StemCell, self).__init__(**kwargs)
         if name is None:

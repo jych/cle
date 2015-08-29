@@ -3,8 +3,9 @@ import logging
 import theano
 import theano.tensor as T
 
-from theano.compat.python2x import OrderedDict
 from cle.cle.utils import sharedX
+
+from theano.compat.python2x import OrderedDict
 
 
 logger = logging.getLogger(__name__)

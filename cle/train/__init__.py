@@ -5,9 +5,10 @@ import time
 
 from cle.cle.graph import TheanoMixin
 from cle.cle.models import Model
-from cle.cle.utils import PickleMixin, OrderedDict, tolist
+from cle.cle.utils import PickleMixin, tolist
 
-from collections import defaultdict, OrderedDict
+from collections import defaultdict
+from theano.compat.python2x import OrderedDict
 
 from itertools import izip
 
@@ -45,6 +46,10 @@ class Training(PickleMixin, TheanoMixin):
         self.updates.update(model.updates)
         self.extension = extension
         self.debug_print = debug_print
+        lr_scalers = OrderedDict()
+        for node in self.model.nodes:
+            lr_scalers[node.name] = node.lr_scaler
+        self.optimizer.lr_scalers = lr_scalers
 
         t0 = time.time()
         self.cost_fn = self.build_training_graph()
