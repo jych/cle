@@ -241,6 +241,8 @@ class EarlyStopping(Extension):
         self.path = path
         self.best = sys.float_info.max
         self.minimize_ = minimize
+        if not self.minimize_:
+            self.best *= -1
         self.channel = channel
         if self.channel is None:
             self.channel = 'valid_nll'
