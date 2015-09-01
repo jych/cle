@@ -25,10 +25,10 @@ class Model(object):
         self.params = params
         self.updates = OrderedDict()
         if updates is not None:
-            for update in updates:
-                self.updates[update] = update
+            for update in updates.items():
+                self.updates[update[0]] = update[1]
 
     def set_updates(self, updates):
 
-        for update in updates:
-            self.updates[update] = update
+        for update in updates.items():
+            self.updates[update[0]] = update[1]
