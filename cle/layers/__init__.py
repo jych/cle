@@ -48,6 +48,9 @@ class InitCell(object):
     def zeros(self, shape):
         return np.zeros(shape)
 
+    def ones(self, shape):
+        return np.ones(shape)
+
     def const(self, shape):
         return np.zeros(shape) + self.mean
 
