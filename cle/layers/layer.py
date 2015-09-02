@@ -1,4 +1,5 @@
 import ipdb
+import numpy as np
 import theano
 import theano.tensor as T
 
@@ -6,11 +7,15 @@ from cle.cle.cost import (
     KLGaussianStdGaussian,
     KLGaussianGaussian
 )
-from cle.cle.layers import StemCell
+from cle.cle.layers import InitCell, StemCell
 from cle.cle.layers.feedforward import FullyConnectedLayer
+from cle.cle.layers.recurrent import RecurrentLayer
 from cle.cle.utils import totuple, unpack
 from cle.cle.utils.op import dropout
 
+from itertools import izip
+
+from theano.compat.python2x import OrderedDict
 from theano.tensor.signal.downsample import max_pool_2d
 
 
@@ -175,3 +180,199 @@ class PriorLayer(StemCell):
 
     def initialize(self):
         pass
+
+
+class BatchNormalizationLayer(StemCell):
+    """
+    Fully connected layer
+
+    Parameters
+    ----------
+    .. todo::
+    """
+    def fprop(self, X, tparams, z_mean=None, z_std=None, ndim=None):
+
+        if len(X) != len(self.parent):
+            raise AttributeError("The number of inputs does not match "
+                                 "with the number of parents.")
+
+        # X could be a list of inputs.
+        # depending the number of parents.
+        if ndim is None:
+            ndims = [x.ndim for x in X]
+            idx = np.argmax(ndims)
+            ndim = np.maximum(np.array(ndims).max(), 2)
+
+        z_shape = [X[idx].shape[i] for i in xrange(ndim-1)] + [self.nout]
+        z = T.zeros(z_shape, dtype=theano.config.floatX)
+
+        for x, (parname, parout) in izip(X, self.parent.items()):
+            W = tparams['W_'+parname+'__'+self.name]
+            if x.ndim == 1:
+                if 'int' not in x.dtype:
+                    x = T.cast(x, 'int64')
+                if z.ndim == 2:
+                    z += W[x]
+                elif z.ndim == 3:
+                    z += W[x][None, :, :]
+            elif x.ndim == 2:
+                if ndim == 2:
+                    z += T.dot(x[:, :parout], W)
+                if ndim == 3:
+                    z += T.dot(x[:, :parout], W)[None, :, :]
+            elif x.ndim == 3:
+                if z.ndim != 3:
+                    raise ValueError("your target ndim is less than the source ndim")
+                z += T.dot(x[:, :, :parout], W)
+
+        if not hasattr(self, 'use_bias'):
+            z += tparams['b_'+self.name]
+        elif self.use_bias:
+            z += tparams['b_'+self.name]
+
+        if z_mean is None or z_std is None:
+            test = 0
+        else:
+            test = 1
+
+        if ndim == 2:
+            if not test:
+                z_true = T.cast(T.neq(z.sum(axis=1), 0.0).sum(), dtype=theano.config.floatX)
+                z_mean = z.sum(axis=0) / z_true
+                z_std = T.sqrt(((z - z_mean[None, :])**2).sum(axis=0) / z_true)
+            z = (z - z_mean[None, :]) / (z_std[None, :] + 1e-6)
+            z = tparams['gamma_'+self.name][None, :] * z + tparams['beta_'+self.name][None, :]
+        if ndim == 3:
+            if not test:
+                z_true = T.cast(T.neq(z.sum(axis=2), 0.0).sum(), dtype=theano.config.floatX)
+                z_mean = z.sum(axis=[0,1]) / z_true
+                z_std = T.sqrt(((z - z_mean[None, None, :])**2).sum(axis=[0,1]) / z_true)
+            z = (z - z_mean[None, None, :]) / (z_std[None, None, :] + 1e-6)
+            z = tparams['gamma_'+self.name][None, None, :] * z + tparams['beta_'+self.name][None, None, :]
+
+        z = self.nonlin(z) + self.cons
+        z.name = self.name
+
+        return z, z_mean, z_std
+
+    def initialize(self):
+
+        params = OrderedDict()
+
+        for parname, parout in self.parent.items():
+            W_shape = (parout, self.nout)
+            W_name = 'W_' + parname + '__' + self.name
+            params[W_name] = self.init_W.get(W_shape)
+
+        if self.use_bias:
+            params['b_'+self.name] = self.init_b.get(self.nout)
+
+        params['beta_'+self.name] = InitCell('zeros').get(self.nout)
+        params['gamma_'+self.name] = InitCell('ones').get(self.nout)
+
+        return params
+
+
+class BatchNormLSTM(RecurrentLayer):
+    """
+    Long short-term memory
+
+    Parameters
+    ----------
+    .. todo::
+    """
+    def get_init_state(self, batch_size):
+
+        state = T.zeros((batch_size, 2*self.nout), dtype=theano.config.floatX)
+        state = T.unbroadcast(state, *range(state.ndim))
+
+        return state
+
+    def fprop(self, XH, tparams, time_step=1, mask=None, z_mean=None, z_var=None, test=0):
+
+        # XH is a list of inputs: [state_belows, state_befores]
+        # each state vector is: [state_before; cell_before]
+        # Hence, you use h[:, :self.nout] to compute recurrent term
+        X, H = XH
+
+        if len(X) != len(self.parent):
+            raise AttributeError("The number of inputs doesn't match "
+                                 "with the number of parents.")
+
+        if len(H) != len(self.recurrent):
+            raise AttributeError("The number of inputs doesn't match "
+                                 "with the number of recurrents.")
+
+        # The index of self recurrence is 0
+        z_t = H[0]
+        z = T.zeros((X[0].shape[0], 4*self.nout), dtype=theano.config.floatX)
+
+        for x, (parname, parout) in izip(X, self.parent.items()):
+            W = tparams['W_'+parname+'__'+self.name]
+            if x.ndim == 1:
+                if 'int' not in x.dtype:
+                    x = T.cast(x, 'int64')
+                z += W[x]
+            else:
+                z += T.dot(x[:, :parout], W)
+
+        for h, (recname, recout) in izip(H, self.recurrent.items()):
+            U = tparams['U_'+recname+'__'+self.name]
+            z += T.dot(h[:, :recout], U)
+
+        z += tparams['b_'+self.name]
+
+        if test:
+            z_mean_t = z_mean
+            z_var_t = z_var
+        else:
+            z_mean_t = z_mean + ((z - z_mean[None, :]) * mask[:, None]).sum(axis=0) / mask.sum() / T.cast(time_step, dtype=theano.config.floatX)
+            z_var_t = z_var + ((z - z_mean[None, :]) * (z - z_mean_t[None, :]) * mask[:, None]).sum(axis=0) / mask.sum()
+
+        z = (z - z_mean_t[None, :]) / (T.sqrt(z_var_t)[None, :] + 1e-6)
+        z = tparams['gamma_'+self.name][None, :] * z + tparams['beta_'+self.name][None, :]
+
+        # Compute activations of gating units
+        i_on = T.nnet.sigmoid(z[:, self.nout:2*self.nout])
+        f_on = T.nnet.sigmoid(z[:, 2*self.nout:3*self.nout])
+        o_on = T.nnet.sigmoid(z[:, 3*self.nout:])
+
+        # Update hidden & cell states
+        z_t = T.set_subtensor(
+            z_t[:, self.nout:],
+            f_on * z_t[:, self.nout:] +
+            i_on * self.nonlin(z[:, :self.nout])
+        )
+
+        z_t = T.set_subtensor(
+            z_t[:, :self.nout],
+            o_on * self.nonlin(z_t[:, self.nout:])
+        )
+
+        z_t.name = self.name
+
+        return z_t, z_mean_t, z_var_t
+
+    def initialize(self):
+
+        params = OrderedDict()
+        N = self.nout
+
+        for parname, parout in self.parent.items():
+            W_shape = (parout, 4*N)
+            W_name = 'W_' + parname + '__' + self.name
+            params[W_name] = self.init_W.get(W_shape)
+
+        for recname, recout in self.recurrent.items():
+            M = recout
+            U = self.init_U.ortho((M, N))
+            for j in xrange(3):
+                U = np.concatenate([U, self.init_U.ortho((M, N))], axis=-1)
+            U_name = 'U_'+recname+'__'+self.name
+            params[U_name] = U
+
+        params['b_'+self.name] = self.init_b.get(4*N)
+        params['beta_'+self.name] = InitCell('zeros').get(4*N)
+        params['gamma_'+self.name] = InitCell('ones').get(4*N)
+
+        return params
