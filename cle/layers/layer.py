@@ -10,7 +10,7 @@ from cle.cle.cost import (
 from cle.cle.layers import InitCell, StemCell
 from cle.cle.layers.feedforward import FullyConnectedLayer
 from cle.cle.layers.recurrent import RecurrentLayer
-from cle.cle.utils import totuple, unpack
+from cle.cle.utils import totuple, unpack, sharedX
 from cle.cle.utils.op import dropout
 
 from itertools import izip
@@ -182,7 +182,7 @@ class PriorLayer(StemCell):
         pass
 
 
-class BatchNormalizationLayer(StemCell):
+class BatchNormLayer(StemCell):
     """
     Fully connected layer
 
@@ -190,7 +190,14 @@ class BatchNormalizationLayer(StemCell):
     ----------
     .. todo::
     """
-    def fprop(self, X, tparams, z_mean=None, z_std=None, ndim=None):
+    def __init__(self, rho=0.5, eps=1e-6, **kwargs):
+        super(BatchNormLayer, self).__init__(**kwargs)
+        self.rho = rho
+        self.eps = eps
+        self.mean = sharedX(InitCell('zeros').get(self.nout), name='mu_'+self.name)
+        self.std = sharedX(InitCell('ones').get(self.nout), name='sigma_'+self.name)
+
+    def fprop(self, X, tparams, test=0, ndim=None):
 
         if len(X) != len(self.parent):
             raise AttributeError("The number of inputs does not match "
@@ -230,30 +237,43 @@ class BatchNormalizationLayer(StemCell):
         elif self.use_bias:
             z += tparams['b_'+self.name]
 
-        if z_mean is None or z_std is None:
-            test = 0
-        else:
-            test = 1
-
         if ndim == 2:
             if not test:
                 z_true = T.cast(T.neq(z.sum(axis=1), 0.0).sum(), dtype=theano.config.floatX)
                 z_mean = z.sum(axis=0) / z_true
                 z_std = T.sqrt(((z - z_mean[None, :])**2).sum(axis=0) / z_true)
-            z = (z - z_mean[None, :]) / (z_std[None, :] + 1e-6)
+                running_mean = theano.clone(self.mean, share_inputs=False)
+                running_mean = self.rho * self.mean + (1 - self.rho) * z_mean
+                running_std = theano.clone(self.mean, share_inputs=False)
+                running_std = self.rho * self.std + (1 - self.rho) * z_std
+                z_mean += 0 * running_mean
+                z_std += 0 * running_std
+            else:
+                z_mean = self.mean
+                z_std = self.std
+            z = (z - z_mean[None, :]) / (z_std[None, :] + self.eps)
             z = tparams['gamma_'+self.name][None, :] * z + tparams['beta_'+self.name][None, :]
         if ndim == 3:
             if not test:
                 z_true = T.cast(T.neq(z.sum(axis=2), 0.0).sum(), dtype=theano.config.floatX)
                 z_mean = z.sum(axis=[0,1]) / z_true
                 z_std = T.sqrt(((z - z_mean[None, None, :])**2).sum(axis=[0,1]) / z_true)
-            z = (z - z_mean[None, None, :]) / (z_std[None, None, :] + 1e-6)
+                running_mean = theano.clone(self.mean, share_inputs=False)
+                running_mean = self.rho * self.mean + (1 - self.rho) * z_mean
+                running_std = theano.clone(self.mean, share_inputs=False)
+                running_std = self.rho * self.std + (1 - self.rho) * z_std
+                z_mean += 0 * running_mean
+                z_std += 0 * running_std
+            else:
+                z_mean = self.mean
+                z_std = self.std
+            z = (z - z_mean[None, None, :]) / (z_std[None, None, :] + self.eps)
             z = tparams['gamma_'+self.name][None, None, :] * z + tparams['beta_'+self.name][None, None, :]
 
         z = self.nonlin(z) + self.cons
         z.name = self.name
 
-        return z, z_mean, z_std
+        return z
 
     def initialize(self):
 
@@ -268,7 +288,7 @@ class BatchNormalizationLayer(StemCell):
             params['b_'+self.name] = self.init_b.get(self.nout)
 
         params['beta_'+self.name] = InitCell('zeros').get(self.nout)
-        params['gamma_'+self.name] = InitCell('ones').get(self.nout)
+        params['gamma_'+self.name] = InitCell('rand', low=0.95, high=1.05).get(self.nout)
 
         return params
 
@@ -326,10 +346,24 @@ class BatchNormLSTM(RecurrentLayer):
             z_mean_t = z_mean
             z_var_t = z_var
         else:
-            z_mean_t = z_mean + ((z - z_mean[None, :]) * mask[:, None]).sum(axis=0) / mask.sum() / T.cast(time_step, dtype=theano.config.floatX)
-            z_var_t = z_var + ((z - z_mean[None, :]) * (z - z_mean_t[None, :]) * mask[:, None]).sum(axis=0) / mask.sum()
+            #z_mean_t = z_mean + ((z - z_mean[None, :]) * mask[:, None]).sum(axis=0) / mask.sum() / T.cast(time_step, dtype=theano.config.floatX)
+            #z_var_t = z_var + (z - z_mean[None, :]) * (z - z_mean_t[None, :]) * mask[:, None]).sum(axis=0) / mask.sum() + 1e-15
+            #z_mean_t = z_mean + (((z - z_mean[None, :]) * mask[:, None]).sum(axis=0) + 1e-15) / (mask.sum() + 1e-15) / T.cast(time_step, dtype=theano.config.floatX)
+            #z_var_t = z_var + (((z - z_mean[None, :]) * (z - z_mean_t[None, :]) * mask[:, None]).sum(axis=0) + 1e-15) / (mask.sum() + 1e-15)
 
-        z = (z - z_mean_t[None, :]) / (T.sqrt(z_var_t)[None, :] + 1e-6)
+
+            #z_mean_t = z_mean + (((z - z_mean[None, :]) / T.cast(time_step, dtype=theano.config.floatX)) * mask[:, None]).sum(axis=0) / mask.sum()
+            #z_var_t = z_var + ((z - z_mean[None, :]) * (z - z_mean_t[None, :]) * mask[:, None]).sum(axis=0) / mask.sum()
+            z_mean_t = T.switch(T.cast(T.eq(time_step, 1), 'int32'),
+                                (z * mask[:, None]).sum(axis=0) / mask.sum(),
+                                z_mean + (((z - z_mean[None, :]) / T.cast(time_step, dtype=theano.config.floatX)) * mask[:, None]).sum(axis=0) / mask.sum())
+            z_var_t = T.switch(T.cast(T.eq(time_step, 1), 'int32'),
+                               z_var,
+                               z_var + ((z - z_mean[None, :]) * (z - z_mean_t[None, :]) * mask[:, None]).sum(axis=0) / mask.sum())
+
+        z = T.switch(T.cast(T.eq(time_step, 1), 'int32'),
+                     z - z_mean_t[None, :],
+                     (z - z_mean_t[None, :]) / (T.sqrt(z_var_t)[None, :] + 1e-6))
         z = tparams['gamma_'+self.name][None, :] * z + tparams['beta_'+self.name][None, :]
 
         # Compute activations of gating units
