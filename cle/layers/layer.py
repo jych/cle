@@ -194,8 +194,8 @@ class BatchNormLayer(StemCell):
         super(BatchNormLayer, self).__init__(**kwargs)
         self.rho = rho
         self.eps = eps
-        self.mean = sharedX(InitCell('zeros').get(self.nout), name='mu_'+self.name)
-        self.std = sharedX(InitCell('ones').get(self.nout), name='sigma_'+self.name)
+        self.mu = sharedX(InitCell('zeros').get(self.nout), name='mu_'+self.name)
+        self.sigma = sharedX(InitCell('ones').get(self.nout), name='sigma_'+self.name)
 
     def fprop(self, X, tparams, test=0, ndim=None):
 
@@ -242,33 +242,33 @@ class BatchNormLayer(StemCell):
                 z_true = T.cast(T.neq(z.sum(axis=1), 0.0).sum(), dtype=theano.config.floatX)
                 z_mean = z.sum(axis=0) / z_true
                 z_std = T.sqrt(((z - z_mean[None, :])**2).sum(axis=0) / z_true)
-                running_mean = theano.clone(self.mean, share_inputs=False)
-                running_mean = self.rho * self.mean + (1 - self.rho) * z_mean
-                running_std = theano.clone(self.mean, share_inputs=False)
-                running_std = self.rho * self.std + (1 - self.rho) * z_std
-                z_mean += 0 * running_mean
-                z_std += 0 * running_std
+                running_mu = theano.clone(self.mu, share_inputs=False)
+                running_mu.default_update = (self.rho * self.mu + (1 - self.rho) * z_mean)
+                running_sigma = theano.clone(self.sigma, share_inputs=False)
+                running_sigma.default_update = (self.rho * self.sigma + (1 - self.rho) * z_std)
+                z_mean += 0 * running_mu
+                z_std += 0 * running_sigma
             else:
-                z_mean = self.mean
-                z_std = self.std
-            z = (z - z_mean[None, :]) / (z_std[None, :] + self.eps)
-            z = tparams['gamma_'+self.name][None, :] * z + tparams['beta_'+self.name][None, :]
+                z_mean = self.mu
+                z_std = self.sigma
+            z_std += self.eps
+            z = (z - z_mean[None, :]) * (tparams['gamma_'+self.name] / z_std)[None, :] + tparams['beta_'+self.name][None, :]
         if ndim == 3:
             if not test:
                 z_true = T.cast(T.neq(z.sum(axis=2), 0.0).sum(), dtype=theano.config.floatX)
                 z_mean = z.sum(axis=[0,1]) / z_true
                 z_std = T.sqrt(((z - z_mean[None, None, :])**2).sum(axis=[0,1]) / z_true)
-                running_mean = theano.clone(self.mean, share_inputs=False)
-                running_mean = self.rho * self.mean + (1 - self.rho) * z_mean
-                running_std = theano.clone(self.mean, share_inputs=False)
-                running_std = self.rho * self.std + (1 - self.rho) * z_std
-                z_mean += 0 * running_mean
-                z_std += 0 * running_std
+                running_mu = theano.clone(self.mu, share_inputs=False)
+                running_mu.default_update = (self.rho * self.mu + (1 - self.rho) * z_mean)
+                running_sigma = theano.clone(self.sigma, share_inputs=False)
+                running_sigma.default_update = (self.rho * self.sigma + (1 - self.rho) * z_std)
+                z_mean += 0 * running_mu
+                z_std += 0 * running_sigma
             else:
-                z_mean = self.mean
-                z_std = self.std
-            z = (z - z_mean[None, None, :]) / (z_std[None, None, :] + self.eps)
-            z = tparams['gamma_'+self.name][None, None, :] * z + tparams['beta_'+self.name][None, None, :]
+                z_mean = self.mu
+                z_std = self.sigma
+            z_std += self.eps
+            z = (z - z_mean[None, None, :]) * (tparams['gamma_'+self.name] / z_std)[None, None, :] + tparams['beta_'+self.name][None, None, :]
 
         z = self.nonlin(z) + self.cons
         z.name = self.name
