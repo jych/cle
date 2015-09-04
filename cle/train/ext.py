@@ -296,7 +296,7 @@ class EarlyStopping(Extension):
 
 
 class WeightDecay(Extension):
-    def __init__(self, lambd=0.0002, param_name=['W']):
+    def __init__(self, lambd=0.0002, keys=['W']):
         """
         .. todo::
 
@@ -304,7 +304,7 @@ class WeightDecay(Extension):
         """
         self.name = 'ext_regularize_pre_grad'
         self.lambd = lambd
-        self.param_name = tolist(param_name)
+        self.keys = tolist(keys)
 
     def exe(self, mainloop):
         """
@@ -312,14 +312,14 @@ class WeightDecay(Extension):
 
             WRITEME
         """
-        for p in mainloop.params:
-            for pname in self.param_name:
-                if pname in p.name:
-                    mainloop.cost += self.lambd * 0.5 * (p**2).sum()
+        for k, p in mainloop.model.params.items():
+            for key in self.keys:
+                if key in k:
+                    mainloop.cost += self.lambd * T.sqr(p).sum()
 
 
 class WeightNorm(Extension):
-    def __init__(self, is_vector=1, weight_norm=1.9365, param_name=['W']):
+    def __init__(self, is_vector=1, weight_norm=1.9365, keys=['W']):
         """
         .. todo::
 
@@ -327,7 +327,7 @@ class WeightNorm(Extension):
         """
         self.name = 'ext_regularize_post_grad'
         self.weight_norm = weight_norm
-        self.param_name = tolist(param_name)
+        self.keys = tolist(keys)
         self.is_vector = is_vector
 
     def exe(self, mainloop):
@@ -337,19 +337,19 @@ class WeightNorm(Extension):
             WRITEME
         """
         for k, p in mainloop.updates.items():
-            for pname in self.param_name:
-                if pname in str(k):
-                    updated_W = mainloop.updates[k]
+            for key in self.keys:
+                if key in str(k):
+                    updated_param = mainloop.updates[k]
                     if self.is_vector:
-                        col_norms = T.sqrt(T.sqr(updated_W).sum(axis=0))
+                        col_norms = T.sqrt(T.sqr(updated_param).sum(axis=0))
                         desired_norms = T.clip(col_norms, 0, self.weight_norm)
                         ratio = (desired_norms / (1e-7 + col_norms))
-                        mainloop.updates[k] = updated_W * ratio
+                        mainloop.updates[k] = updated_param * ratio
                     else:
-                        norm = T.sqrt(T.sqr(updated_W).sum())
+                        norm = T.sqrt(T.sqr(updated_param).sum())
                         desired_norm = T.clip(norm, 0, self.weight_norm)
                         ratio = (desired_norm / (1e-7 + norm))
-                        mainloop.updates[k] = updated_W * ratio
+                        mainloop.updates[k] = updated_param * ratio
 
 
 class LrLinearDecay(Extension):
