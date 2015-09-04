@@ -350,3 +350,78 @@ class WeightNorm(Extension):
                         desired_norm = T.clip(norm, 0, self.weight_norm)
                         ratio = (desired_norm / (1e-7 + norm))
                         mainloop.updates[k] = updated_W * ratio
+
+
+class LrLinearDecay(Extension):
+    def __init__(self, start, end, decay_factor):
+        """
+        .. todo::
+
+            WRITEME
+        """
+        self.name = 'ext_schedule'
+        assert start > 0
+        assert end > start
+        self.start = start
+        self.end = end
+        self.decay_factor = decay_factor
+        self.count = 0
+
+    def exe(self, mainloop):
+        """
+        .. todo::
+
+            WRITEME
+        """
+        if self.count == 0:
+            self.base_lr = mainloop.optimizer.lr.get_value()
+            self.step = ((self.base_lr - self.base_lr * self.decay_factor) /
+                         (self.end - self.start + 1))
+
+        self.count += 1
+
+        if self.count >= self.start:
+            if self.count < self.end:
+                new_lr = self.base_lr - self.step * (self.count - self.start + 1)
+            else:
+                new_lr = self.base_lr * self.decay_factor
+        else:
+            new_lr = self.base_lr
+
+        assert new_lr > 0
+        new_lr = np.cast[theano.config.floatX](new_lr)
+        mainloop.optimizer.lr.set_value(new_lr)
+
+
+class LrExponentialDecay(Extension):
+    def __init__(self, decay_factor, min_lr):
+        """
+        .. todo::
+
+            WRITEME
+        """
+        self.name = 'ext_schedule'
+        self.count = 0
+        self.decay_factor = decay_factor
+        self.min_ = False
+
+    def exe(self, mainloop):
+        """
+        .. todo::
+
+            WRITEME
+        """
+        if self.count == 0:
+            self.base_lr = mainloop.optimizer.lr.get_value()
+        self.count += 1
+
+        if not self.min_:
+            new_lr = self.base_lr / (self.decay_factor ** self.count)
+            if new_lr <= self.min_lr
+                self.min_ = True
+                new_lr = self.min_lr
+        else:
+            new_lr = self.min_lr
+
+        new_lr = np.cast[theano.config.floatX](new_lr)
+        mainloop.optimizer.lr.set_value(new_lr)

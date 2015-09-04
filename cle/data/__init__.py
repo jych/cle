@@ -38,7 +38,7 @@ class Iterator(object):
     .. todo::
     """
     def __init__(self, data, batch_size=None, nbatch=None,
-                 start=0, end=None):
+                 start=0, end=None, shuffle=False):
         if (batch_size or nbatch) is None:
             raise ValueError("Either batch_size or nbatch should be given.")
         if (batch_size and nbatch) is not None:
@@ -56,8 +56,11 @@ class Iterator(object):
             self.nbatch = int(np.float(self.nexp / float(batch_size)))
         self.data = data
         self.name = self.data.name
+        self.shuffle = shuffle
 
     def __iter__(self):
+        if self.shuffle:
+            self.data.shuffle()
         start = self.start
         end = self.end - self.end % self.batch_size
         for idx in xrange(start, end, self.batch_size):
