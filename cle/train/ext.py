@@ -403,6 +403,7 @@ class LrExponentialDecay(Extension):
         self.name = 'ext_schedule'
         self.count = 0
         self.decay_factor = decay_factor
+        self.min_lr = min_lr
         self.min_ = False
 
     def exe(self, mainloop):
@@ -413,11 +414,12 @@ class LrExponentialDecay(Extension):
         """
         if self.count == 0:
             self.base_lr = mainloop.optimizer.lr.get_value()
+
         self.count += 1
 
         if not self.min_:
             new_lr = self.base_lr / (self.decay_factor ** self.count)
-            if new_lr <= self.min_lr
+            if new_lr <= self.min_lr:
                 self.min_ = True
                 new_lr = self.min_lr
         else:
