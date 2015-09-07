@@ -81,7 +81,7 @@ output = FullyConnectedLayer(name='output',
 
 
 # You will fill in a list of nodes
-nodes = [h1, h2, d1, d2, output]
+nodes = [h1, h2, output]
 
 # Initalize the nodes
 params = OrderedDict()
