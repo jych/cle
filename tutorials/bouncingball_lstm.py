@@ -16,7 +16,7 @@ from cle.cle.train.ext import (
     Picklize
 )
 from cle.cle.train.opt import Adam
-from cle.cle.utils import flatten, OrderedDict
+from cle.cle.utils import init_tparams, OrderedDict
 from cle.datasets.bouncing_balls import BouncingBalls
 
 
@@ -34,14 +34,15 @@ train_data = BouncingBalls(name='train',
 valid_data = BouncingBalls(name='valid',
                            path=data_path)
 
-init_W = InitCell('randn')
-init_U = InitCell('ortho')
-init_b = InitCell('zeros')
-
 x, y = train_data.theano_vars()
+
 if debug:
     x.tag.test_value = np.zeros((10, batch_size, frame_size), dtype=np.float32)
     y.tag.test_value = np.zeros((10, batch_size, frame_size), dtype=np.float32)
+
+init_W = InitCell('randn')
+init_U = InitCell('ortho')
+init_b = InitCell('zeros')
 
 h1 = LSTM(name='h1',
           parent=['x'],
@@ -80,10 +81,10 @@ output = FullyConnectedLayer(name='output',
 
 nodes = [h1, h2, h3, output]
 
+params = OrderedDict()
 for node in nodes:
-    node.initialize()
-
-params = flatten([node.get_params().values() for node in nodes])
+    params.update(node.initialize())
+params = init_tparams(params)
 
 s1_0 = h1.get_init_state(batch_size)
 s2_0 = h2.get_init_state(batch_size)
@@ -92,10 +93,10 @@ s3_0 = h3.get_init_state(batch_size)
 
 def inner_fn(x_t, s1_tm1, s2_tm1, s3_tm1):
 
-    s1_t = h1.fprop([[x_t], [s1_tm1]])
-    s2_t = h2.fprop([[s1_t], [s2_tm1]])
-    s3_t = h3.fprop([[s2_t], [s3_tm1]])
-    y_hat_t = output.fprop([s1_t, s2_t, s3_t])
+    s1_t = h1.fprop([[x_t], [s1_tm1]], params)
+    s2_t = h2.fprop([[s1_t], [s2_tm1]], params)
+    s3_t = h3.fprop([[s2_t], [s3_tm1]], params)
+    y_hat_t = output.fprop([s1_t, s2_t, s3_t], params)
 
     return s1_t, s2_t, s3_t, y_hat_t
 
@@ -104,10 +105,7 @@ def inner_fn(x_t, s1_tm1, s2_tm1, s3_tm1):
                 sequences=[x],
                 outputs_info=[s1_0, s2_0, s3_0, None])
 
-ts, _, _ = y_hat_temp.shape
-y_hat_in = y_hat_temp.reshape((ts*batch_size, -1))
-y_in = y.reshape((ts*batch_size, -1))
-mse = MSE(y_in, y_hat_in)
+mse = MSE(y, y_hat_temp)
 mse = mse.mean()
 mse.name = 'mse'
 
