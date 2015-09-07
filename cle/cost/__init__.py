@@ -113,6 +113,7 @@ def GMM(y, mu, sig, coeff):
     inner = -0.5 * T.sum(T.sqr(y - mu) / sig**2 + 2 * T.log(sig) +
                          T.log(2 * np.pi), axis=1)
     nll = -logsumexp(T.log(coeff) + inner, axis=1)
+
     return nll
 
 
@@ -142,7 +143,7 @@ def BiGMM(y, mu, sig, coeff, corr, binary):
     sig_2 = sig[:, 1, :]
 
     c_b = T.sum(T.xlogx.xlogy0(y[:, 0, :], binary) +
-                T.xlogx.xlogy0(1 - y[:, 0, :], 1 - binary), axis=y.ndim-1)
+                T.xlogx.xlogy0(1 - y[:, 0, :], 1 - binary), axis=1)
 
     inner1 = 0.5 * T.log(1 - corr ** 2) + T.log(sig_1) + T.log(sig_2) + T.log(
         2 * np.pi)
@@ -155,7 +156,7 @@ def BiGMM(y, mu, sig, coeff, corr, binary):
     inner2 = 0.5 * (1. / (1. - corr ** 2))
     cost = -(inner1 + (inner2 * Z))
 
-    nll = -logsumexp(T.log(coeff) + cost, axis=y.ndim-1) - c_b
+    NLL = -logsumexp(T.log(coeff) + cost, axis=1) - c_b
 
     return nll
 
@@ -207,7 +208,7 @@ def grbm_free_energy(v, W, X):
     to do::
     """
     bias_term = 0.5*(((v - X[1])/X[2])**2).sum(axis=1)
-    hidden_term = T.log(1 + T.exp(T.dot(v/X[2], W) + X[0])).sum(axis=v.ndim-1)
+    hidden_term = T.log(1 + T.exp(T.dot(v/X[2], W) + X[0])).sum(axis=1)
     FE = bias_term -hidden_term
 
     return FE
