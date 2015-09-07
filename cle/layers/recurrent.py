@@ -28,14 +28,18 @@ class RecurrentLayer(StemCell):
                  **kwargs):
         super(RecurrentLayer, self).__init__(**kwargs)
         self.recurrent = OrderedDict()
+
         if self_recurrent:
             self.recurrent[self.name] = self.nout
+
         recurrent_dim = tolist(recurrent_dim)
+
         for i, rec in enumerate(tolist(recurrent)):
             if len(recurrent_dim) != 0:
                 self.recurrent[rec] = recurrent_dim[i]
             else:
                 self.recurrent[rec] = None
+
         self.init_U = init_U
 
     def get_init_state(self, batch_size):
@@ -82,6 +86,7 @@ class SimpleRecurrent(RecurrentLayer):
 
         for x, (parname, parout) in izip(X, self.parent.items()):
             W = tparams['W_'+parname+'__'+self.name]
+
             if x.ndim == 1:
                 if 'int' not in x.dtype:
                     x = T.cast(x, 'int64')
@@ -136,6 +141,7 @@ class LSTM(RecurrentLayer):
 
         for x, (parname, parout) in izip(X, self.parent.items()):
             W = tparams['W_'+parname+'__'+self.name]
+
             if x.ndim == 1:
                 if 'int' not in x.dtype:
                     x = T.cast(x, 'int64')
@@ -183,8 +189,10 @@ class LSTM(RecurrentLayer):
         for recname, recout in self.recurrent.items():
             M = recout
             U = self.init_U.ortho((M, N))
+
             for j in xrange(3):
                 U = np.concatenate([U, self.init_U.ortho((M, N))], axis=-1)
+
             U_name = 'U_'+recname+'__'+self.name
             params[U_name] = U
 
@@ -223,6 +231,7 @@ class GFLSTM(LSTM):
 
         for x, (parname, parout) in izip(X, self.parent.items()):
             W = tparams['W_'+parname+'__'+self.name]
+
             if x.ndim == 1:
                 if 'int' not in x.dtype:
                     x = T.cast(x, 'int64')
@@ -282,8 +291,10 @@ class GFLSTM(LSTM):
         for recname, recout in self.recurrent.items():
             M = recout
             U = self.init_U.ortho((M, N))
+
             for j in xrange(3):
                 U = np.concatenate([U, self.init_U.ortho((M, N))], axis=-1)
+
             U = np.concatenate([U, self.init_U.rand((M, Nm))], axis=-1)
             U_name = 'U_'+recname+'__'+self.name
             params[U_name] = U
@@ -322,6 +333,7 @@ class GRU(RecurrentLayer):
 
         for x, (parname, parout) in izip(X, self.parent.items()):
             W = tparams['W_'+parname+'__'+self.name]
+
             if x.ndim == 1:
                 if 'int' not in x.dtype:
                     x = T.cast(x, 'int64')
@@ -368,8 +380,10 @@ class GRU(RecurrentLayer):
         for recname, recout in self.recurrent.items():
             M = recout
             U = self.init_U.ortho((M, N))
+
             for j in xrange(2):
                 U = np.concatenate([U, self.init_U.ortho((M, N))], axis=-1)
+
             U_name = 'U_'+recname+'__'+self.name
             params[U_name] = U
 
@@ -408,6 +422,7 @@ class GRU2(GRU):
 
         for x, (parname, parout) in izip(X, self.parent.items()):
             W = tparams['W_'+parname+'__'+self.name]
+
             if x.ndim == 1:
                 if 'int' not in x.dtype:
                     x = T.cast(x, 'int64')
@@ -472,6 +487,7 @@ class GFGRU(GRU):
 
         for x, (parname, parout) in izip(X, self.parent.items()):
             W = tparams['W_'+parname+'__'+self.name]
+
             if x.ndim == 1:
                 if 'int' not in x.dtype:
                     x = T.cast(x, 'int64')
@@ -522,6 +538,7 @@ class GFGRU(GRU):
         for recname, recout in self.recurrent.items():
             M = recout
             U = self.init_U.ortho((M, N))
+
             for j in xrange(2):
                 U = np.concatenate([U, self.init_U.ortho((M, N))], axis=-1)
             U = np.concatenate([U, self.init_U.rand((M, Nm))], axis=-1)
