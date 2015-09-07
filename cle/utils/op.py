@@ -40,6 +40,26 @@ def add_noise_params(params, keys=['W'], std_dev=0.075):
     return nparams
 
 
+def Gaussian_sample(mu, sig, num_sample=None):
+
+    if num_sample is None:
+        num_sample = 1
+
+    mu = mu.dimshuffle(0, 'x', 1)
+    sig = sig.dimshuffle(0, 'x', 1)
+    epsilon = self.theano_rng.normal(size=(mu.shape[0],
+                                           num_sample,
+                                           mu.shape[-1]),
+                                     avg=0., std=1.,
+                                     dtype=mu.dtype)
+    z = mu + sig * epsilon
+
+    if num_sample == 1:
+        z = z.reshape((z.shape[0] * z.shape[1], -1))
+
+    return z
+
+
 def overlap_sum(X, overlap):
     """
     WRITEME
