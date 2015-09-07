@@ -110,7 +110,7 @@ mse = mse.mean()
 mse.name = 'mse'
 
 model.inputs = [x, y]
-model._params = params
+model.params = params
 model.nodes = nodes
 
 optimizer = Adam(

@@ -118,7 +118,7 @@ m_err.name = 'error_rate'
 monitor_fn = theano.function([m_x, m_y], [m_cost, m_err])
 
 model.inputs = [x, y]
-model._params = params
+model.params = params
 model.nodes = nodes
 
 # Define your optimizer: Momentum (Nesterov), RMSProp, Adam

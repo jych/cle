@@ -80,7 +80,7 @@ cost.name = 'cross_entropy'
 err.name = 'error_rate'
 
 model.inputs = [x, y]
-model._params = params
+model.params = params
 model.nodes = nodes
 
 # Define your optimizer: Momentum (Nesterov), RMSProp, Adam
