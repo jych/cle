@@ -13,7 +13,7 @@ def NllBin(y, y_hat):
     ----------
     .. todo::
     """
-    nll = T.nnet.binary_crossentropy(y_hat, y).sum(axis=1)
+    nll = T.nnet.binary_crossentropy(y_hat, y).sum(axis=y.ndim-1)
     return nll
 
 
@@ -25,7 +25,7 @@ def NllMul(y, y_hat):
     ----------
     .. todo::
     """
-    ll = (y * T.log(y_hat)).sum(axis=1)
+    ll = (y * T.log(y_hat)).sum(axis=y.ndim-1)
     nll = -ll
     return nll
 
@@ -59,7 +59,7 @@ def MSE(y, y_hat):
     ----------
     .. todo::
     """
-    mse = T.sum(T.sqr(y - y_hat), axis=-1)
+    mse = T.sum(T.sqr(y - y_hat), axis=y.ndim-1)
     return mse
 
 
@@ -73,7 +73,7 @@ def Laplace(y, mu, sig):
     mu  : FullyConnected (Linear)
     sig : FullyConnected (Softplus)
     """
-    nll = T.sum(abs(y - mu) / sig + T.log(sig) + T.log(2), axis=1)
+    nll = T.sum(abs(y - mu) / sig + T.log(sig) + T.log(2), axis=y.ndim-1)
     return nll
 
 
@@ -88,7 +88,7 @@ def Gaussian(y, mu, sig):
     sig : FullyConnected (Softplus)
     """
     nll = 0.5 * T.sum(T.sqr(y - mu) / sig**2 + 2 * T.log(sig) +
-                      T.log(2 * np.pi), axis=1)
+                      T.log(2 * np.pi), axis=y.ndim-1)
     return nll
 
 
@@ -142,7 +142,7 @@ def BiGMM(y, mu, sig, coeff, corr, binary):
     sig_2 = sig[:, 1, :]
 
     c_b = T.sum(T.xlogx.xlogy0(y[:, 0, :], binary) +
-                T.xlogx.xlogy0(1 - y[:, 0, :], 1 - binary), axis=1)
+                T.xlogx.xlogy0(1 - y[:, 0, :], 1 - binary), axis=y.ndim-1)
 
     inner1 = 0.5 * T.log(1 - corr ** 2) + T.log(sig_1) + T.log(sig_2) + T.log(
         2 * np.pi)
@@ -155,7 +155,8 @@ def BiGMM(y, mu, sig, coeff, corr, binary):
     inner2 = 0.5 * (1. / (1. - corr ** 2))
     cost = -(inner1 + (inner2 * Z))
 
-    nll = -logsumexp(T.log(coeff) + cost, axis=1) - c_b
+    nll = -logsumexp(T.log(coeff) + cost, axis=y.ndim-1) - c_b
+
     return nll
 
 
@@ -169,7 +170,8 @@ def KLGaussianStdGaussian(mu, sig):
     mu  : FullyConnected (Linear)
     sig : FullyConnected (Softplus)
     """
-    kl = T.sum(0.5 * (-2 * T.log(sig) + mu**2 + sig**2 - 1), axis=-1)
+    kl = T.sum(0.5 * (-2 * T.log(sig) + mu**2 + sig**2 - 1), axis=mu.ndim-1)
+
     return kl
 
 
@@ -191,12 +193,21 @@ def KLGaussianGaussian(mu1, sig1, mu2, sig2, keep_dims=0):
     else:
         kl = T.sum(0.5 * (2 * T.log(sig2) - 2 * T.log(sig1) +
                    (sig1**2 + (mu1 - mu2)**2) /
-                   sig2**2 - 1), axis=-1)
+                   sig2**2 - 1), axis=mu1.ndim-1)
+
     return kl
 
 
 def grbm_free_energy(v, W, X):
+    """
+    Gaussian restricted Boltzmann machine free energy
+
+    Parameters
+    ----------
+    to do::
+    """
     bias_term = 0.5*(((v - X[1])/X[2])**2).sum(axis=1)
-    hidden_term = T.log(1 + T.exp(T.dot(v/X[2], W) + X[0])).sum(axis=1)
+    hidden_term = T.log(1 + T.exp(T.dot(v/X[2], W) + X[0])).sum(axis=v.ndim-1)
     FE = bias_term -hidden_term
+
     return FE
