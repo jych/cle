@@ -15,7 +15,7 @@ from cle.cle.train.ext import (
     EarlyStopping
 )
 from cle.cle.train.opt import RMSProp
-from cle.cle.utils import error, flatten, predict, OrderedDict
+from cle.cle.utils import error, flatten, init_tparams, predict, OrderedDict
 from cle.datasets.mnist import MNIST
 
 # Set your dataset
@@ -32,16 +32,17 @@ train_data = MNIST(name='train',
 valid_data = MNIST(name='valid',
                    path=data_path)
 
-# Choose the random initialization method
-init_W = InitCell('randn')
-init_b = InitCell('zeros')
-
 # Define nodes: objects
 x, y = train_data.theano_vars()
+
 # You must use THEANO_FLAGS="compute_test_value=raise" python -m ipdb
 if debug:
     x.tag.test_value = np.zeros((batch_size, 784), dtype=np.float32)
     y.tag.test_value = np.zeros((batch_size, 1), dtype=np.float32)
+
+# Choose the random initialization method
+init_W = InitCell('randn')
+init_b = InitCell('zeros')
 
 h1 = FullyConnectedLayer(name='h1',
                          parent=['x'],
@@ -63,14 +64,14 @@ output = FullyConnectedLayer(name='output',
 nodes = [h1, output]
 
 # Initalize the nodes
+params = OrderedDict()
 for node in nodes:
-    node.initialize()
-
-params = flatten([node.get_params().values() for node in nodes])
+    params.update(node.initialize())
+params = init_tparams(params)
 
 # Build the Theano computational graph
-h1_out = h1.fprop([x])
-y_hat = output.fprop([h1_out])
+h1_out = h1.fprop([x], params)
+y_hat = output.fprop([h1_out], params)
 
 # Compute the cost
 cost = NllMulInd(y, y_hat).mean()

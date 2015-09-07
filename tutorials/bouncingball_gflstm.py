@@ -1,5 +1,6 @@
 import ipdb
 import numpy as np
+import theano
 
 from cle.cle.cost import MSE
 from cle.cle.data import Iterator
@@ -126,7 +127,7 @@ extension = [
     GradientClipping(batch_size=batch_size),
     EpochCount(100),
     Monitoring(freq=100,
-               ddout=[cost]),
+               ddout=[mse]),
     Picklize(freq=200, path=save_path)
 ]
 
@@ -135,8 +136,8 @@ mainloop = Training(
     data=Iterator(trdata, batch_size),
     model=model,
     optimizer=optimizer,
-    cost=cost,
-    outputs=[cost],
+    cost=mse,
+    outputs=[mse],
     extension=extension
 )
 mainloop.run()

@@ -7,7 +7,6 @@ from cle.cle.data import Iterator
 from cle.cle.models import Model
 from cle.cle.layers import InitCell
 from cle.cle.layers.feedforward import FullyConnectedLayer
-from cle.cle.layers.layer import DropoutLayer
 from cle.cle.train import Training
 from cle.cle.train.ext import (
     EpochCount,
@@ -17,14 +16,22 @@ from cle.cle.train.ext import (
     WeightNorm
 )
 from cle.cle.train.opt import RMSProp
-from cle.cle.utils import error, flatten, predict, OrderedDict
+from cle.cle.utils import error, init_tparams, flatten, predict, OrderedDict
+from cle.cle.utils.op import dropout, add_noise_params
 from cle.datasets.mnist import MNIST
+
+
+# Regularization parameters
+std_dev = 0.075
+inp_p = 0.9
+inp_scale = 1 / inp_p
+int_p = 0.5
+int_scale = 1 / int_p
+
 
 # Set your dataset
 data_path = '/data/lisa/data/mnist/mnist.pkl'
 save_path = '/u/chungjun/src/cle/saved/'
-#data_path = '/home/junyoung/data/mnist/mnist.pkl'
-#save_path = '/home/junyoung/src/cle/saved/'
 
 batch_size = 128
 debug = 0
@@ -36,19 +43,17 @@ train_data = MNIST(name='train',
 valid_data = MNIST(name='valid',
                     path=data_path)
 
-# Choose the random initialization method
-init_W = InitCell('rand')
-init_b = InitCell('zeros')
-
 # Define nodes: objects
 x, y = train_data.theano_vars()
-mn_x, mn_y = valid_data.theano_vars()
+
 # You must use THEANO_FLAGS="compute_test_value=raise" python -m ipdb
 if debug:
     x.tag.test_value = np.zeros((batch_size, 784), dtype=np.float32)
     y.tag.test_value = np.zeros((batch_size, 1), dtype=np.float32)
-    mn_x.tag.test_value = np.zeros((batch_size, 784), dtype=np.float32)
-    mn_y.tag.test_value = np.zeros((batch_size, 1), dtype=np.float32)
+
+# Choose the random initialization method
+init_W = InitCell('rand')
+init_b = InitCell('zeros')
 
 h1 = FullyConnectedLayer(name='h1',
                          parent=['x'],
@@ -58,20 +63,16 @@ h1 = FullyConnectedLayer(name='h1',
                          init_W=init_W,
                          init_b=init_b)
 
-d1 = DropoutLayer(name='d1', parent=['h1'], nout=1000)
-
 h2 = FullyConnectedLayer(name='h2',
-                         parent=['d1'],
+                         parent=['h1'],
                          parent_dim=[1000],
                          nout=1000,
                          unit='relu',
                          init_W=init_W,
                          init_b=init_b)
 
-d2 = DropoutLayer(name='d2', parent=['h2'], nout=1000)
-
 output = FullyConnectedLayer(name='output',
-                             parent=['d2'],
+                             parent=['h2'],
                              parent_dim=[1000],
                              nout=10,
                              unit='softmax',
@@ -83,17 +84,18 @@ output = FullyConnectedLayer(name='output',
 nodes = [h1, h2, d1, d2, output]
 
 # Initalize the nodes
+params = OrderedDict()
 for node in nodes:
-    node.initialize()
-
-# Collect parameters
-params = flatten([node.get_params().values() for node in nodes])
+    params.update(node.initialize())
+params = init_tparams(params)
+nparams = add_noise_params(params, std_dev=std_dev)
 
 # Build the Theano computational graph
-h1_out = h1.fprop([x])
-d1_out = d1.fprop([h1_out])
+d_x = inp_scale * dropout(x, p=inp_p)
+h1_out = h1.fprop([d_x], nparams)
+d1_out = int_scale * dropout(h1_out, p=int_p)
 h2_out = h2.fprop([d1_out])
-d2_out = d2.fprop([h2_out])
+d2_out = int_scale * dropout(h2_out, p=int_p)
 y_hat = output.fprop([d2_out])
 
 # Compute the cost
@@ -102,18 +104,18 @@ err = error(predict(y_hat), y)
 cost.name = 'cross_entropy'
 err.name = 'error_rate'
 
-d1.set_mode(1)
-d2.set_mode(1)
-mn_h1_out = h1.fprop([mn_x])
-mn_h2_out = h2.fprop([mn_h1_out])
-mn_y_hat = output.fprop([mn_h2_out])
+# Seperate computational graph to compute monitoring values without
+# considering the noising processes
+m_h1_out = h1.fprop([x], params)
+m_h2_out = h2.fprop([m_h1_out], params)
+m_y_hat = output.fprop([m_h2_out], params)
 
-mn_cost = NllMulInd(mn_y, mn_y_hat).mean()
-mn_err = error(predict(mn_y_hat), mn_y)
-mn_cost.name = 'cross_entropy'
-mn_err.name = 'error_rate'
+m_cost = NllMulInd(m_y, m_y_hat).mean()
+m_err = error(predict(m_y_hat), m_y)
+m_cost.name = 'cross_entropy'
+m_err.name = 'error_rate'
 
-monitor_fn = theano.function([mn_x, mn_y], [mn_cost, mn_err])
+monitor_fn = theano.function([m_x, m_y], [m_cost, m_err])
 
 model.inputs = [x, y]
 model._params = params
@@ -128,7 +130,7 @@ extension = [
     GradientClipping(),
     EpochCount(500),
     Monitoring(freq=100,
-               ddout=[mn_cost, mn_err],
+               ddout=[m_cost, m_err],
                data=[Iterator(train_data, batch_size),
                      Iterator(valid_data, batch_size)],
                monitor_fn=monitor_fn),
