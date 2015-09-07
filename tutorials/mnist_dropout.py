@@ -94,9 +94,9 @@ nparams = add_noise_params(params, std_dev=std_dev)
 d_x = inp_scale * dropout(x, p=inp_p)
 h1_out = h1.fprop([d_x], nparams)
 d1_out = int_scale * dropout(h1_out, p=int_p)
-h2_out = h2.fprop([d1_out])
+h2_out = h2.fprop([d1_out], nparams)
 d2_out = int_scale * dropout(h2_out, p=int_p)
-y_hat = output.fprop([d2_out])
+y_hat = output.fprop([d2_out], nparams)
 
 # Compute the cost
 cost = NllMulInd(y, y_hat).mean()
@@ -110,12 +110,12 @@ m_h1_out = h1.fprop([x], params)
 m_h2_out = h2.fprop([m_h1_out], params)
 m_y_hat = output.fprop([m_h2_out], params)
 
-m_cost = NllMulInd(m_y, m_y_hat).mean()
-m_err = error(predict(m_y_hat), m_y)
+m_cost = NllMulInd(y, m_y_hat).mean()
+m_err = error(predict(m_y_hat), y)
 m_cost.name = 'cross_entropy'
 m_err.name = 'error_rate'
 
-monitor_fn = theano.function([m_x, m_y], [m_cost, m_err])
+monitor_fn = theano.function([x, y], [m_cost, m_err])
 
 model.inputs = [x, y]
 model.params = params
@@ -135,7 +135,7 @@ extension = [
                      Iterator(valid_data, batch_size)],
                monitor_fn=monitor_fn),
     Picklize(freq=1000000, path=save_path),
-    WeightNorm(param_name='W')
+    WeightNorm(keys='W')
 ]
 
 mainloop = Training(
