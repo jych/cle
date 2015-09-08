@@ -18,9 +18,10 @@ from cle.cle.train.opt import RMSProp
 from cle.cle.utils import error, flatten, init_tparams, predict, OrderedDict
 from cle.datasets.mnist import MNIST
 
+
 # Set your dataset
-data_path = '/home/junyoung/data/mnist/mnist.pkl'
-save_path = '/home/junyoung/src/cle/saved/'
+data_path = '/data/lisa/data/mnist/mnist.pkl'
+save_path = '/u/chungjun/src/cle/saved/'
 
 batch_size = 128
 debug = 0
@@ -85,17 +86,17 @@ model.nodes = nodes
 
 # Define your optimizer: Momentum (Nesterov), RMSProp, Adam
 optimizer = RMSProp(
-    lr=0.001
+    lr=0.01
 )
 
 extension = [
-    GradientClipping(),
-    EpochCount(40),
-    Monitoring(freq=100,
+    GradientClipping(batch_size=batch_size, check_nan=1),
+    EpochCount(500),
+    Monitoring(freq=1000,
                ddout=[cost, err],
                data=[Iterator(train_data, batch_size),
                      Iterator(valid_data, batch_size)]),
-    Picklize(freq=200, path=save_path)
+    Picklize(freq=100000, path=save_path)
 ]
 
 mainloop = Training(

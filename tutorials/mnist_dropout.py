@@ -22,8 +22,8 @@ from cle.datasets.mnist import MNIST
 
 
 # Regularization parameters
-std_dev = 0.075
-inp_p = 0.9
+std_dev = 0.001
+inp_p = 1.0
 inp_scale = 1 / inp_p
 int_p = 0.5
 int_scale = 1 / int_p
@@ -63,16 +63,8 @@ h1 = FullyConnectedLayer(name='h1',
                          init_W=init_W,
                          init_b=init_b)
 
-h2 = FullyConnectedLayer(name='h2',
-                         parent=['h1'],
-                         parent_dim=[1000],
-                         nout=1000,
-                         unit='relu',
-                         init_W=init_W,
-                         init_b=init_b)
-
 output = FullyConnectedLayer(name='output',
-                             parent=['h2'],
+                             parent=['h1'],
                              parent_dim=[1000],
                              nout=10,
                              unit='softmax',
@@ -81,7 +73,7 @@ output = FullyConnectedLayer(name='output',
 
 
 # You will fill in a list of nodes
-nodes = [h1, h2, output]
+nodes = [h1, output]
 
 # Initalize the nodes
 params = OrderedDict()
@@ -94,9 +86,7 @@ nparams = add_noise_params(params, std_dev=std_dev)
 d_x = inp_scale * dropout(x, p=inp_p)
 h1_out = h1.fprop([d_x], nparams)
 d1_out = int_scale * dropout(h1_out, p=int_p)
-h2_out = h2.fprop([d1_out], nparams)
-d2_out = int_scale * dropout(h2_out, p=int_p)
-y_hat = output.fprop([d2_out], nparams)
+y_hat = output.fprop([d1_out], nparams)
 
 # Compute the cost
 cost = NllMulInd(y, y_hat).mean()
@@ -107,8 +97,7 @@ err.name = 'error_rate'
 # Seperate computational graph to compute monitoring values without
 # considering the noising processes
 m_h1_out = h1.fprop([x], params)
-m_h2_out = h2.fprop([m_h1_out], params)
-m_y_hat = output.fprop([m_h2_out], params)
+m_y_hat = output.fprop([m_h1_out], params)
 
 m_cost = NllMulInd(y, m_y_hat).mean()
 m_err = error(predict(m_y_hat), y)
@@ -123,18 +112,19 @@ model.nodes = nodes
 
 # Define your optimizer: Momentum (Nesterov), RMSProp, Adam
 optimizer = RMSProp(
-    lr=0.001
+    #lr=0.01
+    lr=0.005
 )
 
 extension = [
-    GradientClipping(),
+    GradientClipping(batch_size=batch_size, check_nan=1),
     EpochCount(500),
-    Monitoring(freq=100,
+    Monitoring(freq=1000,
                ddout=[m_cost, m_err],
                data=[Iterator(train_data, batch_size),
                      Iterator(valid_data, batch_size)],
                monitor_fn=monitor_fn),
-    Picklize(freq=1000000, path=save_path),
+    Picklize(freq=100000, path=save_path),
     WeightNorm(keys='W')
 ]
 
