@@ -177,7 +177,7 @@ class Monitoring(Extension, TheanoMixin):
             self.monitor_data_based_channels(mainloop)
             mt = time.time() - this_t0
             logger.info(" Elapsed time for monitoring: %f" % mt)
-            mainloop.trainlog.monitor['monitoring_time' % mt]
+            mainloop.trainlog.monitor['monitoring_time'] = mt
 
 
 class Picklize(Extension):
