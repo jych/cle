@@ -13,7 +13,7 @@ def NllBin(y, y_hat):
     ----------
     .. todo::
     """
-    nll = T.nnet.binary_crossentropy(y_hat, y).sum(axis=y.ndim-1)
+    nll = T.nnet.binary_crossentropy(y_hat, y).sum(axis=-1)
     return nll
 
 
@@ -25,7 +25,7 @@ def NllMul(y, y_hat):
     ----------
     .. todo::
     """
-    ll = (y * T.log(y_hat)).sum(axis=y.ndim-1)
+    ll = (y * T.log(y_hat)).sum(axis=-1)
     nll = -ll
     return nll
 
@@ -59,7 +59,7 @@ def MSE(y, y_hat):
     ----------
     .. todo::
     """
-    mse = T.sum(T.sqr(y - y_hat), axis=y.ndim-1)
+    mse = T.sum(T.sqr(y - y_hat), axis=-1)
     return mse
 
 
@@ -73,7 +73,7 @@ def Laplace(y, mu, sig):
     mu  : FullyConnected (Linear)
     sig : FullyConnected (Softplus)
     """
-    nll = T.sum(abs(y - mu) / sig + T.log(sig) + T.log(2), axis=y.ndim-1)
+    nll = T.sum(abs(y - mu) / sig + T.log(sig) + T.log(2), axis=-1)
     return nll
 
 
@@ -88,7 +88,7 @@ def Gaussian(y, mu, sig):
     sig : FullyConnected (Softplus)
     """
     nll = 0.5 * T.sum(T.sqr(y - mu) / sig**2 + 2 * T.log(sig) +
-                      T.log(2 * np.pi), axis=y.ndim-1)
+                      T.log(2 * np.pi), axis=-1)
     return nll
 
 
@@ -171,7 +171,7 @@ def KLGaussianStdGaussian(mu, sig):
     mu  : FullyConnected (Linear)
     sig : FullyConnected (Softplus)
     """
-    kl = T.sum(0.5 * (-2 * T.log(sig) + mu**2 + sig**2 - 1), axis=mu.ndim-1)
+    kl = T.sum(0.5 * (-2 * T.log(sig) + mu**2 + sig**2 - 1), axis=-1)
 
     return kl
 
@@ -194,7 +194,7 @@ def KLGaussianGaussian(mu1, sig1, mu2, sig2, keep_dims=0):
     else:
         kl = T.sum(0.5 * (2 * T.log(sig2) - 2 * T.log(sig1) +
                    (sig1**2 + (mu1 - mu2)**2) /
-                   sig2**2 - 1), axis=mu1.ndim-1)
+                   sig2**2 - 1), axis=-1)
 
     return kl
 

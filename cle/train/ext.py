@@ -125,6 +125,8 @@ class Monitoring(Extension, TheanoMixin):
                         raise ValueError("NaN occured in output.")
                     logger.info(" %s_%s: %f" %
                                 (data.name, ch.name, this_mean))
+                    if this_mean > 1000000:
+                        raise ValueError('explosion')
                     ch_name = "%s_%s" % (data.name, ch.name)
                     mainloop.trainlog.monitor[ch_name].append(this_mean)
                     if i < len(self.obj_monitor_ch) and self.obj_monitor_fn is not None:
