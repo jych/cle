@@ -211,7 +211,8 @@ class Picklize(Extension):
                 #secure_pickle_dump(mainloop, path)
             except Exception:
                 raise
-        if np.mod(mainloop.trainlog.batch_seen, self.force_save_freq) == 0:
+        if np.mod(mainloop.trainlog.batch_seen, self.force_save_freq) == 0 and\
+                mainloop.trainlog.batch_seen != 0:
             force_pkl_path = mainloop.name + '_' +\
                              str(mainloop.trainlog.batch_seen) +\
                              'updates.pkl'
