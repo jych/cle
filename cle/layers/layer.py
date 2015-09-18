@@ -218,7 +218,7 @@ class BatchNormLayer(StemCell):
         self.mu = sharedX(InitCell('zeros').get(self.nout), name='mu_'+self.name)
         self.sigma = sharedX(InitCell('ones').get(self.nout), name='sigma_'+self.name)
 
-    def fprop(self, X, tparams, test=0, ndim=None):
+    def fprop(self, X, tparams, test=0, running_average=1, ndim=None):
 
         if len(X) != len(self.parent):
             raise AttributeError("The number of inputs does not match "
@@ -264,12 +264,20 @@ class BatchNormLayer(StemCell):
                 z_true = T.cast(T.neq(z.sum(axis=1), 0.0).sum(), dtype=theano.config.floatX)
                 z_mu = z.sum(axis=0) / z_true
                 z_sigma = T.sqrt(((z - z_mu[None, :])**2).sum(axis=0) / z_true)
-                running_mu = theano.clone(self.mu, share_inputs=False)
-                running_mu.default_update = (self.rho * self.mu + (1 - self.rho) * z_mu)
-                running_sigma = theano.clone(self.sigma, share_inputs=False)
-                running_sigma.default_update = (self.rho * self.sigma + (1 - self.rho) * z_sigma)
-                z_mu += 0 * running_mu
-                z_sigma += 0 * running_sigma
+                if running_average:
+                    running_mu = theano.clone(self.mu, share_inputs=False)
+                    running_mu.default_update = (self.rho * self.mu + (1 - self.rho) * z_mu)
+                    running_sigma = theano.clone(self.sigma, share_inputs=False)
+                    running_sigma.default_update = (self.rho * self.sigma + (1 - self.rho) * z_sigma)
+                    z_mu += 0 * running_mu
+                    z_sigma += 0 * running_sigma
+                else:
+                    mu = theano.clone(self.mu, share_inputs=False)
+                    mu.default_update = z_mu
+                    sigma = theano.clone(self.sigma, share_inputs=False)
+                    sigma.default_update = z_sigma
+                    z_mu += 0 * mu
+                    z_sigma += 0 * sigma
             else:
                 z_mu = self.mu
                 z_sigma = self.sigma
