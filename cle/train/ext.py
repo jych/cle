@@ -84,7 +84,7 @@ class EpochCount(Extension):
 
 class Monitoring(Extension, TheanoMixin):
     def __init__(self, freq, ddout=None, data=None, monitor_fn=None,
-            obj_monitor_fn=None, obj_monitor_ch=[]):
+                 obj_monitor_fn=None, obj_monitor_ch=[], explosion_limit=1e8):
         """
         obj_monitor_fn :
             Python function, a function adapted to the mean of main objective,
@@ -100,6 +100,7 @@ class Monitoring(Extension, TheanoMixin):
         self.monitor_fn = monitor_fn
         self.obj_monitor_fn = obj_monitor_fn
         self.obj_monitor_ch = obj_monitor_ch
+        self.explosion_limit = explosion_limit
 
     def monitor_data_based_channels(self, mainloop):
         """
@@ -125,7 +126,7 @@ class Monitoring(Extension, TheanoMixin):
                         raise ValueError("NaN occured in output.")
                     logger.info(" %s_%s: %f" %
                                 (data.name, ch.name, this_mean))
-                    if this_mean > 1000000:
+                    if this_mean > self.explosion_limit:
                         raise ValueError('explosion')
                     ch_name = "%s_%s" % (data.name, ch.name)
                     mainloop.trainlog.monitor[ch_name].append(this_mean)

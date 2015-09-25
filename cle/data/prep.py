@@ -61,7 +61,7 @@ class StaticPrepMixin(object):
             X = (X - X_min) / (X_max - X_min)
         return (X, X_max, X_min)
 
- 
+
 class SequentialPrepMixin(object):
     """
     Preprocessing mixin for sequential data

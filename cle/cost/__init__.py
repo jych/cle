@@ -51,7 +51,7 @@ def NllMulInd(y, y_hat):
     return nll
 
 
-def MSE(y, y_hat):
+def MSE(y, y_hat, use_sum=1):
     """
     Mean squared error
 
@@ -59,7 +59,10 @@ def MSE(y, y_hat):
     ----------
     .. todo::
     """
-    mse = T.sum(T.sqr(y - y_hat), axis=-1)
+    if use_sum:
+        mse = T.sum(T.sqr(y - y_hat), axis=-1)
+    else:
+        mse = T.mean(T.sqr(y - y_hat), axis=-1)
     return mse
 
 

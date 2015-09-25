@@ -169,3 +169,27 @@ def real_to_complex(X):
         new_x = real + imag*1.0j
         new_X.append(new_x)
     return np.array(new_X)
+
+
+def numpy_rfft(X):
+    """
+    Apply real FFT to X (numpy)
+
+    Parameters
+    ----------
+    X     : list of lists or ndArrays
+    """
+    X = np.array([np.fft.rfft(x) for x in X])
+    return X
+
+
+def numpy_irfft(X):
+    """
+    Apply real inverse FFT to X (numpy)
+
+    Parameters
+    ----------
+    X     : list of lists or ndArrays
+    """
+    X = np.array([np.fft.irfft(x) for x in X])
+    return X
