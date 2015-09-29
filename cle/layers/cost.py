@@ -5,10 +5,11 @@ import scipy
 import theano
 import theano.tensor as T
 
-from theano.compat.python2x import OrderedDict
 from cle.cle.cost import Gaussian, GMM, NllBin, NllMul, MSE
 from cle.cle.layers import RandomCell, StemCell
 from cle.cle.utils import sharedX, tolist, unpack, predict
+
+from theano.compat.python2x import OrderedDict
 
 
 class CostLayer(StemCell):
@@ -119,7 +120,7 @@ class GaussianLayer(CostLayer):
         dic = self.__dict__.copy()
         dic.pop('fprop')
         return dic
-    
+
     def __setstate__(self, state):
         self.__dict__.update(state)
         if self.use_sample:
@@ -146,15 +147,19 @@ class GMMLayer(GaussianLayer):
             return cost.mean()
 
     def sample(self, X):
+
         mu = X[0]
         sig = X[1]
         coeff = X[2]
+
         mu = mu.reshape((mu.shape[0],
                          mu.shape[1]/coeff.shape[-1],
                          coeff.shape[-1]))
+
         sig = sig.reshape((sig.shape[0],
                            sig.shape[1]/coeff.shape[-1],
                            coeff.shape[-1]))
+
         idx = predict(
             self.theano_rng.multinomial(
                 pvals=coeff,
@@ -162,42 +167,84 @@ class GMMLayer(GaussianLayer):
             ),
             axis=1
         )
+
         mu = mu[T.arange(mu.shape[0]), :, idx]
         sig = sig[T.arange(sig.shape[0]), :, idx]
+
         epsilon = self.theano_rng.normal(size=mu.shape,
                                          avg=0., std=1.,
                                          dtype=mu.dtype)
+
         z = mu + sig * epsilon
+
         return z
 
+    """
     def argmax_mean(self, X):
+
         mu = X[0]
         coeff = X[1]
+
         mu = mu.reshape((mu.shape[0],
                          mu.shape[1]/coeff.shape[-1],
                          coeff.shape[-1]))
+
         sig = sig.reshape((sig.shape[0],
                            sig.shape[1]/coeff.shape[-1],
-                           coeff.shape[-1]))       
+                           coeff.shape[-1]))
+
         idx = predict(coeff)
         mu = mu[T.arange(mu.shape[0]), :, idx]
         sig = sig[T.arange(sig.shape[0]), :, idx]
+
         epsilon = self.theano_rng.normal(size=mu.shape,
                                          avg=0., std=1.,
                                          dtype=mu.dtype)
-        z = mu + sig * epsilon
-        return z, mu
 
-    def sample_mean(self, X):
+        z = mu + sig * epsilon
+
+        return z, mu
+    """
+    def argmax_mean(self, X):
+
         mu = X[0]
         sig = X[1]
         coeff = X[2]
+
         mu = mu.reshape((mu.shape[0],
                          mu.shape[1]/coeff.shape[-1],
                          coeff.shape[-1]))
+
         sig = sig.reshape((sig.shape[0],
                            sig.shape[1]/coeff.shape[-1],
                            coeff.shape[-1]))
+
+        idx = predict(coeff)
+        mu = mu[T.arange(mu.shape[0]), :, idx]
+        sig = sig[T.arange(sig.shape[0]), :, idx]
+
+        epsilon = self.theano_rng.normal(size=mu.shape,
+                                         avg=0., std=1.,
+                                         dtype=mu.dtype)
+
+        z = mu + sig * epsilon
+
+        return z, mu
+
+    def sample_mean(self, X):
+
+        mu = X[0]
+        sig = X[1]
+        coeff = X[2]
+
+        mu = mu.reshape((mu.shape[0],
+                         mu.shape[1]/coeff.shape[-1],
+                         coeff.shape[-1]))
+
+        sig = sig.reshape((sig.shape[0],
+                           sig.shape[1]/coeff.shape[-1],
+                           coeff.shape[-1]))
+
         idx = predict(
             self.theano_rng.multinomial(
                 pvals=coeff,
@@ -205,12 +252,16 @@ class GMMLayer(GaussianLayer):
             ),
             axis=1
         )
+
         mu = mu[T.arange(mu.shape[0]), :, idx]
         sig = sig[T.arange(sig.shape[0]), :, idx]
+
         epsilon = self.theano_rng.normal(size=mu.shape,
                                          avg=0., std=1.,
                                          dtype=mu.dtype)
+
         z = mu + sig * epsilon
+
         return z, mu
 
 

@@ -2,6 +2,8 @@ import ipdb
 import numpy as np
 import theano.tensor as T
 
+from cle.cle.utils import predict
+
 from theano.compat.python2x import OrderedDict
 from theano.sandbox.rng_mrg import MRG_RandomStreams
 
@@ -58,6 +60,88 @@ def Gaussian_sample(mu, sig, num_sample=None, theano_rng=default_theano_rng):
         z = z.reshape((z.shape[0] * z.shape[1], -1))
 
     return z
+
+
+def GMM_sample(mu, sig, coeff, theano_rng=default_theano_rng):
+
+    mu = mu.reshape((mu.shape[0],
+                     mu.shape[1]/coeff.shape[-1],
+                     coeff.shape[-1]))
+
+    sig = sig.reshape((sig.shape[0],
+                       sig.shape[1]/coeff.shape[-1],
+                       coeff.shape[-1]))
+
+    idx = predict(
+        theano_rng.multinomial(
+            pvals=coeff,
+            dtype=coeff.dtype
+        ),
+        axis=1
+    )
+
+    mu = mu[T.arange(mu.shape[0]), :, idx]
+    sig = sig[T.arange(sig.shape[0]), :, idx]
+    epsilon = theano_rng.normal(size=mu.shape,
+                                avg=0., std=1.,
+                                dtype=mu.dtype)
+
+    z = mu + sig * epsilon
+
+    return z
+
+
+def GMM_argmax_mean(mu, sig, coeff, theano_rng=default_theano_rng):
+
+    mu = mu.reshape((mu.shape[0],
+                     mu.shape[1]/coeff.shape[-1],
+                     coeff.shape[-1]))
+
+    sig = sig.reshape((sig.shape[0],
+                       sig.shape[1]/coeff.shape[-1],
+                       coeff.shape[-1]))
+
+    idx = predict(coeff)
+    mu = mu[T.arange(mu.shape[0]), :, idx]
+    sig = sig[T.arange(sig.shape[0]), :, idx]
+
+    epsilon = theano_rng.normal(size=mu.shape,
+                                avg=0., std=1.,
+                                dtype=mu.dtype)
+
+    z = mu + sig * epsilon
+
+    return z, mu
+
+
+def GMM_sample_mean(mu, sig, coeff, theano_rng=default_theano_rng):
+
+    mu = mu.reshape((mu.shape[0],
+                     mu.shape[1]/coeff.shape[-1],
+                     coeff.shape[-1]))
+
+    sig = sig.reshape((sig.shape[0],
+                       sig.shape[1]/coeff.shape[-1],
+                       coeff.shape[-1]))
+
+    idx = predict(
+        theano_rng.multinomial(
+            pvals=coeff,
+            dtype=coeff.dtype
+        ),
+        axis=1
+    )
+
+    mu = mu[T.arange(mu.shape[0]), :, idx]
+    sig = sig[T.arange(sig.shape[0]), :, idx]
+
+    epsilon = theano_rng.normal(size=mu.shape,
+                                avg=0., std=1.,
+                                dtype=mu.dtype)
+
+    z = mu + sig * epsilon
+
+    return z, mu
 
 
 def overlap_sum(X, overlap):
