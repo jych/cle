@@ -156,20 +156,20 @@ class LSTM(RecurrentLayer):
         z += tparams['b_'+self.name]
 
         # Compute activations of gating units
-        i_on = T.nnet.sigmoid(z[:, self.nout:2*self.nout])
-        f_on = T.nnet.sigmoid(z[:, 2*self.nout:3*self.nout])
-        o_on = T.nnet.sigmoid(z[:, 3*self.nout:])
+        i_t = T.nnet.sigmoid(z[:, self.nout:2*self.nout])
+        f_t = T.nnet.sigmoid(z[:, 2*self.nout:3*self.nout])
+        o_t = T.nnet.sigmoid(z[:, 3*self.nout:])
 
         # Update hidden & cell states
         z_t = T.set_subtensor(
             z_t[:, self.nout:],
-            f_on * z_t[:, self.nout:] +
-            i_on * self.nonlin(z[:, :self.nout])
+            f_t * z_t[:, self.nout:] +
+            i_t * self.nonlin(z[:, :self.nout])
         )
 
         z_t = T.set_subtensor(
             z_t[:, :self.nout],
-            o_on * self.nonlin(z_t[:, self.nout:])
+            o_t * self.nonlin(z_t[:, self.nout:])
         )
 
         z_t.name = self.name
@@ -249,9 +249,9 @@ class GFLSTM(LSTM):
         z += tparams['b_'+self.name]
 
         # Compute activations of gating units
-        i_on = T.nnet.sigmoid(z[:, self.nout:2*self.nout])
-        f_on = T.nnet.sigmoid(z[:, 2*self.nout:3*self.nout])
-        o_on = T.nnet.sigmoid(z[:, 3*self.nout:4*self.nout])
+        i_t = T.nnet.sigmoid(z[:, self.nout:2*self.nout])
+        f_t = T.nnet.sigmoid(z[:, 2*self.nout:3*self.nout])
+        o_t = T.nnet.sigmoid(z[:, 3*self.nout:4*self.nout])
         gron = T.nnet.sigmoid(z[:, 4*self.nout:])
         c_t = z[:, :self.nout]
 
@@ -264,13 +264,13 @@ class GFLSTM(LSTM):
         # Update hidden & cell states
         z_t = T.set_subtensor(
             z_t[:, self.nout:],
-            f_on * z_t[:, self.nout:] +
-            i_on * self.nonlin(c_t)
+            f_t * z_t[:, self.nout:] +
+            i_t * self.nonlin(c_t)
         )
 
         z_t = T.set_subtensor(
             z_t[:, :self.nout],
-            o_on * self.nonlin(z_t[:, self.nout:])
+            o_t * self.nonlin(z_t[:, self.nout:])
         )
 
         z_t.name = self.name
