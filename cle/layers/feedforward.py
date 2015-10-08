@@ -59,7 +59,12 @@ class FullyConnectedLayer(StemCell):
         elif self.use_bias:
             z += tparams['b_'+self.name]
 
-        z = self.nonlin(z) + self.cons
+        if z.ndim == 3:
+            z_shape = z.shape
+            z = self.nonlin(z.reshape((z_shape[0]*z_shape[1], -1))).reshape((z_shape[0], z_shape[1], -1))
+            z += self.cons
+        elif z.ndim == 2:
+            z = self.nonlin(z) + self.cons
         z.name = self.name
 
         return z
