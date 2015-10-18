@@ -26,6 +26,7 @@ class RecurrentLayer(StemCell):
                  self_recurrent=1,
                  init_U=InitCell('ortho'),
                  **kwargs):
+
         super(RecurrentLayer, self).__init__(**kwargs)
         self.recurrent = OrderedDict()
 
