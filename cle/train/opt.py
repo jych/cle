@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 class Optimizer(object):
+
     def __init__(self, lr, lr_scalers=None):
         """
         .. todo::
@@ -19,6 +20,7 @@ class Optimizer(object):
             WRITEME
         """
         self.lr = sharedX(lr)
+
         if lr_scalers is not None:
             self.lr_scalers = lr_scalers
         else:
@@ -53,6 +55,7 @@ class Momentum(Optimizer):
                  **kwargs):
         self.__dict__.update(locals())
         del self.self
+
         super(Momentum, self).__init__(**kwargs)
 
     def get_updates(self, grads):
@@ -62,6 +65,7 @@ class Momentum(Optimizer):
             WRITEME
         """
         updates = OrderedDict()
+
         for p, g in grads.items():
             lr_scaler = self.lr_scalers.get(str(p), 1.)
             u = sharedX(p.get_value() * 0.)
@@ -71,6 +75,7 @@ class Momentum(Optimizer):
             p_t = p + u_t
             updates[u] = u_t
             updates[p] = p_t
+
         return updates
 
     def monitor(self):
@@ -87,6 +92,7 @@ class RMSProp(Optimizer):
     def __init__(self, mom=0.9, sec_mom=0.95, e=1e-4, **kwargs):
         self.__dict__.update(locals())
         del self.self
+
         super(RMSProp, self).__init__(**kwargs)
 
     def get_updates(self, grads):
@@ -96,6 +102,7 @@ class RMSProp(Optimizer):
             WRITEME
         """
         updates = OrderedDict()
+
         for p, g in grads.items():
             lr_scaler = self.lr_scalers.get(str(p), 1.)
             u = sharedX(p.get_value() * 0.)
@@ -110,6 +117,7 @@ class RMSProp(Optimizer):
             updates[sqr_grad] = sqr_grad_t
             updates[u] = u_t
             updates[p] = p_t
+
         return updates
 
     def monitor(self):
@@ -128,6 +136,7 @@ class Adam(Optimizer):
         self.__dict__.update(locals())
         del self.self
         super(Adam, self).__init__(**kwargs)
+
         if theano.config.floatX == 'float16':
             self.lambd = 1 - 1e-7
             self.e = 1e-7
@@ -140,6 +149,7 @@ class Adam(Optimizer):
         """
         updates = OrderedDict()
         cnt = sharedX(0, 'counter')
+
         for p, g in grads.items():
             lr_scaler = self.lr_scalers.get(str(p), 1.)
             m = sharedX(p.get_value() * 0.)
@@ -154,7 +164,9 @@ class Adam(Optimizer):
             updates[m] = m_t
             updates[v] = v_t
             updates[p] = p_t
+
         updates[cnt] = cnt + 1
+
         return updates
 
     def monitor(self):
