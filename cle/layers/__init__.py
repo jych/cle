@@ -210,9 +210,12 @@ class StemCell(NonlinCell):
                  use_bias=1,
                  lr_scaler=1.,
                  **kwargs):
+
         super(StemCell, self).__init__(**kwargs)
+
         if name is None:
             name = self.__class__.name__.lower()
+
         self.name = name
         self.nout = nout
         self.init_W = init_W
@@ -220,6 +223,7 @@ class StemCell(NonlinCell):
         self.cons = cons
         self.parent = OrderedDict()
         parent_dim = tolist(parent_dim)
+
         for i, par in enumerate(tolist(parent)):
             if len(parent_dim) != 0 and len(parent) != 0:
                 if len(parent) != len(parent_dim):
