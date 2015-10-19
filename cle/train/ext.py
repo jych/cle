@@ -121,6 +121,7 @@ class Monitoring(Extension, TheanoMixin):
                 for batch in data:
                     this_out = self.monitor_fn(*batch)
                     batch_record.append(this_out)
+
                 data_record.append(np.asarray(batch_record))
 
             for record, data in zip(data_record, self.data):
