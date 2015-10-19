@@ -111,25 +111,33 @@ class Monitoring(Extension, TheanoMixin):
         if self.monitor_fn is None:
             inputs = mainloop.inputs
             self.monitor_fn = self.build_theano_graph(inputs, self.ddout)
+
         if self.data is not None:
             data_record = []
+
             for data in self.data:
                 batch_record = []
+
                 for batch in data:
                     this_out = self.monitor_fn(*batch)
                     batch_record.append(this_out)
                 data_record.append(np.asarray(batch_record))
+
             for record, data in zip(data_record, self.data):
                 for i, ch in enumerate(self.ddout):
                     this_mean = record[:, i].mean()
+
                     if this_mean is np.nan:
                         raise ValueError("NaN occured in output.")
                     logger.info(" %s_%s: %f" %
                                 (data.name, ch.name, this_mean))
+
                     if this_mean > self.explosion_limit:
                         raise ValueError('explosion')
+
                     ch_name = "%s_%s" % (data.name, ch.name)
                     mainloop.trainlog.monitor[ch_name].append(this_mean)
+
                     if i < len(self.obj_monitor_ch) and self.obj_monitor_fn is not None:
                         obj_monitor_val = self.obj_monitor_fn(this_mean)
                         ch_name = "%s_%s" % (data.name, self.obj_monitor_ch[i])
