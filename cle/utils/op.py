@@ -32,13 +32,18 @@ def add_noise(x, std_dev=0.075, theano_rng=default_theano_rng):
 
 
 def add_noise_params(params, keys=['W'], std_dev=0.075):
+
     nparams = OrderedDict()
+
     for param in params.items():
+        key_in = 0
         for key in keys:
             if key in param[0]:
                 nparams[param[0]] = add_noise(param[1].copy(), std_dev=std_dev)
-            else:
-                nparams[param[0]] = param[1].copy()
+                key_in = 1
+        if not key_in:
+            nparams[param[0]] = param[1].copy()
+
     return nparams
 
 
