@@ -45,20 +45,25 @@ class GradientClipping(Extension):
         """
         grads = mainloop.grads
         g_norm = 0.
+
         for p, g in grads.items():
             g /= T.cast(self.batch_size, dtype=theano.config.floatX)
             grads[p] = g
             g_norm += (g**2).sum()
+
         if self.check_nan:
             not_finite = T.or_(T.isnan(g_norm), T.isinf(g_norm))
+
         g_norm = T.sqrt(g_norm)
         scaler = self.scaler / T.maximum(self.scaler, g_norm)
+
         if self.check_nan:
             for p, g in grads.items():
                 grads[p] = T.switch(not_finite, 0.1 * p, g * scaler)
         else:
             for p, g in grads.items():
                 grads[p] = g * scaler
+
         mainloop.grads = grads
 
 
@@ -175,6 +180,7 @@ class Monitoring(Extension, TheanoMixin):
             logger.info(" Forward-prop based")
             logger.info(" ..................")
             output_channel = [out.name for out in mainloop.outputs]
+
             if log.batch_seen == 0:
                 logger.info(" initial_monitoring")
             else:
@@ -183,6 +189,7 @@ class Monitoring(Extension, TheanoMixin):
                     if this_mean is np.nan:
                         raise ValueError("NaN occured in output.")
                     logger.info(" this_batch_%s: %f" % (out, this_mean))
+
             this_t0 = time.time()
             self.monitor_data_based_channels(mainloop)
             mt = time.time() - this_t0
@@ -212,6 +219,7 @@ class Picklize(Extension):
             pkl_path = mainloop.name + '.pkl'
             path = os.path.join(self.path, pkl_path)
             logger.info(" Saving model to: %s" % path)
+
             try:
                 import sys
                 sys.setrecursionlimit(50000)
@@ -221,6 +229,7 @@ class Picklize(Extension):
                 #secure_pickle_dump(mainloop, path)
             except Exception:
                 raise
+
         if np.mod(mainloop.trainlog.batch_seen, self.force_save_freq) == 0 and\
                 mainloop.trainlog.batch_seen != 0:
             force_pkl_path = mainloop.name + '_' +\
@@ -228,6 +237,7 @@ class Picklize(Extension):
                              'updates.pkl'
             force_path = os.path.join(self.path, force_pkl_path)
             logger.info(" Saving model to: %s" % force_path)
+
             try:
                 import sys
                 sys.setrecursionlimit(50000)
@@ -250,14 +260,19 @@ class EarlyStopping(Extension):
         self.name = 'ext_save'
         self.freq = freq
         self.force_save_freq = force_save_freq
+
         if not os.path.exists(path):
             os.makedirs(path)
+
         self.path = path
         self.best = sys.float_info.max
         self.minimize_ = minimize
+
         if not self.minimize_:
             self.best *= -1
+
         self.channel = channel
+
         if self.channel is None:
             self.channel = 'valid_nll'
             #raise AttributeError("channel is required for early stopping.")
@@ -269,17 +284,20 @@ class EarlyStopping(Extension):
         if len(mainloop.trainlog.monitor['update']) > 0:
             if np.mod(mainloop.trainlog.batch_seen, self.freq) == 0 or mainloop.endloop:
                 token = 0
+
                 if self.minimize_:
                     if mainloop.trainlog.monitor[self.channel][-1] < self.best:
                         token = 1
                 else:
                     if mainloop.trainlog.monitor[self.channel][-1] > self.best:
                         token = 1
+
                 if token:
                     self.best = mainloop.trainlog.monitor[self.channel][-1]
                     pkl_path = mainloop.name + '_best.pkl'
                     path = os.path.join(self.path, pkl_path)
                     logger.info(" Saving best model to: %s" % path)
+
                     try:
                         import sys
                         sys.setrecursionlimit(50000)
@@ -289,6 +307,7 @@ class EarlyStopping(Extension):
                         #secure_pickle_dump(mainloop, path)
                     except Exception:
                         raise
+
                     if self.force_save_freq is not None:
                         this_scaler = (mainloop.trainlog.batch_seen /
                                       self.force_save_freq)
@@ -298,6 +317,7 @@ class EarlyStopping(Extension):
                                          'updates.pkl'
                         force_path = os.path.join(self.path, force_pkl_path)
                         logger.info(" Saving best model to: %s" % force_path)
+
                         try:
                             import sys
                             sys.setrecursionlimit(50000)
@@ -355,11 +375,14 @@ class WeightNorm(Extension):
             for key in self.keys:
                 if key in str(k):
                     token = 1
+
                     for waiver in self.waivers:
                         if waiver in str(k):
                             token = 0
+
                     if token:
                         updated_param = mainloop.updates[k]
+
                         if self.is_vector:
                             col_norms = T.sqrt(T.sqr(updated_param).sum(axis=0))
                             desired_norms = T.clip(col_norms, 0, self.weight_norm)
