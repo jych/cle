@@ -70,8 +70,10 @@ class Momentum(Optimizer):
             lr_scaler = self.lr_scalers.get(str(p), 1.)
             u = sharedX(p.get_value() * 0.)
             u_t = self.mom * u - self.lr * g
+
             if self.nesterov:
                 u_t = self.mom * u_t - lr_scaler * self.lr * g
+
             p_t = p + u_t
             updates[u] = u_t
             updates[p] = p_t
@@ -139,7 +141,7 @@ class Adam(Optimizer):
 
         if theano.config.floatX == 'float16':
             self.lambd = 1 - 1e-7
-            self.e = 1e-7
+            self.eps = 1e-7
 
     def get_updates(self, grads):
         """
@@ -148,24 +150,67 @@ class Adam(Optimizer):
             WRITEME
         """
         updates = OrderedDict()
-        cnt = sharedX(0, 'counter')
+        i = sharedX(0., 'counter')
+        i_t = i + 1.
+        b1 = self.b1 * self.lambd**i
+        #b2 = self.b2 * self.lambd**i
+        b1_t = self.b1 ** i_t
+        b2_t = self.b2 ** i_t
 
         for p, g in grads.items():
             lr_scaler = self.lr_scalers.get(str(p), 1.)
             m = sharedX(p.get_value() * 0.)
             v = sharedX(p.get_value() * 0.)
-            b1 = self.b1 * self.lambd**cnt
             m_t = b1 * m + (1 - b1) * g
+            #v_t = b2 * v + (1 - b2) * g**2
             v_t = self.b2 * v + (1 - self.b2) * g**2
-            m_t_hat = m_t / (1. - self.b1**(cnt + 1))
-            v_t_hat = v_t / (1. - self.b2**(cnt + 1))
-            g_t = m_t_hat / (T.sqrt(v_t_hat) + self.e)
+            m_t_hat = m_t / (1. - b1_t)
+            v_t_hat = v_t / (1. - b2_t)
+            g_t = m_t_hat / (T.sqrt(v_t_hat) + self.eps)
             p_t = p - lr_scaler * self.lr * g_t
             updates[m] = m_t
             updates[v] = v_t
             updates[p] = p_t
 
-        updates[cnt] = cnt + 1
+        updates[i] = i_t
+
+        return updates
+
+    def monitor(self):
+        logger.info(" Learning rate: %f" % self.lr.get_value())
+        logger.info(" Beta_1: %f" % self.b1)
+        logger.info(" Beta_2: %f" % self.b2)
+
+
+class Adam2(Adam):
+    def get_updates(self, grads):
+        """
+        .. todo::
+
+            WRITEME
+        """
+        updates = OrderedDict()
+        i = sharedX(0., 'counter')
+        i_t = i + 1.
+        b1_t = self.b1**i_t
+        b2_t = self.b2**i_t
+        lr_t = self.lr * T.sqrt(1. - b2_t) / (1 - b1_t)
+        #b1 = 1 - self.b1 * self.lambd**i
+
+        for p, g in grads.items():
+            lr_scaler = self.lr_scalers.get(str(p), 1.)
+            m = sharedX(p.get_value() * 0.)
+            v = sharedX(p.get_value() * 0.)
+            #m_t = b1 * m + (1 - b1) * g
+            m_t = self.b1 * m + (1 - self.b1) * g
+            v_t = self.b2 * v + (1 - self.b2) * g**2
+            g_t = m_t / (T.sqrt(v_t) + self.eps)
+            p_t = p - lr_scaler * lr_t * g_t
+            updates[m] = m_t
+            updates[v] = v_t
+            updates[p] = p_t
+
+        updates[i] = i_t
 
         return updates
 

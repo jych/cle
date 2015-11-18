@@ -94,7 +94,6 @@ class Training(PickleMixin, TheanoMixin):
             self.trainlog.monitor['time'].append(time.time() - batch_t0)
             self.trainlog.monitor['update'].append(this_cost)
             self.trainlog.batch_seen += 1
-            #self.run_extension('ext_save')
             self.run_extension('ext_schedule')
 
         self.trainlog.epoch_seen += 1
