@@ -134,7 +134,7 @@ class Adam(Optimizer):
 
         WRITEME
     """
-    def __init__(self, b1=0.9, b2=0.999, lambd=1-1e-8, e=1e-8, **kwargs):
+    def __init__(self, b1=0.9, b2=0.999, lambd=1-1e-8, eps=1e-8, **kwargs):
         self.__dict__.update(locals())
         del self.self
         super(Adam, self).__init__(**kwargs)
