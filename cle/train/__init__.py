@@ -19,11 +19,12 @@ class Data(object):
         if multi_process > 0:
             self.queue = Queue()
             processes = [None] * multi_process
-            for midx in xrange(multi_process):
-                processes[midx] = Process(target=self.multi_process_slices)
-                processes[midx].start()
+            for mid in xrange(multi_process):
+                processes[mid] = Process(target=self.multi_process_slices,
+                                         args=(mid,))
+                processes[mid].start()
 
-    def multi_process_slices(self):
+    def multi_process_slices(self, mid=-1):
         raise NotImplementedError(
             str(type(self)) + " does not implement Data.multi_process_slices.")
 
