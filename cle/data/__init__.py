@@ -19,20 +19,21 @@ class Data(object):
         if multi_process > 0:
             self.queue = Queue()
             processes = [None] * multi_process
-            for midx in xrange(multi_process):
-                processes[midx] = Process(target=self.multi_process_slices)
-                processes[midx].start()
+            for mid in xrange(multi_process):
+                processes[mid] = Process(target=self.multi_process_slices,
+                                         args=(mid,))
+                processes[mid].start()
 
-    def multi_process_slices(self):
+    def multi_process_slices(self, mid=-1):
         raise NotImplementedError(
-            str(type(self)) + " does not implement Data.slice.")
+            str(type(self)) + " does not implement Data.multi_process_slices.")
 
     def load(self, path):
         return np.load(path)
 
     def slices(self):
         raise NotImplementedError(
-            str(type(self)) + " does not implement Data.slice.")
+            str(type(self)) + " does not implement Data.slices.")
 
     def num_examples(self):
         return max(mat.shape[0] for mat in self.data)
@@ -87,7 +88,6 @@ class Iterator(object):
             end = self.end - self.end % self.batch_size
             for idx in xrange(start, end, self.batch_size):
                 yield self.data.slices(idx, idx + self.batch_size)
-
 
 
 class DesignMatrix(Data):
