@@ -1,143 +1,151 @@
 import ipdb
-import logging
-import theano.tensor as T
-import time
+import numpy as np
 
-from cle.cle.graph import TheanoMixin
-from cle.cle.models import Model
-from cle.cle.utils import PickleMixin, tolist
-
-from collections import defaultdict
-from theano.compat.python2x import OrderedDict
-
-from itertools import izip
+from multiprocessing import Process, Queue
 
 
-logging.basicConfig(level=logging.INFO, format='%(message)s')
-logger = logging.getLogger(__name__)
-
-
-class Training(PickleMixin, TheanoMixin):
+class Data(object):
     """
-    WRITEME
+    Abstract class for data
 
     Parameters
     ----------
     .. todo::
     """
-    def __init__(self,
-                 name,
-                 data,
-                 model,
-                 optimizer,
-                 cost,
-                 outputs,
-                 debug_print=0,
-                 trainlog=None,
-                 extension=None):
+    def __init__(self, name=None, path=None, multi_process=0):
         self.name = name
-        self.data = data
-        self.model = model
-        self.optimizer = optimizer
-        self.inputs = model.inputs
-        self.cost = cost
-        self.outputs = tolist(outputs)
-        self.updates = OrderedDict()
-        self.updates.update(model.updates)
-        self.extension = extension
-        self.debug_print = debug_print
-        lr_scalers = OrderedDict()
-        for node in self.model.nodes:
-            lr_scalers[node.name] = node.lr_scaler
-        self.optimizer.lr_scalers = lr_scalers
+        self.data = self.load(path)
+        self.multi_process = multi_process
+        if multi_process > 0:
+            self.queue = Queue()
+            processes = [None] * multi_process
+            for midx in xrange(multi_process):
+                processes[midx] = Process(target=self.multi_process_slices)
+                processes[midx].start()
 
-        t0 = time.time()
-        self.cost_fn = self.build_training_graph()
-        print "Elapsed compilation time: %f" % (time.time() - t0)
-        if self.debug_print:
-            from theano.printing import debugprint
-            debugprint(self.cost_fn)
-        if trainlog is None:
-            self.trainlog = TrainLog()
-        else:
-            self.trainlog = trainlog
-        self.endloop = 0
+    def multi_process_slices(self):
+        raise NotImplementedError(
+            str(type(self)) + " does not implement Data.slice.")
 
-    def build_training_graph(self):
+    def load(self, path):
+        return np.load(path)
 
-        self.run_extension('ext_regularize_pre_grad')
-        self.grads = OrderedDict(izip(self.model.params.values(),
-                                      T.grad(self.cost, self.model.params.values())))
-        self.run_extension('ext_grad')
-        grads = self.optimizer.get_updates(self.grads)
+    def slices(self):
+        raise NotImplementedError(
+            str(type(self)) + " does not implement Data.slice.")
 
-        for key, val in grads.items():
-            self.updates[key] = val
+    def num_examples(self):
+        return max(mat.shape[0] for mat in self.data)
 
-        self.run_extension('ext_regularize_post_grad')
-
-        return self.build_theano_graph(self.inputs, self.outputs, self.updates)
-
-    def run(self):
-        logger.info("Entering main loop")
-        while self.run_epoch():
-            pass
-        logger.info("Terminating main loop")
-
-    def run_epoch(self):
-
-        for batch in self.data:
-            self.run_extension('ext_monitor')
-            self.run_extension('ext_save')
-            batch_t0 = time.time()
-            this_cost = self.cost_fn(*batch)
-            self.trainlog.monitor['time'].append(time.time() - batch_t0)
-            self.trainlog.monitor['update'].append(this_cost)
-            self.trainlog.batch_seen += 1
-            self.run_extension('ext_schedule')
-
-        self.trainlog.epoch_seen += 1
-        self.run_extension('ext_term')
-
-        if self.end_training():
-            self.run_extension('ext_monitor')
-            self.run_extension('ext_save')
-            return False
-
-        return True
-
-    def find_extension(self, name):
-
-        try:
-            exts = [extension for extension in self.extension
-                    if extension.name == name]
-            if len(exts) > 0:
-                return_val = 1
-            else:
-                return_val = 0
-            return return_val, exts
-        except:
-            return (0, None)
-
-    def run_extension(self, name):
-        tok, exts = self.find_extension(name)
-        if tok:
-            for ext in exts:
-                ext.exe(self)
-
-    def end_training(self):
-        return self.endloop
+    def theano_vars(self):
+        raise NotImplementedError(
+            str(type(self)) + " does not implement Data.theano_vars.")
 
 
-class TrainLog(object):
+class Iterator(object):
     """
-    Training log class
+    Dataset iterator
 
     Parameters
     ----------
     .. todo::
     """
-    def __init__(self):
-        self.monitor = defaultdict(list)
-        self.epoch_seen = 0
-        self.batch_seen = 0
+    def __init__(self, data, batch_size=None, nbatch=None,
+                 start=0, end=None, shuffle=False, infinite_data=0,
+                 pseudo_n=1000000):
+        if (batch_size or nbatch) is None:
+            raise ValueError("Either batch_size or nbatch should be given.")
+        if (batch_size and nbatch) is not None:
+            raise ValueError("Provide either batch_size or nbatch.")
+        self.infinite_data = infinite_data
+        if not infinite_data:
+            self.start = start
+            self.end = data.num_examples() if end is None else end
+            if self.start >= self.end or self.start < 0:
+                raise ValueError("Got wrong value for start %d.", self.start)
+            self.nexp = self.end - self.start
+            if nbatch is not None:
+                self.batch_size = int(np.float(self.nexp / float(nbatch)))
+                self.nbatch = nbatch
+            elif batch_size is not None:
+                self.batch_size = batch_size
+                self.nbatch = int(np.float(self.nexp / float(batch_size)))
+            self.shuffle = shuffle
+        else:
+            self.pseudo_n = pseudo_n
+        self.data = data
+        self.name = self.data.name
+
+    def __iter__(self):
+        if self.infinite_data:
+            for i in xrange(self.pseudo_n):
+                yield self.data.slices()
+        else:
+            if self.shuffle:
+                self.data.shuffle()
+            start = self.start
+            end = self.end - self.end % self.batch_size
+            for idx in xrange(start, end, self.batch_size):
+                yield self.data.slices(idx, idx + self.batch_size)
+
+
+class DesignMatrix(Data):
+    """
+    Abstract class for static data.
+
+    Parameters
+    ----------
+    .. todo::
+    """
+    def slices(self, start, end):
+        return (mat[start:end] for mat in self.data)
+
+
+class TemporalSeries(Data):
+    """
+    Abstract class for temporal data.
+    We use TemporalSeries when the data contains variable length
+    seuences, otherwise, we use DesignMatrix.
+
+    Parameters
+    ----------
+    .. todo::
+    """
+    def slices(self, start, end):
+        return (mat[start:end].swapaxes(0, 1)
+                for mat in self.data)
+
+    def create_mask(self, batch):
+        samples_len = [len(sample) for sample in batch]
+        max_sample_len = max(samples_len)
+        mask = np.zeros((max_sample_len, len(batch)),
+                        dtype=batch.dtype)
+        for i, sample_len in enumerate(samples_len):
+            mask[:sample_len, i] = 1.
+        return mask
+
+    def zero_pad(self, batch):
+        max_sample_len = max(len(sample) for sample in batch)
+        rval = np.zeros((len(batch), max_sample_len, batch[0].shape[-1]),
+                        dtype=batch.dtype)
+        for i, sample in enumerate(batch):
+            rval[i, :len(sample)] = sample
+        return rval.swapaxes(0, 1)
+
+    def create_mask_and_zero_pad(self, batch):
+        samples_len = [len(sample) for sample in batch]
+        max_sample_len = max(samples_len)
+        mask = np.zeros((max_sample_len, len(batch)),
+                        dtype=batch.dtype)
+        if batch[0].ndim == 1:
+            rval = np.zeros((max_sample_len, len(batch)), dtype=batch.dtype)
+        else:
+            rval = np.zeros((max_sample_len, len(batch), batch[0].shape[1]),
+                            dtype=batch.dtype)
+        for i, (sample, sample_len) in enumerate(zip(batch, samples_len)):
+            mask[:sample_len, i] = 1.
+            if batch[0].ndim == 1:
+                rval[:sample_len, i] = sample
+            else:
+                rval[:sample_len, i, :] = sample
+        return rval, mask
