@@ -336,9 +336,12 @@ class GRU(RecurrentLayer):
             W = tparams['W_'+parname+'__'+self.name]
 
             if x.ndim == 1:
-                if 'int' not in x.dtype:
-                    x = T.cast(x, 'int64')
-                z += W[x]
+                if self.x_as_index:
+                    if 'int' not in x.dtype:
+                        x = T.cast(x, 'int64')
+                    z += W[x]
+                else:
+                    z += x[:, None] * W.flatten()[None, :]
             else:
                 z += T.dot(x[:, :parout], W)
 

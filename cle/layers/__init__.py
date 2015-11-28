@@ -209,6 +209,7 @@ class StemCell(NonlinCell):
                  cons=0.,
                  use_bias=1,
                  lr_scaler=1.,
+                 x_as_index=0,
                  **kwargs):
 
         super(StemCell, self).__init__(**kwargs)
@@ -221,6 +222,7 @@ class StemCell(NonlinCell):
         self.init_W = init_W
         self.init_b = init_b
         self.cons = cons
+        self.x_as_index = x_as_index
         self.parent = OrderedDict()
         parent_dim = tolist(parent_dim)
 
