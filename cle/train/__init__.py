@@ -25,14 +25,14 @@ class Data(object):
 
     def multi_process_slices(self):
         raise NotImplementedError(
-            str(type(self)) + " does not implement Data.slice.")
+            str(type(self)) + " does not implement Data.multi_process_slices.")
 
     def load(self, path):
         return np.load(path)
 
     def slices(self):
         raise NotImplementedError(
-            str(type(self)) + " does not implement Data.slice.")
+            str(type(self)) + " does not implement Data.slices.")
 
     def num_examples(self):
         return max(mat.shape[0] for mat in self.data)
