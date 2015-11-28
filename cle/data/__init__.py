@@ -1,6 +1,8 @@
 import ipdb
 import numpy as np
 
+from multiprocessing import Process, Queue
+
 
 class Data(object):
     """
@@ -10,14 +12,25 @@ class Data(object):
     ----------
     .. todo::
     """
-    def __init__(self, name, path):
+    def __init__(self, name=None, path=None, multi_process=0):
         self.name = name
         self.data = self.load(path)
+        self.multi_process = multi_process
+        if multi_process > 0:
+            self.queue = Queue()
+            processes = [None] * multi_process
+            for midx in xrange(multi_process):
+                processes[midx] = Process(target=self.multi_process_slices)
+                processes[midx].start()
+
+    def multi_process_slices(self):
+        raise NotImplementedError(
+            str(type(self)) + " does not implement Data.slice.")
 
     def load(self, path):
         return np.load(path)
 
-    def slices(self, i):
+    def slices(self):
         raise NotImplementedError(
             str(type(self)) + " does not implement Data.slice.")
 
@@ -38,33 +51,43 @@ class Iterator(object):
     .. todo::
     """
     def __init__(self, data, batch_size=None, nbatch=None,
-                 start=0, end=None, shuffle=False):
+                 start=0, end=None, shuffle=False, infinite_data=0,
+                 pseudo_n=1000000):
         if (batch_size or nbatch) is None:
             raise ValueError("Either batch_size or nbatch should be given.")
         if (batch_size and nbatch) is not None:
             raise ValueError("Provide either batch_size or nbatch.")
-        self.start = start
-        self.end = data.num_examples() if end is None else end
-        if self.start >= self.end or self.start < 0:
-            raise ValueError("Got wrong value for start %d.", self.start)
-        self.nexp = self.end - self.start
-        if nbatch is not None:
-            self.batch_size = int(np.float(self.nexp / float(nbatch)))
-            self.nbatch = nbatch
-        elif batch_size is not None:
-            self.batch_size = batch_size
-            self.nbatch = int(np.float(self.nexp / float(batch_size)))
+        self.infinite_data = infinite_data
+        if not infinite_data:
+            self.start = start
+            self.end = data.num_examples() if end is None else end
+            if self.start >= self.end or self.start < 0:
+                raise ValueError("Got wrong value for start %d.", self.start)
+            self.nexp = self.end - self.start
+            if nbatch is not None:
+                self.batch_size = int(np.float(self.nexp / float(nbatch)))
+                self.nbatch = nbatch
+            elif batch_size is not None:
+                self.batch_size = batch_size
+                self.nbatch = int(np.float(self.nexp / float(batch_size)))
+            self.shuffle = shuffle
+        else:
+            self.pseudo_n = pseudo_n
         self.data = data
         self.name = self.data.name
-        self.shuffle = shuffle
 
     def __iter__(self):
-        if self.shuffle:
-            self.data.shuffle()
-        start = self.start
-        end = self.end - self.end % self.batch_size
-        for idx in xrange(start, end, self.batch_size):
-            yield self.data.slices(idx, idx + self.batch_size)
+        if self.infinite_data:
+            for i in xrange(self.pseudo_n):
+                yield self.data.slices()
+        else:
+            if self.shuffle:
+                self.data.shuffle()
+            start = self.start
+            end = self.end - self.end % self.batch_size
+            for idx in xrange(start, end, self.batch_size):
+                yield self.data.slices(idx, idx + self.batch_size)
+
 
 
 class DesignMatrix(Data):
