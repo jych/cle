@@ -282,14 +282,10 @@ class HighwayNet(StemCell):
             W_shape = (parout, self.nout)
             W_name = 'W_' + parname + '__' + self.name + '_h1'
             params[W_name] = self.init_W.get(W_shape)
-            C_name = 'C_' + parname + '__' + self.name + '_h1'
-            params[C_name] = self.init_W.get(W_shape)
 
         if self.use_bias:
             b_name = 'b_' + self.name + '_h1'
             params[b_name] = self.init_b.get(self.nout)
-            b_C_name = 'b_C_' + self.name + '_h1'
-            params[b_C_name] = self.init_b_C.get(self.nout)
 
         for l in xrange(1, self.num_layers):
             W_shape = (self.nout, self.nout)
@@ -319,52 +315,35 @@ class HighwayNet(StemCell):
 
         z_shape = [X[idx].shape[i] for i in xrange(ndim-1)] + [self.nout]
         z = T.zeros(z_shape, dtype=theano.config.floatX)
-        z_C = T.zeros(z_shape, dtype=theano.config.floatX)
 
         for x, (parname, parout) in izip(X, self.parent.items()):
             W_name = 'W_' + parname + '__' + self.name + '_h1'
             W = tparams[W_name]
-            C_name = 'C_' + parname + '__' + self.name + '_h1'
-            C = tparams[C_name]
 
             if x.ndim == 1:
                 if 'int' not in x.dtype:
                     x = T.cast(x, 'int64')
                 if z.ndim == 2:
                     z += W[x]
-                    z_C += C[x]
                 elif z.ndim == 3:
                     z += W[x][None, :, :]
-                    z_C += C[x][None, :, :]
             elif x.ndim == 2:
                 if ndim == 2:
                     z += T.dot(x[:, :parout], W)
-                    z_C += T.dot(x[:, :parout], C)
                 if ndim == 3:
                     z += T.dot(x[:, :parout], W)[None, :, :]
-                    z_C += T.dot(x[:, :parout], C)[None, :, :]
             elif x.ndim == 3:
                 if z.ndim != 3:
                     raise ValueError("your target ndim is less than the source ndim")
                 z += T.dot(x[:, :, :parout], W)
-                z_C += T.dot(x[:, :, :parout], C)
 
         b_name = 'b_' + self.name + '_h1'
-        b_C_name = 'b_C_' + self.name + '_h1'
-
         z += tparams[b_name]
-        z_C += tparams[b_C_name]
-
-        z = self.nonlin(z.reshape((z_shape[0]*z_shape[1], -1))).reshape((z_shape[0], z_shape[1], -1))
 
         if z.ndim == 3:
-            x = x.reshape((z_shape[0]*z_shape[1], -1))
             z = z.reshape((z_shape[0]*z_shape[1], -1))
-            z_C = z_C.reshape((z_shape[0]*z_shape[1], -1))
 
         z = self.nonlin(z)
-        z_C = T.nnet.sigmoid(z_C)
-        z = z * z_C + x * (1 - z_C)
 
         for l in xrange(1, self.num_layers):
 
