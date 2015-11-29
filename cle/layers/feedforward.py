@@ -378,7 +378,7 @@ class HighwayNet(StemCell):
             b_C = tparams[b_C_name]
 
             inter_z = T.dot(z, W) + b
-            inter_z_C = T.dot(z, C) + b_T
+            inter_z_C = T.dot(z, C) + b_C
             inter_z = self.nonlin(inter_z)
             inter_z_C = T.nnet.sigmoid(inter_z_C)
             z = inter_z * inter_z_C + z * (1 - inter_z_C)
