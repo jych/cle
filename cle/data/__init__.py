@@ -17,7 +17,7 @@ class Data(object):
         self.data = self.load(path)
         self.multi_process = multi_process
         if multi_process > 0:
-            self.queue = Queue()
+            self.queue = Queue(2**15)
             processes = [None] * multi_process
             for mid in xrange(multi_process):
                 processes[mid] = Process(target=self.multi_process_slices,
