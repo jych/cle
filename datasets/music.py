@@ -20,9 +20,12 @@ class Music(TemporalSeries):
 
     def slices(self, start, end):
         batches = [mat[start:end] for mat in self.data]
-        mask = tolist(self.create_mask(batches[0].swapaxes(0, 1)))
-        batches = [self.zero_pad(batch) for batch in batches]
-        return totuple(batches + mask)
+        #mask = tolist(self.create_mask(batches[0]).swapaxes(0, 1))
+        #batches = [self.zero_pad(batch) for batch in batches]
+        x, x_mask = self.create_mask_and_zero_pad(batches[0])
+        y, y_mask = self.create_mask_and_zero_pad(batches[1])
+        #return totuple(batches + mask)
+        return totuple([x, y, y_mask])
 
     def load(self, path):
         data = np.load(path)

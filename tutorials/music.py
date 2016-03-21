@@ -16,7 +16,8 @@ from cle.cle.train.ext import (
     Picklize
 )
 from cle.cle.train.opt import RMSProp
-from cle.cle.utils import flatten, OrderedDict
+from cle.cle.utils import init_tparams, sharedX
+from cle.cle.utils.compat import OrderedDict
 from cle.datasets.music import Music
 
 data_path = '/home/junyoung/data/music/MuseData.pickle'
@@ -84,10 +85,13 @@ output = FullyConnectedLayer(name='output',
 
 nodes = [h1, h2, h3, output]
 
-for node in nodes:
-    node.initialize()
+params = OrderedDict()
 
-params = flatten([node.get_params().values() for node in nodes])
+for node in nodes:
+    if node.initialize() is not None:
+        params.update(node.initialize())
+
+params = init_tparams(params)
 
 s1_0 = h1.get_init_state(batch_size)
 s2_0 = h2.get_init_state(batch_size)
@@ -96,10 +100,10 @@ s3_0 = h3.get_init_state(batch_size)
 
 def inner_fn(x_t, s1_tm1, s2_tm1, s3_tm1):
 
-    h1_t = h1.fprop([[x_t], [s1_tm1]])
-    h2_t = h2.fprop([[h1_t], [s2_tm1]])
-    h3_t = h3.fprop([[h2_t], [s2_tm1]])
-    output_t = output.fprop([h1_t, h2_t, h3_t])
+    h1_t = h1.fprop([[x_t], [s1_tm1]], params)
+    h2_t = h2.fprop([[h1_t], [s2_tm1]], params)
+    h3_t = h3.fprop([[h2_t], [s2_tm1]], params)
+    output_t = output.fprop([h1_t, h2_t, h3_t], params)
 
     return h1_t, h2_t, h3_t, output_t
 
@@ -120,7 +124,7 @@ cost.name = 'cost'
 nll.name = 'nll'
 
 model.inputs = [x, y, mask]
-model._params = params
+model.params = params
 model.nodes = nodes
 
 optimizer = RMSProp(
