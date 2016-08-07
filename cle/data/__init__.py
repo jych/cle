@@ -63,7 +63,7 @@ class Iterator(object):
             self.start = start
             self.end = data.num_examples() if end is None else end
             if self.start >= self.end or self.start < 0:
-                raise ValueError("Got wrong value for start %d.", self.start)
+                raise ValueError("Got wrong value for start %d." % self.start)
             self.nexp = self.end - self.start
             if nbatch is not None:
                 self.batch_size = int(np.float(self.nexp / float(nbatch)))
