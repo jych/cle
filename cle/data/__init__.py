@@ -119,8 +119,7 @@ class TemporalSeries(Data):
     def create_mask(self, batch):
         samples_len = [len(sample) for sample in batch]
         max_sample_len = max(samples_len)
-        mask = np.zeros((max_sample_len, len(batch)),
-                        dtype=batch.dtype)
+        mask = np.zeros((max_sample_len, len(batch)), dtype=batch.dtype)
         for i, sample_len in enumerate(samples_len):
             mask[:sample_len, i] = 1.
         return mask
@@ -136,8 +135,7 @@ class TemporalSeries(Data):
     def create_mask_and_zero_pad(self, batch):
         samples_len = [len(sample) for sample in batch]
         max_sample_len = max(samples_len)
-        mask = np.zeros((max_sample_len, len(batch)),
-                        dtype=batch.dtype)
+        mask = np.zeros((max_sample_len, len(batch)), dtype=batch.dtype)
         if batch[0].ndim == 1:
             rval = np.zeros((max_sample_len, len(batch)), dtype=batch.dtype)
         else:
